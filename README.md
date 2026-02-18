@@ -35,7 +35,6 @@ packages/
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (Latest LTS)
 - [pnpm](https://pnpm.io/) (Package Manager)
 - [Expo Go](https://expo.dev/client) (For testing mobile app)
 
