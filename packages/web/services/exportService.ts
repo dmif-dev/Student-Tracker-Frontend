@@ -20,6 +20,8 @@ export interface ExportTemplate {
   config: ExportOptions;
 }
 
+// packages/web/services/exportService.ts
+
 export const exportTemplates: ExportTemplate[] = [
   {
     id: 'student-list',
@@ -43,11 +45,11 @@ export const exportTemplates: ExportTemplate[] = [
     }
   },
   {
-    id: 'outcome-report',
-    name: 'Outcomes Report',
-    description: 'Detailed outcomes with student information',
+    id: 'g-gmp-outcomes',
+    name: 'G-GMP Outcomes Report',
+    description: 'Patent filings, papers, and startups',
     config: {
-      filename: 'outcomes',
+      filename: 'g-gmp-outcomes',
       format: 'pdf',
       data: [],
       columns: [
@@ -56,10 +58,51 @@ export const exportTemplates: ExportTemplate[] = [
         { header: 'Student', key: 'student' },
         { header: 'Status', key: 'status' },
         { header: 'Date', key: 'date' },
-        { header: 'Mentor', key: 'mentor' }
+        { header: 'Mentor', key: 'mentor' },
+        { header: 'Program', key: 'program' }
       ],
-      title: 'Outcomes Report',
+      title: 'G-GMP Innovation Outcomes Report',
       orientation: 'landscape'
+    }
+  },
+  {
+    id: 'pcp-certifications',
+    name: 'PCP Certification Report',
+    description: 'Professional certifications completed',
+    config: {
+      filename: 'pcp-certifications',
+      format: 'pdf',
+      data: [],
+      columns: [
+        { header: 'Certification', key: 'title' },
+        { header: 'Student', key: 'student' },
+        { header: 'Level', key: 'level' },
+        { header: 'Status', key: 'status' },
+        { header: 'Completed Date', key: 'date' }
+      ],
+      title: 'PCP Certification Report',
+      orientation: 'portrait'
+    }
+  },
+  {
+    id: 'program-comparison',
+    name: 'Program Comparison Report',
+    description: 'Compare metrics across all programs',
+    config: {
+      filename: 'program-comparison',
+      format: 'excel',
+      data: [],
+      columns: [
+        { header: 'Program', key: 'program' },
+        { header: 'Type', key: 'type' },
+        { header: 'Total Students', key: 'totalStudents' },
+        { header: 'Active Students', key: 'activeStudents' },
+        { header: 'Completion Rate', key: 'completionRate' },
+        { header: 'Has Mentors', key: 'hasMentors' },
+        { header: 'Has Outcomes', key: 'hasOutcomes' },
+        { header: 'Outcome Count', key: 'outcomeCount' }
+      ],
+      title: 'DMIF Program Comparison Report'
     }
   }
 ];

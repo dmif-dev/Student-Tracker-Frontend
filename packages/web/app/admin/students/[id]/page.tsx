@@ -1,3 +1,5 @@
+// packages/web/app/admin/students/[id]/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,9 +16,16 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Users
+  Users,
+  BookOpen,
+  Code,
+  Brain,
+  GraduationCap,
+  Info,
+  Briefcase // Add this import
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
+import { Outcome } from '@/services/mockData';
 
 interface StudentDetails {
   id: string;
@@ -25,18 +34,30 @@ interface StudentDetails {
   registrationNumber: string;
   program: string;
   track: string;
-  mentor: string;
+  mentor?: string;
   status: string;
   joinDate: string;
   lastActive: string;
-  phone?: string; // Make optional
-  address?: string; // Make optional
-  avatar?: string; // Make optional
+  phone?: string;
+  address?: string;
+  avatar?: string;
   progress: number;
-  outcomes: {
-    patents: number;
-    papers: number;
-    projects: number;
+  // Outcomes only for G-GMP students
+  outcomes?: {
+    patents?: number;
+    papers?: number;
+    projects?: number;
+    startups?: number;
+  };
+  // For G-CMP students
+  projects?: {
+    completed: number;
+    inProgress: number;
+  };
+  // For PCP students
+  certifications?: {
+    completed: number;
+    inProgress: number;
   };
   recentActivity: Array<{
     id: string;
@@ -68,16 +89,12 @@ export default function StudentDetailPage() {
             ApiService.getRecentActivities(5)
           ]);
           
-          setStudent({
+          // Different data structure based on program
+          const studentData: StudentDetails = {
             ...data,
-            phone: data.phone || '', // Provide default empty string
+            phone: data.phone || '',
             address: data.address || '',
             avatar: data.avatar,
-            outcomes: {
-              patents: outcomes.filter(o => o.type === 'patent').length,
-              papers: outcomes.filter(o => o.type === 'paper').length,
-              projects: outcomes.filter(o => o.type === 'project').length,
-            },
             recentActivity: activities
               .filter(a => a.userId === data.id)
               .map(a => ({
@@ -86,7 +103,29 @@ export default function StudentDetailPage() {
                 description: a.description,
                 date: a.date || new Date().toISOString().split('T')[0],
               })),
-          });
+          };
+
+          // Add program-specific data
+          if (data.program === 'G-GMP') {
+            studentData.outcomes = {
+              patents: outcomes.filter((o: Outcome) => o.type === 'patent').length,
+              papers: outcomes.filter((o: Outcome) => o.type === 'paper').length,
+              projects: 0,
+              startups: outcomes.filter((o: Outcome) => o.type === 'startup').length,
+            };
+          } else if (data.program === 'G-CMP') {
+            studentData.projects = {
+              completed: Math.floor(Math.random() * 5) + 1,
+              inProgress: Math.floor(Math.random() * 3) + 1,
+            };
+          } else if (data.program === 'PCP') {
+            studentData.certifications = {
+              completed: Math.floor(Math.random() * 3),
+              inProgress: Math.floor(Math.random() * 2) + 1,
+            };
+          }
+
+          setStudent(studentData);
         }
       } catch (error) {
         console.error('Error fetching student:', error);
@@ -99,6 +138,31 @@ export default function StudentDetailPage() {
       fetchStudent();
     }
   }, [params.id]);
+
+  const getProgramColor = (program: string) => {
+    const colors = {
+      'G-GMP': 'bg-purple-100 text-purple-700',
+      'G-CMP': 'bg-green-100 text-green-700',
+      'E-TIP': 'bg-blue-100 text-blue-700',
+      'PCP': 'bg-orange-100 text-orange-700'
+    };
+    return colors[program as keyof typeof colors] || 'bg-gray-100 text-gray-700';
+  };
+
+  const getProgramIcon = (program: string) => {
+    switch (program) {
+      case 'G-GMP':
+        return <Brain size={20} className="text-purple-500" />;
+      case 'G-CMP':
+        return <Code size={20} className="text-green-500" />;
+      case 'E-TIP':
+        return <Award size={20} className="text-blue-500" />;
+      case 'PCP':
+        return <GraduationCap size={20} className="text-orange-500" />;
+      default:
+        return <BookOpen size={20} className="text-gray-500" />;
+    }
+  };
 
   if (loading) {
     return (
@@ -122,7 +186,6 @@ export default function StudentDetailPage() {
     );
   }
 
-  // Rest of the component remains the same...
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -135,7 +198,12 @@ export default function StudentDetailPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{student.name}</h1>
+            <div className="flex items-center space-x-3">
+              <h1 className="text-2xl font-bold text-gray-900">{student.name}</h1>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getProgramColor(student.program)}`}>
+                {student.program}
+              </span>
+            </div>
             <p className="text-gray-500">{student.registrationNumber}</p>
           </div>
         </div>
@@ -154,11 +222,40 @@ export default function StudentDetailPage() {
         </div>
       </div>
 
+      {/* Program Info Note */}
+      <div className={`p-4 rounded-lg ${
+        student.program === 'G-GMP' ? 'bg-purple-50 border-purple-200' :
+        student.program === 'G-CMP' ? 'bg-green-50 border-green-200' :
+        student.program === 'E-TIP' ? 'bg-blue-50 border-blue-200' :
+        'bg-orange-50 border-orange-200'
+      } border`}>
+        <div className="flex items-start space-x-3">
+          {getProgramIcon(student.program)}
+          <div>
+            <p className="text-sm font-medium">
+              {student.program} Program - {
+                student.program === 'G-GMP' ? 'Innovation & Outcomes Tracked' :
+                student.program === 'G-CMP' ? 'Coding Learning Program' :
+                student.program === 'E-TIP' ? 'Executive Learning Program' :
+                'Self-paced Certification Program'
+              }
+            </p>
+            <p className="text-xs mt-1">
+              {student.program === 'G-GMP' ? 'This program tracks patents, papers, and startup outcomes.' :
+               student.program === 'G-CMP' ? 'This program focuses on coding skills and project completion.' :
+               student.program === 'E-TIP' ? 'This program focuses on executive technology leadership.' :
+               'This program focuses on self-paced certification completion.'}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Status Badge */}
       <div className="flex items-center space-x-4">
         <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${
           student.status === 'active' ? 'bg-green-100 text-green-700' :
           student.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+          student.status === 'completed' ? 'bg-indigo-100 text-indigo-700' :
           'bg-gray-100 text-gray-700'
         }`}>
           {student.status}
@@ -196,16 +293,19 @@ export default function StudentDetailPage() {
           >
             Progress
           </Link>
-          <Link
-            href={`/admin/students/${params.id}/outcomes`}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-              activeTab === 'outcomes'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Outcomes
-          </Link>
+          {/* Only show Outcomes tab for G-GMP students */}
+          {student.program === 'G-GMP' && (
+            <Link
+              href={`/admin/students/${params.id}/outcomes`}
+              className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+                activeTab === 'outcomes'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Outcomes
+            </Link>
+          )}
           <Link
             href={`/admin/students/${params.id}/activity`}
             className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
@@ -241,7 +341,12 @@ export default function StudentDetailPage() {
                 <p className="text-2xl font-bold text-gray-900">{student.progress}%</p>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                   <div
-                    className="bg-primary-600 rounded-full h-2"
+                    className={`rounded-full h-2 ${
+                      student.program === 'G-GMP' ? 'bg-purple-600' :
+                      student.program === 'G-CMP' ? 'bg-green-600' :
+                      student.program === 'E-TIP' ? 'bg-blue-600' :
+                      'bg-orange-600'
+                    }`}
                     style={{ width: `${student.progress}%` }}
                   ></div>
                 </div>
@@ -253,10 +358,74 @@ export default function StudentDetailPage() {
               </div>
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <p className="text-sm text-gray-600 mb-1">Mentor</p>
-                <p className="text-lg font-semibold text-gray-900">{student.mentor}</p>
-                <p className="text-sm text-primary-600 mt-1 cursor-pointer">View Profile</p>
+                {student.program === 'PCP' ? (
+                  <p className="text-lg font-semibold text-gray-400">Self-paced</p>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold text-gray-900">{student.mentor || 'Not assigned'}</p>
+                    {student.mentor && (
+                      <p className="text-sm text-primary-600 mt-1 cursor-pointer">View Profile</p>
+                    )}
+                  </>
+                )}
               </div>
             </div>
+
+            {/* Program-specific Achievement Cards */}
+            {student.program === 'G-GMP' && student.outcomes && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold mb-4">Innovation Outcomes</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 bg-purple-50 rounded-lg text-center">
+                    <FileText size={24} className="mx-auto text-purple-600 mb-2" />
+                    <p className="text-2xl font-bold text-purple-700">{student.outcomes.patents || 0}</p>
+                    <p className="text-xs text-purple-600">Patents Filed</p>
+                  </div>
+                  <div className="p-4 bg-blue-50 rounded-lg text-center">
+                    <BookOpen size={24} className="mx-auto text-blue-600 mb-2" />
+                    <p className="text-2xl font-bold text-blue-700">{student.outcomes.papers || 0}</p>
+                    <p className="text-xs text-blue-600">Papers Published</p>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg text-center">
+                    <Briefcase size={24} className="mx-auto text-green-600 mb-2" />
+                    <p className="text-2xl font-bold text-green-700">{student.outcomes.startups || 0}</p>
+                    <p className="text-xs text-green-600">Startup Concepts</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {student.program === 'G-CMP' && student.projects && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold mb-4">Project Progress</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <p className="text-sm text-green-600 mb-1">Completed Projects</p>
+                    <p className="text-3xl font-bold text-green-700">{student.projects.completed}</p>
+                  </div>
+                  <div className="p-4 bg-yellow-50 rounded-lg">
+                    <p className="text-sm text-yellow-600 mb-1">In Progress</p>
+                    <p className="text-3xl font-bold text-yellow-700">{student.projects.inProgress}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {student.program === 'PCP' && student.certifications && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold mb-4">Certification Progress</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-orange-50 rounded-lg">
+                    <p className="text-sm text-orange-600 mb-1">Completed</p>
+                    <p className="text-3xl font-bold text-orange-700">{student.certifications.completed}</p>
+                  </div>
+                  <div className="p-4 bg-yellow-50 rounded-lg">
+                    <p className="text-sm text-yellow-600 mb-1">In Progress</p>
+                    <p className="text-3xl font-bold text-yellow-700">{student.certifications.inProgress}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Contact Information */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -280,30 +449,37 @@ export default function StudentDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Outcomes Summary */}
+            {/* Program Summary */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-4">Outcomes</h3>
+              <h3 className="text-lg font-semibold mb-4">Program Summary</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Award size={18} className="text-purple-500 mr-2" />
-                    <span>Patents</span>
+                    {getProgramIcon(student.program)}
+                    <span className="ml-2">Program Type</span>
                   </div>
-                  <span className="font-semibold">{student.outcomes.patents}</span>
+                  <span className="font-semibold">
+                    {student.program === 'G-GMP' ? 'Innovation' :
+                     student.program === 'G-CMP' ? 'Coding' :
+                     student.program === 'E-TIP' ? 'Executive' :
+                     'Certification'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <FileText size={18} className="text-green-500 mr-2" />
-                    <span>Papers</span>
+                    <TrendingUp size={18} className="text-gray-500 mr-2" />
+                    <span>Track</span>
                   </div>
-                  <span className="font-semibold">{student.outcomes.papers}</span>
+                  <span className="font-semibold">{student.track}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <TrendingUp size={18} className="text-primary-500 mr-2" />
-                    <span>Projects</span>
+                    <Clock size={18} className="text-gray-500 mr-2" />
+                    <span>Duration</span>
                   </div>
-                  <span className="font-semibold">{student.outcomes.projects}</span>
+                  <span className="font-semibold">
+                    {student.program === 'PCP' ? 'Self-paced' : '6-12 months'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -319,19 +495,19 @@ export default function StudentDetailPage() {
                         <TrendingUp size={12} className="text-primary-600" />
                       </div>
                     )}
-                    {activity.type === 'outcome' && (
-                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Award size={12} className="text-green-600" />
+                    {activity.type === 'outcome' && student.program === 'G-GMP' && (
+                      <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Award size={12} className="text-purple-600" />
                       </div>
                     )}
                     {activity.type === 'session' && (
-                      <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Clock size={12} className="text-purple-600" />
+                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Clock size={12} className="text-blue-600" />
                       </div>
                     )}
-                    {activity.type === 'enrollment' && (
-                      <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Users size={12} className="text-yellow-600" />
+                    {activity.type === 'completion' && (
+                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <CheckCircle size={12} className="text-green-600" />
                       </div>
                     )}
                     <div className="ml-3">
@@ -362,38 +538,50 @@ export default function StudentDetailPage() {
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium">Module Completion</p>
-                <p className="text-sm text-gray-500">Patent Drafting Module</p>
+                <p className="text-sm text-gray-500">{student.track}</p>
               </div>
               <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm">In Progress</span>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium">Mentor Sessions</p>
-                <p className="text-sm text-gray-500">8 sessions completed</p>
+                <p className="text-sm text-gray-500">{student.program === 'PCP' ? 'Self-paced' : '8 sessions completed'}</p>
               </div>
-              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">75%</span>
+              {student.program !== 'PCP' && (
+                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">75%</span>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {activeTab === 'outcomes' && (
+      {activeTab === 'outcomes' && student.program === 'G-GMP' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold mb-4">Outcomes Portfolio</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="border border-gray-200 rounded-lg p-4">
               <div className="flex items-center mb-3">
-                <Award size={20} className="text-purple-500 mr-2" />
+                <FileText size={20} className="text-purple-500 mr-2" />
                 <h4 className="font-medium">Patents</h4>
               </div>
-              <p className="text-sm text-gray-600">{student?.outcomes.patents} filed • 0 granted</p>
+              <p className="text-2xl font-bold text-purple-600">{student.outcomes?.patents || 0}</p>
+              <p className="text-sm text-gray-500">filed</p>
             </div>
             <div className="border border-gray-200 rounded-lg p-4">
               <div className="flex items-center mb-3">
-                <FileText size={20} className="text-green-500 mr-2" />
+                <BookOpen size={20} className="text-blue-500 mr-2" />
                 <h4 className="font-medium">Research Papers</h4>
               </div>
-              <p className="text-sm text-gray-600">{student?.outcomes.papers} published</p>
+              <p className="text-2xl font-bold text-blue-600">{student.outcomes?.papers || 0}</p>
+              <p className="text-sm text-gray-500">published</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center mb-3">
+                <Briefcase size={20} className="text-green-500 mr-2" />
+                <h4 className="font-medium">Startup Concepts</h4>
+              </div>
+              <p className="text-2xl font-bold text-green-600">{student.outcomes?.startups || 0}</p>
+              <p className="text-sm text-gray-500">developed</p>
             </div>
           </div>
         </div>
@@ -403,7 +591,7 @@ export default function StudentDetailPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold mb-4">Activity Log</h3>
           <div className="space-y-4">
-            {student?.recentActivity.map((activity) => (
+            {student.recentActivity.map((activity) => (
               <div key={activity.id} className="flex items-start space-x-3 border-b border-gray-100 pb-4 last:border-0">
                 <div className="flex-shrink-0">
                   {activity.type === 'progress' && (
@@ -411,19 +599,19 @@ export default function StudentDetailPage() {
                       <TrendingUp size={16} className="text-primary-600" />
                     </div>
                   )}
-                  {activity.type === 'outcome' && (
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <Award size={16} className="text-green-600" />
+                  {activity.type === 'outcome' && student.program === 'G-GMP' && (
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Award size={16} className="text-purple-600" />
                     </div>
                   )}
                   {activity.type === 'session' && (
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Clock size={16} className="text-purple-600" />
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Clock size={16} className="text-blue-600" />
                     </div>
                   )}
-                  {activity.type === 'enrollment' && (
-                    <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                      <Users size={16} className="text-yellow-600" />
+                  {activity.type === 'completion' && (
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircle size={16} className="text-green-600" />
                     </div>
                   )}
                 </div>

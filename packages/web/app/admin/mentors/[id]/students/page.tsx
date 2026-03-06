@@ -1,3 +1,5 @@
+// packages/web/app/admin/mentors/[id]/students/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,7 +15,12 @@ import {
   Mail,
   Clock,
   Filter,
-  Download
+  Download,
+  Info,
+  UserCheck,
+  BookOpen,
+  Code,
+  Brain
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
 
@@ -33,6 +40,20 @@ interface Student {
     papers: number;
     projects: number;
   };
+  hasMentor: boolean;
+}
+
+// Interface for assigned student from mentor data
+interface AssignedStudent {
+  id: string;
+  name: string;
+  program: 'G-GMP' | 'G-CMP' | 'E-TIP' | 'PCP';
+  track: string;
+  joinDate: string;
+  lastSession?: string;
+  nextSession?: string;
+  progress: number;
+  hasMentor: boolean;
 }
 
 export default function MentorStudentsPage() {
@@ -51,7 +72,32 @@ export default function MentorStudentsPage() {
         if (mentorData) {
           setMentor(mentorData);
           
-          // Mock students data - replace with actual API call
+          // Filter out PCP students from assigned students
+          const nonPCPStudents = (mentorData.assignedStudents || []).filter(
+            (s: AssignedStudent) => s.program !== 'PCP'
+          );
+          
+          // Map AssignedStudent to Student type
+          const mappedStudents: Student[] = nonPCPStudents.map((s: AssignedStudent) => ({
+            id: s.id,
+            name: s.name,
+            email: `${s.name.toLowerCase().replace(' ', '.')}@example.com`, // Generate email
+            registrationNumber: `DMIF2024${s.id.padStart(3, '0')}`, // Generate registration number
+            program: s.program,
+            track: s.track,
+            progress: s.progress,
+            joinDate: s.joinDate,
+            lastSession: s.lastSession,
+            nextSession: s.nextSession,
+            outcomes: {
+              patents: 0, // Default values
+              papers: 0,
+              projects: 0
+            },
+            hasMentor: s.hasMentor
+          }));
+          
+          // Mock students data - only non-PCP programs
           const mockStudents: Student[] = [
             {
               id: '1',
@@ -64,7 +110,8 @@ export default function MentorStudentsPage() {
               joinDate: '2024-01-15',
               lastSession: '2024-03-20',
               nextSession: '2024-03-27',
-              outcomes: { patents: 1, papers: 0, projects: 2 }
+              outcomes: { patents: 1, papers: 0, projects: 2 },
+              hasMentor: true
             },
             {
               id: '5',
@@ -77,24 +124,69 @@ export default function MentorStudentsPage() {
               joinDate: '2024-01-20',
               lastSession: '2024-03-19',
               nextSession: '2024-03-26',
-              outcomes: { patents: 0, papers: 1, projects: 1 }
+              outcomes: { patents: 0, papers: 1, projects: 1 },
+              hasMentor: true
             },
             {
-              id: '6',
-              name: 'Emily Brown',
-              email: 'emily.b@example.com',
-              registrationNumber: 'DMIF2024006',
+              id: '2',
+              name: 'Jane Smith',
+              email: 'jane.smith@example.com',
+              registrationNumber: 'DMIF2024002',
+              program: 'G-CMP',
+              track: 'AI Product Development',
+              progress: 60,
+              joinDate: '2024-02-01',
+              lastSession: '2024-03-21',
+              nextSession: '2024-03-28',
+              outcomes: { patents: 0, papers: 0, projects: 2 },
+              hasMentor: true
+            },
+            {
+              id: '7',
+              name: 'David Lee',
+              email: 'david.lee@example.com',
+              registrationNumber: 'DMIF2024007',
               program: 'G-CMP',
               track: 'Full Stack Development',
-              progress: 30,
-              joinDate: '2024-02-15',
+              progress: 35,
+              joinDate: '2024-02-10',
               lastSession: '2024-03-18',
               nextSession: '2024-03-25',
-              outcomes: { patents: 0, papers: 0, projects: 1 }
+              outcomes: { patents: 0, papers: 0, projects: 1 },
+              hasMentor: true
+            },
+            {
+              id: '3',
+              name: 'Mike Johnson',
+              email: 'mike.j@example.com',
+              registrationNumber: 'DMIF2024003',
+              program: 'E-TIP',
+              track: 'Cloud Development',
+              progress: 25,
+              joinDate: '2024-03-10',
+              lastSession: '2024-03-15',
+              nextSession: '2024-03-22',
+              outcomes: { patents: 0, papers: 0, projects: 1 },
+              hasMentor: true
+            },
+            {
+              id: '8',
+              name: 'Lisa Chen',
+              email: 'lisa.chen@example.com',
+              registrationNumber: 'DMIF2024008',
+              program: 'E-TIP',
+              track: 'AI Product Development',
+              progress: 15,
+              joinDate: '2024-03-01',
+              lastSession: '2024-03-14',
+              nextSession: '2024-03-21',
+              outcomes: { patents: 0, papers: 0, projects: 0 },
+              hasMentor: true
             }
           ];
           
-          setStudents(mockStudents);
+          // If we have actual assigned students from API, use mapped ones, otherwise use mock
+          setStudents(mappedStudents.length > 0 ? mappedStudents : mockStudents);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -116,6 +208,19 @@ export default function MentorStudentsPage() {
       'PCP': 'bg-orange-100 text-orange-700'
     };
     return colors[program as keyof typeof colors] || 'bg-gray-100 text-gray-700';
+  };
+
+  const getProgramIcon = (program: string) => {
+    switch (program) {
+      case 'G-GMP':
+        return <Brain size={16} className="text-purple-500" />;
+      case 'G-CMP':
+        return <Code size={16} className="text-green-500" />;
+      case 'E-TIP':
+        return <Award size={16} className="text-blue-500" />;
+      default:
+        return <BookOpen size={16} className="text-gray-500" />;
+    }
   };
 
   const getSessionStatus = (nextSession?: string) => {
@@ -204,7 +309,7 @@ export default function MentorStudentsPage() {
               {mentor.name}'s Students
             </h1>
             <p className="text-gray-500 mt-1">
-              Managing {students.length} assigned students
+              Managing {students.length} students across G-GMP, G-CMP, and E-TIP programs
             </p>
           </div>
         </div>
@@ -215,6 +320,19 @@ export default function MentorStudentsPage() {
           <Download size={18} className="mr-2" />
           Export List
         </button>
+      </div>
+
+      {/* PCP Note */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <Info size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-blue-700">
+              <strong>Note:</strong> PCP (Professional Certification Program) students are self-paced and 
+              do not require mentor assignment. They are not shown in this list.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -265,7 +383,6 @@ export default function MentorStudentsPage() {
             <option value="G-GMP">G-GMP</option>
             <option value="G-CMP">G-CMP</option>
             <option value="E-TIP">E-TIP</option>
-            <option value="PCP">PCP</option>
           </select>
         </div>
       </div>
@@ -304,9 +421,12 @@ export default function MentorStudentsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-1">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getProgramColor(student.program)}`}>
-                          {student.program}
-                        </span>
+                        <div className="flex items-center space-x-1">
+                          {getProgramIcon(student.program)}
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getProgramColor(student.program)}`}>
+                            {student.program}
+                          </span>
+                        </div>
                         <div className="text-sm text-gray-600">{student.track}</div>
                       </div>
                     </td>
@@ -386,26 +506,41 @@ export default function MentorStudentsPage() {
         <h3 className="text-lg font-semibold mb-4">Weekly Session Schedule</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-purple-50 rounded-lg">
-            <h4 className="font-medium text-purple-700 mb-2">G-GMP Students</h4>
+            <div className="flex items-center space-x-2 mb-2">
+              <Brain size={18} className="text-purple-700" />
+              <h4 className="font-medium text-purple-700">G-GMP Students</h4>
+            </div>
             <p className="text-2xl font-bold text-purple-700">
               {students.filter(s => s.program === 'G-GMP').length}
             </p>
             <p className="text-sm text-purple-600 mt-1">Sessions on Mondays</p>
           </div>
           <div className="p-4 bg-green-50 rounded-lg">
-            <h4 className="font-medium text-green-700 mb-2">G-CMP Students</h4>
+            <div className="flex items-center space-x-2 mb-2">
+              <Code size={18} className="text-green-700" />
+              <h4 className="font-medium text-green-700">G-CMP Students</h4>
+            </div>
             <p className="text-2xl font-bold text-green-700">
               {students.filter(s => s.program === 'G-CMP').length}
             </p>
             <p className="text-sm text-green-600 mt-1">Sessions on Wednesdays</p>
           </div>
           <div className="p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-medium text-blue-700 mb-2">E-TIP Students</h4>
+            <div className="flex items-center space-x-2 mb-2">
+              <Award size={18} className="text-blue-700" />
+              <h4 className="font-medium text-blue-700">E-TIP Students</h4>
+            </div>
             <p className="text-2xl font-bold text-blue-700">
               {students.filter(s => s.program === 'E-TIP').length}
             </p>
             <p className="text-sm text-blue-600 mt-1">Sessions on Fridays</p>
           </div>
+        </div>
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-600 flex items-center">
+            <Info size={16} className="mr-2 text-gray-400" />
+            PCP students are self-paced and do not require weekly mentoring sessions.
+          </p>
         </div>
       </div>
     </div>

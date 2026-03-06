@@ -30,9 +30,24 @@ export default function StudentsPage() {
   const [selectedProgram, setSelectedProgram] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [filtersLoaded, setFiltersLoaded] = useState(false);
 
-  // Get filters from AdvancedFilters
-  const { filters } = useAdvancedFilters({ storageKey: 'studentFilters' });
+  // Get filters from AdvancedFilters with the correct storage key
+  const { filters, isInitialized } = useAdvancedFilters({ 
+    storageKey: 'studentsFilters' // Make sure this matches your localStorage key
+  });
+
+  // Mark filters as loaded after first render
+  useEffect(() => {
+    setFiltersLoaded(true);
+  }, []);
+
+  // Log filters to debug
+  useEffect(() => {
+    if (filtersLoaded) {
+      console.log('Current filters:', filters);
+    }
+  }, [filters, filtersLoaded]);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -49,7 +64,14 @@ export default function StudentsPage() {
     fetchStudents();
   }, []);
 
-  // Apply both local filters and advanced filters
+  // Debug logging
+  useEffect(() => {
+    if (isInitialized) {
+      console.log('Filters are initialized:', filters);
+    }
+  }, [filters, isInitialized]);
+
+  // Apply filters only after initialization
   const filteredStudents = students.filter((student) => {
     // Local filters
     const matchesSearch =
@@ -62,13 +84,22 @@ export default function StudentsPage() {
 
     if (!matchesSearch || !matchesProgram || !matchesStatus) return false;
 
-    // Advanced filters (if any are applied)
-    if (Object.keys(filters).length > 0) {
+    // Advanced filters - only apply if initialized and have filters
+    if (isInitialized && Object.keys(filters).length > 0) {
       return filterData([student], filters).length > 0;
     }
 
     return true;
   });
+
+  // Show loading state while filters are initializing
+  if (loading || !isInitialized) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
 
   const handleExport = () => {
     const headers = [
@@ -113,6 +144,12 @@ export default function StudentsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Debug info - remove after fixing
+      <div className="bg-gray-100 p-4 rounded-lg text-xs">
+        <p>Filters loaded: {JSON.stringify(filters)}</p>
+        <p>Filtered count: {filteredStudents.length}</p>
+        <p>Total students: {students.length}</p>
+      </div> */}
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Students</h1>

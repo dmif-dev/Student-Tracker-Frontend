@@ -1,3 +1,5 @@
+// packages/web/app/admin/outcomes/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,25 +13,32 @@ import {
   Download,
   Search,
   ChevronDown,
+  BookOpen,
+  Briefcase,
+  Brain,
+  Info
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
+import { Outcome } from '@/services/mockData';
 
-interface Outcome {
-  id: string;
-  type: 'patent' | 'paper' | 'project' | 'certification';
-  title: string;
-  student: string;
-  studentId: string;
-  status: 'pending' | 'filed' | 'published' | 'granted' | 'completed';
-  date: string;
-  mentor?: string;
-}
+// interface Outcome {
+//   id: string;
+//   type: 'patent' | 'paper' | 'startup' | 'project' | 'certification';
+//   title: string;
+//   student: string;
+//   studentId: string;
+//   status: 'pending' | 'filed' | 'published' | 'granted' | 'completed';
+//   date: string;
+//   mentor?: string;
+//   program: string;
+// }
 
 export default function OutcomesPage() {
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedProgram, setSelectedProgram] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -37,7 +46,12 @@ export default function OutcomesPage() {
     const fetchOutcomes = async () => {
       try {
         const data = await ApiService.getOutcomes();
-        setOutcomes(data);
+        // Filter to only show G-GMP outcomes (patents, papers, startups)
+        // and PCP certifications
+        const filteredData = data.filter((o: Outcome) => 
+          o.program === 'G-GMP' || o.type === 'certification'
+        );
+        setOutcomes(filteredData);
       } catch (error) {
         console.error('Error fetching outcomes:', error);
       } finally {
@@ -48,19 +62,22 @@ export default function OutcomesPage() {
     fetchOutcomes();
   }, []);
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'patent':
-        return <Award size={16} className="text-purple-500" />;
-      case 'paper':
-        return <FileText size={16} className="text-green-500" />;
-      case 'project':
-        return <TrendingUp size={16} className="text-primary-500" />;
-      case 'certification':
-        return <Award size={16} className="text-orange-500" />;
-      default:
-        return <FileText size={16} />;
+  const getTypeIcon = (type: string, program: string) => {
+    if (program === 'G-GMP') {
+      switch (type) {
+        case 'patent':
+          return <FileText size={16} className="text-purple-500" />;
+        case 'paper':
+          return <BookOpen size={16} className="text-blue-500" />;
+        case 'startup':
+          return <Briefcase size={16} className="text-green-500" />;
+        default:
+          return <Award size={16} className="text-gray-500" />;
+      }
+    } else if (type === 'certification') {
+      return <Award size={16} className="text-orange-500" />;
     }
+    return <Award size={16} className="text-gray-500" />;
   };
 
   const getStatusColor = (status: string) => {
@@ -84,16 +101,17 @@ export default function OutcomesPage() {
       outcome.student.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType = selectedType === 'all' || outcome.type === selectedType;
+    const matchesProgram = selectedProgram === 'all' || outcome.program === selectedProgram;
     const matchesStatus = selectedStatus === 'all' || outcome.status === selectedStatus;
 
-    return matchesSearch && matchesType && matchesStatus;
+    return matchesSearch && matchesType && matchesProgram && matchesStatus;
   });
 
   const stats = {
     total: outcomes.length,
     patents: outcomes.filter((o) => o.type === 'patent').length,
     papers: outcomes.filter((o) => o.type === 'paper').length,
-    projects: outcomes.filter((o) => o.type === 'project').length,
+    startups: outcomes.filter((o) => o.type === 'startup').length,
     certifications: outcomes.filter((o) => o.type === 'certification').length,
   };
 
@@ -109,7 +127,10 @@ export default function OutcomesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Outcomes</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Outcomes</h1>
+          <p className="text-sm text-gray-500 mt-1">Tracking G-GMP innovations and PCP certifications</p>
+        </div>
         <div className="flex space-x-3">
           <button className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
             <Download size={18} className="mr-2" />
@@ -119,6 +140,19 @@ export default function OutcomesPage() {
             <Award size={18} className="mr-2" />
             Add Outcome
           </button>
+        </div>
+      </div>
+
+      {/* Info Note */}
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <Brain size={20} className="text-purple-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-purple-700">
+              <strong>Note:</strong> Outcomes are only tracked for G-GMP (Patents, Papers, Startups) and PCP (Certifications). 
+              G-CMP and E-TIP are learning programs without outcome tracking.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -134,11 +168,11 @@ export default function OutcomesPage() {
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Papers</p>
-          <p className="text-2xl font-bold text-green-600">{stats.papers}</p>
+          <p className="text-2xl font-bold text-blue-600">{stats.papers}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <p className="text-sm text-gray-600 mb-1">Projects</p>
-          <p className="text-2xl font-bold text-primary-600">{stats.projects}</p>
+          <p className="text-sm text-gray-600 mb-1">Startups</p>
+          <p className="text-2xl font-bold text-green-600">{stats.startups}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Certifications</p>
@@ -185,10 +219,22 @@ export default function OutcomesPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="all">All Types</option>
-                <option value="patent">Patents</option>
-                <option value="paper">Papers</option>
-                <option value="project">Projects</option>
-                <option value="certification">Certifications</option>
+                <option value="patent">Patents (G-GMP)</option>
+                <option value="paper">Papers (G-GMP)</option>
+                <option value="startup">Startups (G-GMP)</option>
+                <option value="certification">Certifications (PCP)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Program</label>
+              <select
+                value={selectedProgram}
+                onChange={(e) => setSelectedProgram(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="all">All Programs</option>
+                <option value="G-GMP">G-GMP (Innovation)</option>
+                <option value="PCP">PCP (Certifications)</option>
               </select>
             </div>
             <div>
@@ -205,17 +251,6 @@ export default function OutcomesPage() {
                 <option value="granted">Granted</option>
                 <option value="completed">Completed</option>
               </select>
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  setSelectedType('all');
-                  setSelectedStatus('all');
-                }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-900"
-              >
-                Clear Filters
-              </button>
             </div>
           </div>
         )}
@@ -236,6 +271,9 @@ export default function OutcomesPage() {
                 Student
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Program
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -254,12 +292,21 @@ export default function OutcomesPage() {
               <tr key={outcome.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <div className="flex items-center">
-                    {getTypeIcon(outcome.type)}
-                    <span className="ml-2 text-sm capitalize">{outcome.type}</span>
+                    {getTypeIcon(outcome.type, outcome.program)}
+                    <span className="ml-2 text-sm capitalize">
+                      {outcome.type === 'startup' ? 'Startup Concept' : outcome.type}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">{outcome.title}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{outcome.student}</td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    outcome.program === 'G-GMP' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                  }`}>
+                    {outcome.program}
+                  </span>
+                </td>
                 <td className="px-6 py-4">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(outcome.status)}`}
@@ -288,7 +335,9 @@ export default function OutcomesPage() {
           <div className="text-center py-12">
             <Award size={48} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No outcomes found</h3>
-            <p className="text-gray-500">Get started by adding your first outcome.</p>
+            <p className="text-gray-500">
+              Outcomes are only tracked for G-GMP (patents, papers, startups) and PCP (certifications).
+            </p>
           </div>
         )}
       </div>

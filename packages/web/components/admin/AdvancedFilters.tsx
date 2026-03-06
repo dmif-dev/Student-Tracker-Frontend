@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Filter,
   X,
@@ -43,7 +43,13 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
 
   const configs = filterConfigs[context];
 
+  // Notify parent when filters change
+  useEffect(() => {
+    onFilterChange?.(filters);
+  }, [filters, onFilterChange]);
+
   const handleFilterChange = (key: string, value: any) => {
+    console.log('AdvancedFilters: handleFilterChange', key, value);
     updateFilter(key, value);
     onFilterChange?.({ ...filters, [key]: value });
   };

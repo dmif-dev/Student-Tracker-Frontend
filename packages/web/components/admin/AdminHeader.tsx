@@ -1,9 +1,11 @@
+// packages/web/components/admin/AdminHeader.tsx
+
 'use client';
 
 import { useState } from 'react';
-import { Menu, Bell, User, LogOut } from 'lucide-react';
-import Image from 'next/image';
+import { Menu, User, LogOut, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import NotificationBell from './NotificationBell';
 
 interface AdminHeaderProps {
   toggleSidebar: () => void;
@@ -11,7 +13,6 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const router = useRouter();
 
   const handleLogout = () => {
@@ -23,94 +24,101 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
   const user = {
     name: 'Admin User',
     email: 'admin@dmif.org',
-    avatar: '/avatars/admin.jpg',
+    role: 'Administrator',
   };
-
-  const notifications = [
-    { id: 1, title: 'New student registered', time: '5 min ago', read: false },
-    { id: 2, title: 'Weekly reports ready', time: '1 hour ago', read: false },
-    { id: 3, title: 'Mentor session completed', time: '2 hours ago', read: true },
-  ];
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
+          {/* Left section - Menu toggle and title */}
           <div className="flex items-center">
             <button
               onClick={toggleSidebar}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors mr-4"
+              aria-label="Toggle sidebar"
             >
               <Menu size={20} />
             </button>
             <h1 className="text-xl font-semibold text-gray-800">Admin Dashboard</h1>
           </div>
 
+          {/* Right section - Notifications and User menu */}
           <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
-              >
-                <Bell size={20} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
-                  <div className="px-4 py-2 border-b border-gray-200">
-                    <h3 className="font-semibold">Notifications</h3>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.map((notif) => (
-                      <div
-                        key={notif.id}
-                        className={`px-4 py-3 hover:bg-gray-50 cursor-pointer ${
-                          !notif.read ? 'bg-primary-50' : ''
-                        }`}
-                      >
-                        <p className="text-sm font-medium">{notif.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">{notif.time}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Notifications Bell - Now using context from layout */}
+            <NotificationBell />
 
             {/* User Menu */}
             <div className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="User menu"
+                aria-expanded={showUserMenu}
               >
-                <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
                   {user.name.charAt(0)}
                 </div>
                 <div className="text-left hidden md:block">
-                  <p className="text-sm font-medium">{user.name}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
+                  <p className="text-sm font-medium text-gray-700">{user.name}</p>
+                  <p className="text-xs text-gray-500">{user.role}</p>
                 </div>
               </button>
 
+              {/* User Dropdown Menu */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
-                  <button
-                    onClick={() => router.push('/admin/profile')}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
-                  >
-                    <User size={16} className="mr-2" />
-                    Profile
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center text-red-600"
-                  >
-                    <LogOut size={16} className="mr-2" />
-                    Logout
-                  </button>
-                </div>
+                <>
+                  {/* Backdrop for closing on click outside */}
+                  <div 
+                    className="fixed inset-0 z-30" 
+                    onClick={() => setShowUserMenu(false)}
+                  />
+                  
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
+                    {/* User info header */}
+                    <div className="px-4 py-3 border-b border-gray-200">
+                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                      <p className="text-xs text-gray-500 mt-1">{user.email}</p>
+                    </div>
+
+                    {/* Menu items */}
+                    <div className="py-2">
+                      <button
+                        onClick={() => {
+                          router.push('/admin/profile');
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center text-sm text-gray-700"
+                      >
+                        <User size={16} className="mr-3 text-gray-500" />
+                        Your Profile
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          router.push('/admin/settings');
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center text-sm text-gray-700"
+                      >
+                        <Settings size={16} className="mr-3 text-gray-500" />
+                        Settings
+                      </button>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-200 my-2"></div>
+
+                    {/* Logout */}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center text-sm text-red-600"
+                    >
+                      <LogOut size={16} className="mr-3" />
+                      Sign out
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>

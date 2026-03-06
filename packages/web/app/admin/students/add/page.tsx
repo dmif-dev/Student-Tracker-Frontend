@@ -1,3 +1,5 @@
+// packages/web/app/admin/students/add/page.tsx
+
 'use client';
 
 import { useState } from 'react';
@@ -16,29 +18,83 @@ const studentSchema = z.object({
   registrationNumber: z.string().min(5, 'Registration number must be at least 5 characters'),
   program: z.enum(['G-GMP', 'G-CMP', 'E-TIP', 'PCP']),
   track: z.string().min(1, 'Please select a track'),
-  mentor: z.string().min(1, 'Please select a mentor'),
-  status: z.enum(['active', 'inactive', 'pending']),
+  mentor: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'pending', 'completed']),
   joinDate: z.string(),
   phone: z.string().optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
+}).refine((data) => {
+  // Mentor is required only for non-PCP programs
+  if (data.program !== 'PCP' && !data.mentor) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Mentor is required for this program',
+  path: ['mentor'],
 });
 
 type StudentFormData = z.infer<typeof studentSchema>;
 
 // Mock data for dropdowns
 const programs = [
-  { id: 'G-GMP', name: 'G-GMP', tracks: ['Patent Track', 'Research Paper Track', 'Entrepreneurship Track', 'Inventor Foundation Track'] },
-  { id: 'G-CMP', name: 'G-CMP', tracks: ['AI Product Development', 'Full Stack Product Development', 'Cloud Development & Deployment', 'Agentic AI Product Development'] },
-  { id: 'E-TIP', name: 'E-TIP', tracks: ['AI Product Development', 'Full Stack', 'Cloud Development', 'Agentic AI', 'Custom Track'] },
-  { id: 'PCP', name: 'PCP', tracks: ['AI Product Development', 'Agentic AI Systems', 'AI for Finance', 'AI Security'] },
+  { 
+    id: 'G-GMP' as const, 
+    name: 'G-GMP', 
+    description: 'Global Guided Mentorship Program',
+    hasMentor: true,
+    tracks: [
+      'Patent Track',
+      'Research Paper Track',
+      'Entrepreneurship Track',
+      'Inventor Foundation Track'
+    ] 
+  },
+  { 
+    id: 'G-CMP' as const, 
+    name: 'G-CMP', 
+    description: 'Global Coding Mentorship Program',
+    hasMentor: true,
+    tracks: [
+      'AI Product Development',
+      'Full Stack Development',
+      'Cloud Development & Deployment',
+      'Agentic AI Development'
+    ] 
+  },
+  { 
+    id: 'E-TIP' as const, 
+    name: 'E-TIP', 
+    description: 'Executive Technology Immersion Program',
+    hasMentor: true,
+    tracks: [
+      'AI Product Development',
+      'Full Stack',
+      'Cloud Development',
+      'Agentic AI',
+      'Custom Track'
+    ] 
+  },
+  { 
+    id: 'PCP' as const, 
+    name: 'PCP', 
+    description: 'Professional Certification Program (Self-Paced, No Mentors)',
+    hasMentor: false,
+    tracks: [
+      'AI Product Development',
+      'Agentic AI Systems',
+      'AI for Finance',
+      'AI Security'
+    ] 
+  },
 ];
 
 const mentors = [
-  { id: '1', name: 'Dr. Smith' },
-  { id: '2', name: 'Prof. Johnson' },
-  { id: '3', name: 'Dr. Williams' },
-  { id: '4', name: 'Dr. Brown' },
+  { id: '1', name: 'Dr. Smith', programs: ['G-GMP', 'G-CMP'] },
+  { id: '2', name: 'Prof. Johnson', programs: ['G-CMP'] },
+  { id: '3', name: 'Dr. Williams', programs: ['E-TIP', 'G-GMP'] },
+  { id: '4', name: 'Dr. Brown', programs: ['E-TIP'] },
 ];
 
 export default function AddStudentPage() {
@@ -60,21 +116,33 @@ export default function AddStudentPage() {
     },
   });
 
-  const onSubmit = async (data: StudentFormData) => {
-  setIsSubmitting(true);
-  try {
-    await ApiService.createStudent(data);
-    alert('Student added successfully!');
-    router.push('/admin/students');
-  } catch (error) {
-    console.error('Error adding student:', error);
-    alert('Failed to add student. Please try again.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  // Watch program to update tracks dropdown and mentor requirements
+  const watchProgram = watch('program');
+  const selectedProgramData = programs.find(p => p.id === watchProgram);
 
-  const currentProgram = programs.find(p => p.id === selectedProgram);
+  // Filter mentors based on selected program
+  const availableMentors = mentors.filter(mentor => 
+    watchProgram && mentor.programs.includes(watchProgram)
+  );
+
+  const onSubmit = async (data: StudentFormData) => {
+    setIsSubmitting(true);
+    try {
+      // For PCP students, ensure mentor is undefined
+      if (data.program === 'PCP') {
+        data.mentor = undefined;
+      }
+      
+      await ApiService.createStudent(data);
+      alert('Student added successfully!');
+      router.push('/admin/students');
+    } catch (error) {
+      console.error('Error adding student:', error);
+      alert('Failed to add student. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -93,6 +161,7 @@ export default function AddStudentPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Personal Information */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4">Personal Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -167,8 +236,20 @@ export default function AddStudentPage() {
           </div>
         </div>
 
+        {/* Program Enrollment */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4">Program Enrollment</h2>
+          
+          {/* Program Info Alert for PCP */}
+          {watchProgram === 'PCP' && (
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Note:</strong> PCP is a self-paced certification program. Students in this program 
+                do not require mentor assignment and progress independently through the curriculum.
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -179,12 +260,15 @@ export default function AddStudentPage() {
                 onChange={(e) => {
                   setSelectedProgram(e.target.value);
                   setValue('track', '');
+                  setValue('mentor', '');
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">Select Program</option>
                 {programs.map(program => (
-                  <option key={program.id} value={program.id}>{program.name}</option>
+                  <option key={program.id} value={program.id}>
+                    {program.name} - {program.description}
+                  </option>
                 ))}
               </select>
               {errors.program && (
@@ -202,7 +286,7 @@ export default function AddStudentPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">Select Track</option>
-                {currentProgram?.tracks.map(track => (
+                {selectedProgramData?.tracks.map(track => (
                   <option key={track} value={track}>{track}</option>
                 ))}
               </select>
@@ -211,23 +295,48 @@ export default function AddStudentPage() {
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Assign Mentor *
-              </label>
-              <select
-                {...register('mentor')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">Select Mentor</option>
-                {mentors.map(mentor => (
-                  <option key={mentor.id} value={mentor.name}>{mentor.name}</option>
-                ))}
-              </select>
-              {errors.mentor && (
-                <p className="mt-1 text-sm text-red-600">{errors.mentor.message}</p>
-              )}
-            </div>
+            {/* Mentor Assignment - Conditional based on program */}
+            {watchProgram && (
+              <>
+                {watchProgram !== 'PCP' ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Assign Mentor *
+                    </label>
+                    <select
+                      {...register('mentor', { required: true })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="">Select Mentor</option>
+                      {availableMentors.map(mentor => (
+                        <option key={mentor.id} value={mentor.name}>{mentor.name}</option>
+                      ))}
+                    </select>
+                    {errors.mentor && (
+                      <p className="mt-1 text-sm text-red-600">{errors.mentor.message}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Select a mentor specializing in {watchProgram}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Mentor
+                    </label>
+                    <input
+                      type="text"
+                      value="No mentor required (Self-paced PCP)"
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      PCP is a self-paced certification program. No mentor assignment needed.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -240,6 +349,7 @@ export default function AddStudentPage() {
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
                 <option value="inactive">Inactive</option>
+                <option value="completed">Completed</option>
               </select>
             </div>
 
@@ -254,8 +364,42 @@ export default function AddStudentPage() {
               />
             </div>
           </div>
+
+          {/* Program-specific information */}
+          {watchProgram && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Program Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Program Type:</span>
+                  <span className="ml-2 font-medium">
+                    {selectedProgramData?.hasMentor ? 'Mentor-led' : 'Self-paced'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Mentor Required:</span>
+                  <span className="ml-2 font-medium">
+                    {selectedProgramData?.hasMentor ? 'Yes' : 'No'}
+                  </span>
+                </div>
+                {watchProgram === 'PCP' && (
+                  <>
+                    <div>
+                      <span className="text-gray-500">Certification Type:</span>
+                      <span className="ml-2 font-medium">Professional Certification</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Duration:</span>
+                      <span className="ml-2 font-medium">Self-paced (6-12 weeks)</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Additional Notes */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4">Additional Notes</h2>
           <div>

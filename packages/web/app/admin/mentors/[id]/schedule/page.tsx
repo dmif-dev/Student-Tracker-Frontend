@@ -1,3 +1,5 @@
+// packages/web/app/admin/mentors/[id]/schedule/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,13 +21,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-  GraduationCap
+  GraduationCap,
+  Info
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
 import { MentorSchedule, AssignedStudent } from '@/services/mockData';
 
-
-// Add this interface after imports
 interface SessionFormData {
   studentId: string;
   date: string;
@@ -54,10 +55,14 @@ export default function MentorSchedulePage() {
         const mentorData = await ApiService.getMentorById(params.id as string);
         if (mentorData) {
           setMentor(mentorData);
-          setStudents(mentorData.assignedStudents || []);
+          // Only include non-PCP students in assigned students
+          const nonPCPStudents = (mentorData.assignedStudents || []).filter(
+            (student: AssignedStudent) => student.program !== 'PCP'
+          );
+          setStudents(nonPCPStudents);
           
-          // Generate mock schedule data based on mentor's availability and students
-          const mockSchedules = generateMockSchedules(mentorData);
+          // Generate mock schedule data based on mentor's availability and non-PCP students
+          const mockSchedules = generateMockSchedules(mentorData, nonPCPStudents);
           setSchedules(mockSchedules);
         }
       } catch (error) {
@@ -72,14 +77,13 @@ export default function MentorSchedulePage() {
     }
   }, [params.id]);
 
-  const generateMockSchedules = (mentorData: any): MentorSchedule[] => {
+  const generateMockSchedules = (mentorData: any, assignedStudents: AssignedStudent[]): MentorSchedule[] => {
     const schedules: MentorSchedule[] = [];
     const now = new Date();
-    const students = mentorData.assignedStudents || [];
 
     // Generate schedules for next 4 weeks based on program requirements
-    students.forEach((student: AssignedStudent) => {
-      // Skip PCP students (they don't have weekly meetings)
+    assignedStudents.forEach((student: AssignedStudent) => {
+      // Skip PCP students (already filtered, but double-check)
       if (student.program === 'PCP') return;
 
       // Determine day of week based on program
@@ -224,10 +228,26 @@ export default function MentorSchedulePage() {
         </div>
       </div>
 
+      {/* PCP Note */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <Info size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-blue-700">
+              <strong>Note:</strong> PCP (Professional Certification Program) students are self-paced and 
+              do not require mentor sessions. They are not shown in the schedule.
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Currently managing {students.length} students across G-GMP, G-CMP, and E-TIP programs.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Program Legend */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <h3 className="text-sm font-medium text-gray-700 mb-3">Weekly Meeting Schedule by Program</h3>
-        <div className="flex space-x-6">
+        <div className="flex flex-wrap gap-4">
           <div className="flex items-center">
             <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
             <span className="text-sm">G-GMP: Mondays</span>
@@ -241,8 +261,8 @@ export default function MentorSchedulePage() {
             <span className="text-sm">E-TIP: Fridays</span>
           </div>
           <div className="flex items-center">
-            <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
-            <span className="text-sm">PCP: No weekly meetings</span>
+            <div className="w-3 h-3 bg-gray-300 rounded-full mr-2"></div>
+            <span className="text-sm text-gray-500">PCP: No weekly meetings (self-paced)</span>
           </div>
         </div>
       </div>
@@ -440,18 +460,21 @@ export default function MentorSchedulePage() {
           onClose={() => setShowAddModal(false)}
           onSchedule={(sessionData: SessionFormData) => {
             // Add new session
+            const selectedStudent = students.find(s => s.id === sessionData.studentId);
+            if (!selectedStudent) return;
+            
             const newSession: MentorSchedule = {
-                id: Date.now().toString(),
-                studentId: sessionData.studentId,
-                studentName: students.find(s => s.id === sessionData.studentId)?.name || '',
-                studentProgram: students.find(s => s.id === sessionData.studentId)?.program || 'G-GMP',
-                date: sessionData.date,
-                startTime: sessionData.startTime,
-                endTime: sessionData.endTime,
-                status: 'scheduled',
-                topic: sessionData.topic,
-                notes: sessionData.notes,
-                meetingLink: sessionData.meetingLink
+              id: Date.now().toString(),
+              studentId: sessionData.studentId,
+              studentName: selectedStudent.name,
+              studentProgram: selectedStudent.program,
+              date: sessionData.date,
+              startTime: sessionData.startTime,
+              endTime: sessionData.endTime,
+              status: 'scheduled',
+              topic: sessionData.topic,
+              notes: sessionData.notes,
+              meetingLink: sessionData.meetingLink
             };
             setSchedules([...schedules, newSession].sort((a, b) => a.date.localeCompare(b.date)));
             setShowAddModal(false);
@@ -483,9 +506,11 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
     if (program === 'G-GMP') return ' (Recommended: Monday)';
     if (program === 'G-CMP') return ' (Recommended: Wednesday)';
     if (program === 'E-TIP') return ' (Recommended: Friday)';
-    if (program === 'PCP') return ' (No weekly meetings required)';
+    if (program === 'PCP') return ' (No weekly meetings required - self-paced)';
     return '';
   };
+
+  const selectedStudent = students.find((s: any) => s.id === formData.studentId);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -510,6 +535,11 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
                 </option>
               ))}
             </select>
+            {selectedStudent?.program === 'PCP' && (
+              <p className="text-xs text-red-500 mt-1">
+                Warning: PCP students are self-paced and don't require mentor sessions
+              </p>
+            )}
           </div>
 
           <div>

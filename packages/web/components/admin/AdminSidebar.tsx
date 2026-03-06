@@ -13,7 +13,8 @@ import {
   FileText,
   Award,
   UserCog,
-  Tag 
+  Tag,
+  Bell
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -26,10 +27,12 @@ const navigation = [
   { name: 'Students', href: '/admin/students', icon: Users },
   { name: 'Programs', href: '/admin/programs', icon: GraduationCap },
   { name: 'Mentors', href: '/admin/mentors', icon: UserCog },
-  { name: 'Outcomes', href: '/admin/outcomes', icon: Award }, // Added
+  { name: 'Documents', href: '/admin/documents', icon: FileText },
+  // { name: 'Outcomes', href: '/admin/outcomes', icon: Award }, // Added
   { name: 'Reports', href: '/admin/reports', icon: FileText }, // Added
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { name: 'Tags', href: '/admin/tags', icon: Tag }, 
+  // { name: 'Tags', href: '/admin/tags', icon: Tag }, 
+  { name: 'Notifications', href: '/admin/notifications', icon: Bell },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

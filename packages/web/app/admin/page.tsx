@@ -1,3 +1,5 @@
+// packages/web/app/admin/page.tsx
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,8 +9,7 @@ import {
   Award, 
   TrendingUp,
   Clock,
-  CheckCircle,
-  AlertCircle
+  CheckCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { ApiService } from '@/services/api';
@@ -29,21 +30,23 @@ interface DashboardStats {
 
 interface ActivityItem {
   id: string;
-  type: 'student_registered' | 'progress_submitted' | 'report_generated' | 'outcome_achieved';
+  type: 'student_registered' | 'progress_submitted' | 'report_generated' | 'outcome_achieved' | 'certification_completed';
   title: string;
   time: string;
   user?: string;
+  program?: string;
 }
 
 // Map mock activity types to expected types
-const mapActivityType = (type: string): ActivityItem['type'] => {
+const mapActivityType = (type: string, program?: string): ActivityItem['type'] => {
+  if (type === 'outcome') {
+    return program === 'PCP' ? 'certification_completed' : 'outcome_achieved';
+  }
   switch (type) {
     case 'enrollment':
       return 'student_registered';
     case 'progress':
       return 'progress_submitted';
-    case 'outcome':
-      return 'outcome_achieved';
     case 'report_generated':
       return 'report_generated';
     default:
@@ -74,10 +77,11 @@ export default function AdminDashboard() {
         setStats(statsData);
         setRecentActivity(activities.map(a => ({
           id: a.id,
-          type: mapActivityType(a.type),
+          type: mapActivityType(a.type, a.program),
           title: a.title,
           time: a.time,
           user: a.user,
+          program: a.program,
         })));
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -260,6 +264,11 @@ export default function AdminDashboard() {
                       <Award size={16} className="text-purple-600" />
                     </div>
                   )}
+                  {activity.type === 'certification_completed' && (
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <GraduationCap size={16} className="text-orange-600" />
+                    </div>
+                  )}
                   {activity.type === 'report_generated' && (
                     <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
                       <CheckCircle size={16} className="text-yellow-600" />
@@ -272,6 +281,16 @@ export default function AdminDashboard() {
                     <p className="text-xs text-gray-500">by {activity.user}</p>
                   )}
                   <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
+                  {activity.program && (
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs ${
+                      activity.program === 'G-GMP' ? 'bg-purple-100 text-purple-700' :
+                      activity.program === 'G-CMP' ? 'bg-green-100 text-green-700' :
+                      activity.program === 'E-TIP' ? 'bg-blue-100 text-blue-700' :
+                      'bg-orange-100 text-orange-700'
+                    }`}>
+                      {activity.program}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -312,26 +331,6 @@ export default function AdminDashboard() {
             >
               Bulk Import Students
             </Link>
-          </div>
-
-          {/* Alerts */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-              <AlertCircle size={16} className="mr-2 text-orange-500" />
-              Alerts
-            </h4>
-            <div className="space-y-2">
-              <div className="p-3 bg-orange-50 rounded-lg">
-                <p className="text-xs text-orange-700">
-                  <span className="font-medium">5 students</span> haven't submitted progress in 7 days
-                </p>
-              </div>
-              <div className="p-3 bg-red-50 rounded-lg">
-                <p className="text-xs text-red-700">
-                  <span className="font-medium">3 mentor sessions</span> need rescheduling
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
