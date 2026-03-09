@@ -1,6 +1,7 @@
 {
     "typescript.tsdk": "node_modules/typescript/lib",
     "typescript.enableProjectDiagnostics": true,
+    "css.lint.unknownAtRules": "ignore",
     "search.exclude": {
         "**/node_modules": true,
         "**/.next": true,

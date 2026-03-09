@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import Link, { LinkProps } from "next/link";
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, LayoutDashboard, Users, FileText, Settings, LogOut, TrendingUp, Home, User, UserCircle, BookOpen } from "lucide-react";
+import { Menu, X, LayoutDashboard, Users, FileText, Settings, LogOut, TrendingUp, Home, User, UserCircle, BookOpen, GraduationCap, UserCog, BarChart3, Bell, Calendar } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 // --- Types & Context ---
@@ -184,44 +184,50 @@ export const SidebarLink = ({
 // --- Main Sidebar Component ---
 export function Sidebar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
-  const navItems: Links[] = [
-    {
-      label: "Dashboard",
-      href: "/Student/dashboard",
-      icon: <LayoutDashboard className="h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "My Courses",
-      href: "/Student/my-courses",
-      icon: <BookOpen className="h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "Progress",
-      href: "/Student/progress/new",
-      icon: <TrendingUp className="h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "My Stats",
-      href: "/Student/my-stats",
-      icon: <FileText className="h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "Mentor Details",
-      href: "/Student/mentor-details",
-      icon: <UserCircle className="h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "My Profile",
-      href: "/Student/my-profile",
-      icon: <User className="h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "Settings",
-      href: "/Student/settings",
-      icon: <Settings className="h-5 w-5 flex-shrink-0" />,
-    },
-  ];
+  let navItems: Links[] = [];
+  let roleTitle = "Student Tracker";
+  let letter = "S";
+
+  if (pathname.startsWith("/admin")) {
+    roleTitle = "DMIF Admin";
+    letter = "A";
+    navItems = [
+      { label: "Dashboard", href: "/admin", icon: <LayoutDashboard className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Students", href: "/admin/students", icon: <Users className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Programs", href: "/admin/programs", icon: <GraduationCap className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Mentors", href: "/admin/mentors", icon: <UserCog className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Documents", href: "/admin/documents", icon: <FileText className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Reports", href: "/admin/reports", icon: <FileText className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Analytics", href: "/admin/analytics", icon: <BarChart3 className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Notifications", href: "/admin/notifications", icon: <Bell className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Settings", href: "/admin/settings", icon: <Settings className="h-5 w-5 flex-shrink-0" /> },
+    ];
+  } else if (pathname.startsWith("/mentor")) {
+    roleTitle = "DMIF Mentor";
+    letter = "M";
+    navItems = [
+      { label: "Dashboard", href: "/mentor", icon: <LayoutDashboard className="h-5 w-5 flex-shrink-0" /> },
+      { label: "My Students", href: "/mentor/students", icon: <Users className="h-5 w-5 flex-shrink-0" /> },
+      { label: "My Documents", href: "/mentor/documents", icon: <FileText className="h-5 w-5 flex-shrink-0" /> },
+      { label: "My Schedule", href: "/mentor/schedule", icon: <Calendar className="h-5 w-5 flex-shrink-0" /> },
+      { label: "My Profile", href: "/mentor/profile", icon: <User className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Settings", href: "/mentor/settings", icon: <Settings className="h-5 w-5 flex-shrink-0" /> },
+    ];
+  } else {
+    roleTitle = "Student Tracker";
+    letter = "S";
+    navItems = [
+      { label: "Dashboard", href: "/Student/dashboard", icon: <LayoutDashboard className="h-5 w-5 flex-shrink-0" /> },
+      { label: "My Courses", href: "/Student/my-courses", icon: <BookOpen className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Progress", href: "/Student/progress/new", icon: <TrendingUp className="h-5 w-5 flex-shrink-0" /> },
+      { label: "My Stats", href: "/Student/my-stats", icon: <FileText className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Mentor Details", href: "/Student/mentor-details", icon: <UserCircle className="h-5 w-5 flex-shrink-0" /> },
+      { label: "My Profile", href: "/Student/my-profile", icon: <User className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Settings", href: "/Student/settings", icon: <Settings className="h-5 w-5 flex-shrink-0" /> },
+    ];
+  }
 
   return (
     <SidebarProvider open={open} setOpen={setOpen}>
@@ -230,14 +236,14 @@ export function Sidebar() {
           {/* Logo / Top Section */}
           <div className="flex items-center gap-2 px-2 py-4">
             <div className="h-6 w-6 bg-primary rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] text-primary-foreground font-bold">
-              S
+              {letter}
             </div>
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: open ? 1 : 0 }}
               className="font-bold text-neutral-800 dark:text-neutral-200 whitespace-nowrap font-montserrat"
             >
-              Student Tracker
+              {roleTitle}
             </motion.span>
           </div>
           <div className="mt-8 flex flex-col gap-2">
