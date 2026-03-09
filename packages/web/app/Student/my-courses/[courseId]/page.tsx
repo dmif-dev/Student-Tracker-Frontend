@@ -17,6 +17,10 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ProcessSection } from "@/components/display/ProcessSection";
+import { CourseTracks } from "@/components/display/CourseTracks";
+import { MentorshipModel } from "@/components/display/MentorshipModel";
+import { ExecutiveTracks } from "@/components/display/ExecutiveTracks";
 
 // --- Mock Data ---
 const COURSE_CONTENT = {
@@ -111,9 +115,17 @@ export default function CourseDetailPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/30 p-4 md:p-8 space-y-8">
+        <div className="min-h-screen bg-orange-50/20 p-4 md:p-8 space-y-8 relative overflow-hidden">
+            {/* Soft decorative background blurs */}
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-orange-200/20 rounded-full blur-[140px] -translate-y-1/2 translate-x-1/2 -z-10" />
+            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-amber-100/30 rounded-full blur-[140px] translate-y-1/2 -translate-x-1/2 -z-10" />
             {/* Top Navigation & Status */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+            >
                 <div className="flex items-center gap-6">
                     <button
                         onClick={() => router.back()}
@@ -148,71 +160,36 @@ export default function CourseDetailPage() {
                         <p className="text-sm font-bold text-gray-900">{course.completedModules} of {course.totalModules} modules finished</p>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
-            <div className="grid grid-cols-1 gap-8">
-                {/* Main Content: Module Details */}
-                <div className="space-y-8">
-                    {/* Module Info & Assignments */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <LiquidCard className="bg-white border-white/40 shadow-xl">
-                            <CardHeader className="pb-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Active Module</h3>
-                                    <Badge className="bg-orange-500 text-[10px] font-black">CONTINUE</Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <p className="text-gray-500 text-sm leading-relaxed">
-                                    In this module, you'll learn industry-standard frameworks for {activeModule?.title.toLowerCase()}. This includes strategic implementation and verification of performance metrics.
-                                </p>
-                                <div className="flex gap-4">
-                                    <Button variant="outline" className="flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest gap-2">
-                                        <Download className="w-4 h-4" /> Resources
-                                    </Button>
-                                    <Button variant="outline" className="flex-1 h-12 rounded-xl text-xs font-black uppercase tracking-widest gap-2">
-                                        <FileText className="w-4 h-4" /> Notes
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </LiquidCard>
+            {courseId === "G-CMP" && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        className="max-w-7xl mx-auto px-4 md:px-0 pt-4"
+                    >
+                        <ProcessSection />
+                    </motion.div>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        className="max-w-7xl mx-auto px-4 md:px-0"
+                    >
+                        <CourseTracks />
+                    </motion.div>
+                </>
+            )}
 
-                        <LiquidCard className="bg-white border-white/40 shadow-xl">
-                            <CardHeader className="pb-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Assignment Status</h3>
-                                    <Trophy className="w-5 h-5 text-amber-500" />
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {course.assignments.map((assignment) => (
-                                    <div key={assignment.id} className="p-3 rounded-xl border border-gray-50 bg-gray-50/50 flex items-center justify-between group hover:bg-white hover:shadow-md transition-all">
-                                        <div className="space-y-1">
-                                            <p className="text-xs font-black text-gray-900 truncate max-w-[120px]">{assignment.title}</p>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Due: {assignment.dueDate}</p>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            {assignment.score && (
-                                                <span className="text-xs font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-md">{assignment.score}%</span>
-                                            )}
-                                            <Badge variant="outline" className={cn(
-                                                "text-[9px] font-black uppercase border-none px-2",
-                                                assignment.status === "Graded" ? "bg-green-100 text-green-700" :
-                                                    assignment.status === "Submitted" ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"
-                                            )}>
-                                                {assignment.status}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                ))}
-                                <Button className="w-full h-12 bg-gray-900 hover:bg-orange-600 font-black uppercase tracking-widest text-[10px] rounded-xl mt-2">
-                                    Submit New Assignment <Send className="w-3 h-3 ml-2" />
-                                </Button>
-                            </CardContent>
-                        </LiquidCard>
-                    </div>
+            {courseId === "E-TIP" && (
+                <div className="max-w-7xl mx-auto px-4 md:px-0 space-y-12">
+                    <MentorshipModel />
+                    <ExecutiveTracks />
                 </div>
-            </div>
+            )}
+
         </div>
     );
 }
