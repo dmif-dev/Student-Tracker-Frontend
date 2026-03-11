@@ -74,7 +74,7 @@ export default function TagInput({
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap items-center gap-2 p-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent">
+      <div className="flex flex-wrap items-center gap-2 p-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-transparent">
         {selectedTags.map(tagId => {
           const tag = getTagDetails(tagId);
           if (!tag) return null;

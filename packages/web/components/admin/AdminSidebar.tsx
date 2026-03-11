@@ -69,7 +69,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                   href={item.href}
                   className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary-50 text-primary-600'
+                      ? 'bg-orange-50 text-orange-600'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >

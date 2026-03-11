@@ -611,7 +611,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -636,7 +636,7 @@ export default function AnalyticsPage() {
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
           >
             {exporting ? (
               <>
@@ -666,11 +666,11 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             <div className="flex items-start space-x-3">
-              <Activity size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
+              <Activity size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm text-blue-700">
+                <p className="text-sm text-orange-700">
                   <strong>G-CMP, E-TIP, PCP:</strong> Learning programs - focus on progress and completion
                 </p>
               </div>
@@ -686,7 +686,7 @@ export default function AnalyticsPage() {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               {dateRanges.map(range => (
                 <option key={range.value} value={range.value}>{range.label}</option>
@@ -701,7 +701,7 @@ export default function AnalyticsPage() {
                 setSelectedProgram(e.target.value);
                 setSelectedTrack('all');
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               {programs.map(program => (
                 <option key={program.value} value={program.value}>{program.label}</option>
@@ -714,7 +714,7 @@ export default function AnalyticsPage() {
               <select
                 value={selectedTrack}
                 onChange={(e) => setSelectedTrack(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="all">All Tracks</option>
                 {tracks.map(track => (
@@ -728,14 +728,14 @@ export default function AnalyticsPage() {
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
               showFilters || getActiveFilterCount() > 0
-                ? 'bg-primary-50 border-primary-300 text-primary-600'
+                ? 'bg-orange-50 border-orange-300 text-orange-600'
                 : 'border-gray-300 hover:bg-gray-50'
             }`}
           >
             <Filter size={18} className="mr-2" />
             Filters
             {getActiveFilterCount() > 0 && (
-              <span className="ml-2 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="ml-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {getActiveFilterCount()}
               </span>
             )}
@@ -761,7 +761,7 @@ export default function AnalyticsPage() {
                   type="checkbox"
                   checked={showPCPStats}
                   onChange={(e) => setShowPCPStats(e.target.checked)}
-                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                 />
                 <span className="text-sm text-gray-700">Show PCP self-paced statistics</span>
               </label>
@@ -772,7 +772,7 @@ export default function AnalyticsPage() {
                   type="checkbox"
                   checked={showOutcomeStats}
                   onChange={(e) => setShowOutcomeStats(e.target.checked)}
-                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                 />
                 <span className="text-sm text-gray-700">Show G-GMP outcome statistics</span>
               </label>
@@ -794,8 +794,8 @@ export default function AnalyticsPage() {
                 </p>
               )}
             </div>
-            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-              <Users size={24} className="text-primary-600" />
+            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+              <Users size={24} className="text-orange-600" />
             </div>
           </div>
         </div>
@@ -895,7 +895,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5">
                     <div 
-                      className={`rounded-full h-1.5 ${program.hasOutcomes ? 'bg-purple-500' : program.hasMentors ? 'bg-primary-600' : 'bg-orange-500'}`} 
+                      className={`rounded-full h-1.5 ${program.hasOutcomes ? 'bg-purple-500' : program.hasMentors ? 'bg-orange-600' : 'bg-orange-500'}`} 
                       style={{ width: `${program.stats.completionRate}%` }}
                     />
                   </div>
@@ -913,9 +913,9 @@ export default function AnalyticsPage() {
             Mentor Statistics {selectedProgram !== 'all' && `(${programs.find(p => p.value === selectedProgram)?.label})`}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-600 mb-1">Total Mentors</p>
-              <p className="text-2xl font-bold text-blue-700">{data.mentorStats.totalMentors}</p>
+            <div className="p-4 bg-orange-50 rounded-lg">
+              <p className="text-sm text-orange-600 mb-1">Total Mentors</p>
+              <p className="text-2xl font-bold text-orange-700">{data.mentorStats.totalMentors}</p>
             </div>
             <div className="p-4 bg-green-50 rounded-lg">
               <p className="text-sm text-green-600 mb-1">Active Mentors</p>
@@ -998,13 +998,13 @@ export default function AnalyticsPage() {
               <p className="text-2xl font-bold text-purple-700">{data.outcomeStats.totalPatents}</p>
               <p className="text-sm text-purple-600">Patents Filed</p>
             </div>
-            <div className="p-4 bg-blue-50 rounded-lg">
+            <div className="p-4 bg-orange-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <BookOpen size={20} className="text-blue-600" />
-                <span className="text-xs text-blue-600">Target: 25</span>
+                <BookOpen size={20} className="text-orange-600" />
+                <span className="text-xs text-orange-600">Target: 25</span>
               </div>
-              <p className="text-2xl font-bold text-blue-700">{data.outcomeStats.totalPapers}</p>
-              <p className="text-sm text-blue-600">Research Papers</p>
+              <p className="text-2xl font-bold text-orange-700">{data.outcomeStats.totalPapers}</p>
+              <p className="text-sm text-orange-600">Research Papers</p>
             </div>
             <div className="p-4 bg-green-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
@@ -1108,7 +1108,7 @@ export default function AnalyticsPage() {
                             <div 
                               className={`rounded-full h-2 ${
                                 track.program === 'G-GMP' ? 'bg-purple-500' :
-                                track.hasMentor ? 'bg-primary-600' : 'bg-orange-500'
+                                track.hasMentor ? 'bg-orange-600' : 'bg-orange-500'
                               }`} 
                               style={{ width: `${track.progress}%` }} 
                             />
@@ -1133,7 +1133,7 @@ export default function AnalyticsPage() {
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           track.program === 'G-GMP' ? 'bg-purple-100 text-purple-700' :
-                          track.hasMentor ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                          track.hasMentor ? 'bg-orange-100 text-orange-700' : 'bg-orange-100 text-orange-700'
                         }`}>
                           {track.program === 'G-GMP' ? 'Innovation' : track.hasMentor ? 'Mentor-led' : 'Self-paced'}
                         </span>
@@ -1165,7 +1165,7 @@ export default function AnalyticsPage() {
           <p className="text-gray-500">No programs match your current filter criteria.</p>
           <button
             onClick={clearFilters}
-            className="mt-4 px-4 py-2 text-primary-600 border border-primary-300 rounded-lg hover:bg-primary-50"
+            className="mt-4 px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
           >
             Clear filters
           </button>
@@ -1174,3 +1174,4 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+

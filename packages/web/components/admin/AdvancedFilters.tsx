@@ -71,12 +71,12 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
     }
 
     return (
-      <div className="inline-flex items-center bg-primary-50 text-primary-700 rounded-full px-3 py-1 text-sm">
+      <div className="inline-flex items-center bg-orange-50 text-orange-700 rounded-full px-3 py-1 text-sm">
         <span className="font-medium mr-1">{config.name}:</span>
         <span className="truncate max-w-[150px]">{displayValue}</span>
         <button
           onClick={() => removeFilter(filterKey)}
-          className="ml-2 text-primary-600 hover:text-primary-700"
+          className="ml-2 text-orange-600 hover:text-orange-700"
         >
           <X size={14} />
         </button>
@@ -109,7 +109,7 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
                 value={filters[config.id] || ''}
                 onChange={(e) => handleFilterChange(config.id, e.target.value)}
                 placeholder={config.placeholder}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             )}
 
@@ -117,7 +117,7 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
               <select
                 value={filters[config.id] || ''}
                 onChange={(e) => handleFilterChange(config.id, e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">All</option>
                 {config.options?.map((opt) => (
@@ -159,7 +159,7 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
                     ...filters[config.id],
                     start: e.target.value
                   })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Start"
                 />
                 <input
@@ -169,7 +169,7 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
                     ...filters[config.id],
                     end: e.target.value
                   })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="End"
                 />
               </div>
@@ -181,7 +181,7 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
                 value={filters[config.id] || ''}
                 onChange={(e) => handleFilterChange(config.id, e.target.value)}
                 placeholder={config.placeholder}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             )}
           </div>
@@ -197,7 +197,7 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
         </button>
         <button
           onClick={() => setShowSaveModal(true)}
-          className="flex items-center text-sm text-primary-600 hover:text-primary-700"
+          className="flex items-center text-sm text-orange-600 hover:text-orange-700"
         >
           <Save size={16} className="mr-1" />
           Save as preset
@@ -220,7 +220,7 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
               type="text"
               value={presetName}
               onChange={(e) => setPresetName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="e.g., Active Students"
             />
           </div>
@@ -251,7 +251,7 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
               setIsShared(false);
             }}
             disabled={!presetName}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
           >
             Save
           </button>
@@ -267,14 +267,14 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
           onClick={() => setShowFilterPanel(!showFilterPanel)}
           className={`flex items-center px-4 py-2 border rounded-lg transition-colors relative ${
             showFilterPanel || hasActiveFilters
-              ? 'bg-primary-50 border-primary-300 text-primary-600'
+              ? 'bg-orange-50 border-orange-300 text-orange-600'
               : 'border-gray-300 hover:bg-gray-50'
           }`}
         >
           <Filter size={18} className="mr-2" />
           Filters
           {hasActiveFilters && (
-            <span className="ml-2 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            <span className="ml-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
               {getActiveFilterCount()}
             </span>
           )}
@@ -324,7 +324,7 @@ export default function AdvancedFilters({ context, onFilterChange }: AdvancedFil
                 <div
                   key={preset.id}
                   className={`px-4 py-2 hover:bg-gray-50 cursor-pointer ${
-                    activePreset === preset.id ? 'bg-primary-50' : ''
+                    activePreset === preset.id ? 'bg-orange-50' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">

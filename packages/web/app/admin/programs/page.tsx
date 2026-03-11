@@ -171,7 +171,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
           programId === 'g-gmp' ? 'bg-purple-100 text-purple-700' :
           programId === 'pcp' ? 'bg-orange-100 text-orange-700' :
-          'bg-blue-100 text-blue-700'
+          'bg-orange-100 text-orange-700'
         }`}>
           {programId === 'g-gmp' ? 'Innovation' :
            programId === 'pcp' ? 'Certification' :
@@ -189,7 +189,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
             type="number"
             value={progress}
             onChange={handleProgressChange}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
             min="0"
             max="100"
           />
@@ -203,7 +203,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
               type="number"
               value={outcomes}
               onChange={handleOutcomesChange}
-              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
               min="0"
             />
           </div>
@@ -214,7 +214,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
       <div className="mb-3">
         <button
           onClick={() => setIsEditing(!isEditing)}
-          className="flex items-center text-xs text-primary-600 hover:text-primary-700"
+          className="flex items-center text-xs text-orange-600 hover:text-orange-700"
         >
           {isEditing ? (
             <>
@@ -240,7 +240,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
               value={editedTrack.description}
               onChange={(e) => setEditedTrack({ ...editedTrack, description: e.target.value })}
               rows={2}
-              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Enter track description..."
             />
           </div>
@@ -254,7 +254,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
                 type="number"
                 value={editedTrack.students}
                 onChange={(e) => setEditedTrack({ ...editedTrack, students: parseInt(e.target.value) || 0 })}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                 min="0"
               />
             </div>
@@ -267,7 +267,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
                 type="number"
                 value={editedTrack.mentors}
                 onChange={(e) => setEditedTrack({ ...editedTrack, mentors: parseInt(e.target.value) || 0 })}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                 min="0"
               />
             </div>
@@ -286,7 +286,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
 
             <button
               onClick={handleSaveDetails}
-              className="flex items-center px-3 py-1 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
+              className="flex items-center px-3 py-1 bg-orange-600 text-white text-xs rounded hover:bg-orange-700"
             >
               <Save size={12} className="mr-1" />
               Save Details
@@ -347,7 +347,7 @@ export default function ProgramsPage() {
     const classes = {
       purple: 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100',
       green: 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100',
-      blue: 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100',
+      blue: 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100',
       orange: 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100',
     };
     return classes[color as keyof typeof classes] || classes.blue;
@@ -635,7 +635,7 @@ export default function ProgramsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -652,7 +652,7 @@ export default function ProgramsPage() {
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="all">All Programs</option>
             <option value="innovation">Innovation Programs (G-GMP)</option>
@@ -670,7 +670,7 @@ export default function ProgramsPage() {
               <p className="text-sm text-gray-600">Total Programs</p>
               <p className="text-2xl font-bold text-gray-900">{programs.length}</p>
             </div>
-            <GraduationCap size={24} className="text-primary-500" />
+            <GraduationCap size={24} className="text-orange-500" />
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -692,7 +692,7 @@ export default function ProgramsPage() {
                 {programs.reduce((sum, p) => sum + p.activeStudents, 0)}
               </p>
             </div>
-            <TrendingUp size={24} className="text-blue-500" />
+            <TrendingUp size={24} className="text-orange-500" />
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -752,7 +752,7 @@ export default function ProgramsPage() {
                   </div>
                   <Link
                     href={`/admin/programs/${program.id}`}
-                    className="flex items-center px-4 py-2 bg-white text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors"
+                    className="flex items-center px-4 py-2 bg-white text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
                   >
                     View Details
                     <ArrowRight size={16} className="ml-2" />
@@ -778,7 +778,7 @@ export default function ProgramsPage() {
                         className={`rounded-full h-1.5 ${
                           program.id === 'g-gmp' ? 'bg-purple-500' :
                           program.id === 'pcp' ? 'bg-orange-500' :
-                          'bg-primary-500'
+                          'bg-orange-500'
                         }`}
                         style={{ width: `${program.completionRate}%` }}
                       />
@@ -794,7 +794,7 @@ export default function ProgramsPage() {
                          program.id === 'g-cmp' ? '19' : 
                          program.id === 'e-tip' ? '10' : '0'}
                       </p>
-                      <p className="text-xs text-blue-600 mt-1">Active mentors</p>
+                      <p className="text-xs text-orange-600 mt-1">Active mentors</p>
                     </div>
                   )}
 
@@ -812,7 +812,7 @@ export default function ProgramsPage() {
                         <div className="flex items-center space-x-2 mt-1 text-xs">
                           <span className="text-purple-600">12 patents</span>
                           <span className="text-gray-300">•</span>
-                          <span className="text-blue-600">15 papers</span>
+                          <span className="text-orange-600">15 papers</span>
                           <span className="text-gray-300">•</span>
                           <span className="text-green-600">8 startups</span>
                         </div>
@@ -919,7 +919,7 @@ export default function ProgramsPage() {
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                               program.id === 'g-gmp' ? 'bg-purple-100 text-purple-700' :
                               program.id === 'pcp' ? 'bg-orange-100 text-orange-700' :
-                              program.hasMentors ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                              program.hasMentors ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
                             }`}>
                               {program.id === 'g-gmp' ? 'Innovation Track' :
                                program.id === 'pcp' ? 'Certification Track' :
@@ -954,7 +954,7 @@ export default function ProgramsPage() {
                     {program.hasOutcomes && (
                       <Link
                         href={`/admin/outcomes?program=${program.id}`}
-                        className="text-sm text-primary-600 hover:text-primary-700"
+                        className="text-sm text-orange-600 hover:text-orange-700"
                       >
                         View all {program.id === 'g-gmp' ? 'outcomes' : 'certifications'} →
                       </Link>
@@ -970,7 +970,7 @@ export default function ProgramsPage() {
                     </button>
                     <button
                       onClick={() => handleManageTracks(program)}
-                      className="flex items-center px-3 py-1 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                      className="flex items-center px-3 py-1 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                     >
                       <Settings size={14} className="mr-1" />
                       Manage Tracks
@@ -1017,7 +1017,7 @@ export default function ProgramsPage() {
                 <select
                   value={reportFormat}
                   onChange={(e) => setReportFormat(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="pdf">PDF Document</option>
                   <option value="excel">Excel Spreadsheet</option>
@@ -1032,7 +1032,7 @@ export default function ProgramsPage() {
                 <select
                   value={reportDateRange}
                   onChange={(e) => setReportDateRange(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="7d">Last 7 days</option>
                   <option value="30d">Last 30 days</option>
@@ -1063,7 +1063,7 @@ export default function ProgramsPage() {
               <button
                 onClick={() => handleGenerateReport(showReportModal)}
                 disabled={generatingReport}
-                className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
               >
                 {generatingReport ? (
                   <>
@@ -1109,7 +1109,7 @@ export default function ProgramsPage() {
                   // Add new track functionality here
                   console.log('Add new track for program:', showTrackModal.id);
                 }}
-                className="w-full mt-4 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors"
+                className="w-full mt-4 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-600 transition-colors"
               >
                 + Add New Track
               </button>
@@ -1128,7 +1128,7 @@ export default function ProgramsPage() {
                   setShowTrackModal(null);
                   alert('Track changes saved successfully!');
                 }}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
               >
                 Save Changes
               </button>
@@ -1139,3 +1139,4 @@ export default function ProgramsPage() {
     </div>
   );
 }
+

@@ -124,7 +124,7 @@ export default function NotificationsPage() {
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      student: 'bg-blue-100 text-blue-700',
+      student: 'bg-orange-100 text-orange-700',
       mentor: 'bg-green-100 text-green-700',
       session: 'bg-purple-100 text-purple-700',
       report: 'bg-yellow-100 text-yellow-700',
@@ -143,7 +143,7 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="flex items-center px-4 py-2 text-primary-600 border border-primary-300 rounded-lg hover:bg-primary-50 transition-colors"
+            className="flex items-center px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors"
           >
             <Check size={18} className="mr-2" />
             Mark all as read
@@ -160,14 +160,14 @@ export default function NotificationsPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
                   showFilters || getActiveFilterCount() > 0
-                    ? 'bg-primary-50 border-primary-300 text-primary-600'
+                    ? 'bg-orange-50 border-orange-300 text-orange-600'
                     : 'border-gray-300 hover:bg-gray-50'
                 }`}
               >
                 <Filter size={18} className="mr-2" />
                 Filters
                 {getActiveFilterCount() > 0 && (
-                  <span className="ml-2 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="ml-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {getActiveFilterCount()}
                   </span>
                 )}
@@ -200,7 +200,7 @@ export default function NotificationsPage() {
                   <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value as FilterType)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="all">All Status</option>
                     <option value="unread">Unread ({unreadCount})</option>
@@ -216,7 +216,7 @@ export default function NotificationsPage() {
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value as CategoryFilterType)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="all">All Categories</option>
                     <option value="student">Students</option>
@@ -238,7 +238,7 @@ export default function NotificationsPage() {
                   <select
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value as DateFilterType)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="all">All Time</option>
                     <option value="today">Today</option>
@@ -277,7 +277,7 @@ export default function NotificationsPage() {
                 alert.type === 'error' ? 'bg-red-50 border-red-200' :
                 alert.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
                 alert.type === 'success' ? 'bg-green-50 border-green-200' :
-                'bg-blue-50 border-blue-200'
+                'bg-orange-50 border-orange-200'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -285,7 +285,7 @@ export default function NotificationsPage() {
                   {alert.type === 'error' && <AlertTriangle size={20} className="text-red-500" />}
                   {alert.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500" />}
                   {alert.type === 'success' && <CheckCircle size={20} className="text-green-500" />}
-                  {alert.type === 'info' && <Info size={20} className="text-blue-500" />}
+                  {alert.type === 'info' && <Info size={20} className="text-orange-500" />}
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
                       <h3 className="font-medium text-gray-900">{alert.title}</h3>
@@ -297,7 +297,7 @@ export default function NotificationsPage() {
                     {alert.action && (
                       <button
                         onClick={() => router.push(alert.action!.url)}
-                        className="mt-2 text-sm text-primary-600 hover:text-primary-700 flex items-center"
+                        className="mt-2 text-sm text-orange-600 hover:text-orange-700 flex items-center"
                       >
                         {alert.action.text}
                         <ExternalLink size={14} className="ml-1" />
@@ -331,7 +331,7 @@ export default function NotificationsPage() {
           {filteredNotifications.length > 0 && (
             <button
               onClick={markAllAsRead}
-              className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+              className="text-sm text-orange-600 hover:text-orange-700 flex items-center"
             >
               <Check size={16} className="mr-1" />
               Mark all as read
@@ -351,7 +351,7 @@ export default function NotificationsPage() {
             {getActiveFilterCount() > 0 && (
               <button
                 onClick={clearFilters}
-                className="mt-4 px-4 py-2 text-primary-600 border border-primary-300 rounded-lg hover:bg-primary-50"
+                className="mt-4 px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
               >
                 Clear all filters
               </button>
@@ -364,7 +364,7 @@ export default function NotificationsPage() {
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
                 className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                  !notification.isRead ? 'bg-primary-50/50' : ''
+                  !notification.isRead ? 'bg-orange-50/50' : ''
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -372,13 +372,13 @@ export default function NotificationsPage() {
                     {notification.type === 'success' && <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />}
                     {notification.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />}
                     {notification.type === 'error' && <AlertTriangle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />}
-                    {notification.type === 'info' && <Info size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />}
+                    {notification.type === 'info' && <Info size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />}
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2">
                         <h4 className="font-medium text-gray-900">{notification.title}</h4>
                         {!notification.isRead && (
-                          <span className="px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs">
+                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
                             New
                           </span>
                         )}
@@ -393,7 +393,7 @@ export default function NotificationsPage() {
                           {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                         </p>
                         {notification.actionUrl && (
-                          <span className="text-xs text-primary-600 hover:text-primary-700 flex items-center">
+                          <span className="text-xs text-orange-600 hover:text-orange-700 flex items-center">
                             Click to view
                             <ExternalLink size={12} className="ml-1" />
                           </span>
@@ -448,3 +448,4 @@ export default function NotificationsPage() {
     </div>
   );
 }
+

@@ -59,7 +59,7 @@ export default function UserSettingsPage() {
   const getRoleBadge = (role: string) => {
     const colors = {
       admin: 'bg-purple-100 text-purple-700',
-      mentor: 'bg-primary-100 text-primary-700',
+      mentor: 'bg-orange-100 text-orange-700',
       staff: 'bg-green-100 text-green-700'
     };
     return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-700';
@@ -69,7 +69,7 @@ export default function UserSettingsPage() {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">User Management</h2>
-        <button className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+        <button className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
           <Plus size={18} className="mr-2" />
           Add User
         </button>
@@ -84,7 +84,7 @@ export default function UserSettingsPage() {
             placeholder="Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
       </div>

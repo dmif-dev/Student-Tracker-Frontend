@@ -3,16 +3,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-  Users, 
-  GraduationCap, 
-  Award, 
+import {
+  Users,
+  GraduationCap,
+  Award,
   TrendingUp,
   Clock,
   CheckCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { ApiService } from '@/services/api';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
 
 interface DashboardStats {
   totalStudents: number;
@@ -73,7 +79,7 @@ export default function AdminDashboard() {
           ApiService.getDashboardStats(),
           ApiService.getRecentActivities(4)
         ]);
-        
+
         setStats(statsData);
         setRecentActivity(activities.map(a => ({
           id: a.id,
@@ -94,39 +100,55 @@ export default function AdminDashboard() {
   }, []);
 
   const StatCard = ({ title, value, icon: Icon, color, trend }: any) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+    <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm transition-all hover:translate-y-[-4px] hover:shadow-lg">
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div className={cn("p-3 rounded-2xl bg-orange-100 text-orange-600", color.replace('bg-', 'text-').replace('-500', '-600'))}>
+            <Icon size={24} />
+          </div>
           {trend && (
-            <p className="text-xs text-green-600 mt-2 flex items-center">
-              <TrendingUp size={12} className="mr-1" />
-              {trend} from last month
-            </p>
+            <div className="px-2 py-1 rounded-full bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest flex items-center">
+              <TrendingUp size={10} className="mr-1" />
+              {trend}
+            </div>
           )}
         </div>
-        <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center`}>
-          <Icon size={24} className="text-white" />
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground font-montserrat uppercase tracking-wider">{title}</p>
+          <p className="text-3xl font-extrabold tracking-tighter">{value}</p>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-6 pb-20 bg-gradient-to-br from-white via-orange-50/5 to-white min-h-screen">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-8 text-white">
-        <h2 className="text-2xl font-bold mb-2">Welcome back, Admin!</h2>
-        <p className="text-primary-100">Here's what's happening with your programs today.</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight font-montserrat text-gray-900">Welcome back, Admin!</h1>
+          <p className="text-muted-foreground mt-2 text-lg">Here's what's happening across your programs today.</p>
+        </div>
+        <div className="flex gap-3">
+          <Link href="/admin/analytics">
+            <Button variant="outline" className="font-montserrat font-bold border-orange-200 text-orange-600 hover:bg-orange-50">
+              <TrendingUp className="mr-2 h-4 w-4" /> Comprehensive Analytics
+            </Button>
+          </Link>
+          <Link href="/admin/students/add">
+            <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
+              <Users className="mr-2 h-4 w-4" /> Add New Student
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -135,205 +157,201 @@ export default function AdminDashboard() {
           title="Total Students"
           value={stats.totalStudents}
           icon={Users}
-          color="bg-primary-500"
+          color="bg-orange-500"
           trend="+12%"
         />
         <StatCard
           title="Active Students"
           value={stats.activeStudents}
           icon={GraduationCap}
-          color="bg-green-500"
+          color="bg-amber-500"
           trend="+8%"
         />
         <StatCard
           title="Active Mentors"
           value={stats.totalMentors}
           icon={Users}
-          color="bg-purple-500"
+          color="bg-orange-600"
         />
         <StatCard
           title="Active Programs"
           value={stats.programsCount}
           icon={Award}
-          color="bg-yellow-500"
+          color="bg-amber-600"
         />
         <StatCard
           title="Pending Reviews"
           value={stats.pendingReviews}
           icon={Clock}
-          color="bg-orange-500"
+          color="bg-orange-400"
         />
         <StatCard
           title="Outcomes This Month"
           value={stats.outcomesThisMonth}
           icon={CheckCircle}
-          color="bg-teal-500"
+          color="bg-amber-400"
           trend="+25%"
         />
       </div>
 
       {/* Weekly Schedule Overview */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold mb-4">This Week's Mentoring Sessions</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="bg-purple-50 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-purple-700">G-GMP</h4>
-              <span className="text-sm bg-purple-200 text-purple-700 px-2 py-1 rounded-full">Mondays</span>
-            </div>
-            <p className="text-2xl font-bold text-purple-700">12</p>
-            <p className="text-sm text-purple-600">sessions scheduled</p>
-          </div>
-          
-          <div className="bg-green-50 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-green-700">G-CMP</h4>
-              <span className="text-sm bg-green-200 text-green-700 px-2 py-1 rounded-full">Wednesdays</span>
-            </div>
-            <p className="text-2xl font-bold text-green-700">8</p>
-            <p className="text-sm text-green-600">sessions scheduled</p>
-          </div>
-          
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-blue-700">E-TIP</h4>
-              <span className="text-sm bg-blue-200 text-blue-700 px-2 py-1 rounded-full">Fridays</span>
-            </div>
-            <p className="text-2xl font-bold text-blue-700">5</p>
-            <p className="text-sm text-blue-600">sessions scheduled</p>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          <h4 className="font-medium text-gray-700">Today's Sessions</h4>
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div>
-                <p className="text-sm font-medium">John Doe with Dr. Smith</p>
-                <p className="text-xs text-gray-500">G-GMP • Patent Track</p>
+      <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-card/70 backdrop-blur-md">
+        <CardHeader className="p-8 pb-4">
+          <CardTitle className="text-2xl font-extrabold tracking-tight font-montserrat">This Week's Mentoring Sessions</CardTitle>
+          <CardDescription>Scheduled active sessions across all major programs.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-8 pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 group hover:bg-orange-100 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-black text-orange-700 tracking-wider">G-GMP</h4>
+                <span className="text-[10px] font-black bg-orange-200 text-orange-800 px-2 py-1 rounded-full uppercase">Mondays</span>
               </div>
+              <p className="text-3xl font-black text-orange-900 tracking-tighter">12</p>
+              <p className="text-sm font-bold text-orange-600/70">active sessions</p>
             </div>
-            <span className="text-sm text-gray-600">10:00 AM</span>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div>
-                <p className="text-sm font-medium">Jane Smith with Prof. Johnson</p>
-                <p className="text-xs text-gray-500">G-CMP • AI Product Development</p>
+
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 group hover:bg-amber-100 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-black text-amber-700 tracking-wider">G-CMP</h4>
+                <span className="text-[10px] font-black bg-amber-200 text-amber-800 px-2 py-1 rounded-full uppercase">Wednesdays</span>
               </div>
+              <p className="text-3xl font-black text-amber-900 tracking-tighter">8</p>
+              <p className="text-sm font-bold text-amber-600/70">active sessions</p>
             </div>
-            <span className="text-sm text-gray-600">2:00 PM</span>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div>
-                <p className="text-sm font-medium">Alex Chen with Dr. Smith</p>
-                <p className="text-xs text-gray-500">G-GMP • Research Paper Track</p>
+
+            <div className="bg-gray-100 border border-gray-200 rounded-2xl p-5 group hover:bg-gray-200 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-black text-gray-700 tracking-wider">E-TIP</h4>
+                <span className="text-[10px] font-black bg-gray-300 text-gray-800 px-2 py-1 rounded-full uppercase">Fridays</span>
               </div>
+              <p className="text-3xl font-black text-gray-900 tracking-tighter">5</p>
+              <p className="text-sm font-bold text-gray-600">active sessions</p>
             </div>
-            <span className="text-sm text-gray-600">3:30 PM</span>
           </div>
-        </div>
-      </div>
+
+          <div className="space-y-4">
+            <h4 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Today's Active Pipeline</h4>
+            <div className="grid gap-3">
+              {[
+                { name: "John Doe with Dr. Smith", prog: "G-GMP • Patent Track", time: "10:00 AM" },
+                { name: "Jane Smith with Prof. Johnson", prog: "G-CMP • AI Product", time: "02:00 PM" },
+                { name: "Alex Chen with Dr. Smith", prog: "G-GMP • Research Track", time: "03:30 PM" }
+              ].map((session, i) => (
+                <div key={i} className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl border border-transparent hover:border-orange-100 transition-all shadow-sm">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.5)]"></div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{session.name}</p>
+                      <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{session.prog}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">{session.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-          <div className="space-y-4">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  {activity.type === 'student_registered' && (
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <Users size={16} className="text-green-600" />
+        <div className="lg:col-span-2">
+          <Card className="rounded-2xl shadow-xl border-none bg-white p-8">
+            <h3 className="text-2xl font-black font-montserrat mb-6 tracking-tight">System Activity</h3>
+            <div className="space-y-6">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-4">
+                  <div className="flex-shrink-0">
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center",
+                      activity.type === 'student_registered' ? "bg-green-100 text-green-600" :
+                        activity.type === 'progress_submitted' ? "bg-orange-100 text-orange-600" :
+                          activity.type === 'outcome_achieved' ? "bg-purple-100 text-purple-600" :
+                            activity.type === 'certification_completed' ? "bg-amber-100 text-amber-600" :
+                              "bg-gray-100 text-gray-600"
+                    )}>
+                      {activity.type === 'student_registered' && <Users size={18} />}
+                      {activity.type === 'progress_submitted' && <TrendingUp size={18} />}
+                      {activity.type === 'outcome_achieved' && <Award size={18} />}
+                      {activity.type === 'certification_completed' && <GraduationCap size={18} />}
+                      {activity.type === 'report_generated' && <CheckCircle size={18} />}
                     </div>
-                  )}
-                  {activity.type === 'progress_submitted' && (
-                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                      <TrendingUp size={16} className="text-primary-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <p className="text-sm font-bold text-gray-900 group-hover:text-orange-600 transition-colors">{activity.title}</p>
+                      <span className="text-[10px] font-bold text-gray-400">{activity.time}</span>
                     </div>
-                  )}
-                  {activity.type === 'outcome_achieved' && (
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Award size={16} className="text-purple-600" />
-                    </div>
-                  )}
-                  {activity.type === 'certification_completed' && (
-                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                      <GraduationCap size={16} className="text-orange-600" />
-                    </div>
-                  )}
-                  {activity.type === 'report_generated' && (
-                    <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                      <CheckCircle size={16} className="text-yellow-600" />
-                    </div>
-                  )}
+                    {activity.user && (
+                      <p className="text-xs font-medium text-gray-500">by {activity.user}</p>
+                    )}
+                    {activity.program && (
+                      <span className={cn(
+                        "inline-block mt-2 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border",
+                        activity.program === 'G-GMP' ? "bg-orange-50 text-orange-700 border-orange-100" :
+                          activity.program === 'G-CMP' ? "bg-amber-50 text-amber-700 border-amber-100" :
+                            "bg-gray-50 text-gray-700 border-gray-200"
+                      )}>
+                        {activity.program}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{activity.title}</p>
-                  {activity.user && (
-                    <p className="text-xs text-gray-500">by {activity.user}</p>
-                  )}
-                  <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
-                  {activity.program && (
-                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs ${
-                      activity.program === 'G-GMP' ? 'bg-purple-100 text-purple-700' :
-                      activity.program === 'G-CMP' ? 'bg-green-100 text-green-700' :
-                      activity.program === 'E-TIP' ? 'bg-blue-100 text-blue-700' :
-                      'bg-orange-100 text-orange-700'
-                    }`}>
-                      {activity.program}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </Card>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <Link
-              href="/admin/students/add"
-              className="block w-full px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-center"
-            >
-              Add New Student
-            </Link>
-            <Link
-              href="/admin/mentors/add"
-              className="block w-full px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-center"
-            >
-              Add New Mentor
-            </Link>
-            <Link
-              href="/admin/mentors"
-              className="block w-full px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors text-center"
-            >
-              View Mentor Schedules
-            </Link>
-            <Link
-              href="/admin/analytics"
-              className="block w-full px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-center"
-            >
-              View Analytics
-            </Link>
-            <Link
-              href="/admin/students/import"
-              className="block w-full px-4 py-2 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 transition-colors text-center"
-            >
-              Bulk Import Students
-            </Link>
-          </div>
+        <div className="space-y-6">
+          <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-gray-900 text-white p-8">
+            <h3 className="text-xl font-black font-montserrat mb-6 uppercase tracking-wider flex items-center gap-2">
+              <TrendingUp className="text-orange-500 w-5 h-5" />
+              Administrative
+            </h3>
+            <div className="grid gap-3">
+              <Link
+                href="/admin/students/add"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+              >
+                <span className="font-bold text-sm tracking-wide">Add Student</span>
+                <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </Link>
+              <Link
+                href="/admin/mentors/add"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+              >
+                <span className="font-bold text-sm tracking-wide">Assign Mentor</span>
+                <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </Link>
+              <Link
+                href="/admin/analytics"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+              >
+                <span className="font-bold text-sm tracking-wide">View Analytics</span>
+                <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </Link>
+              <Link
+                href="/admin/students/import"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+              >
+                <span className="font-bold text-sm tracking-wide">Bulk Import</span>
+                <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </Link>
+            </div>
+          </Card>
+
+          <Card className="rounded-2xl shadow-lg border-none bg-orange-50 p-6 border-l-4 border-orange-500">
+            <h4 className="font-black text-orange-900 text-sm uppercase tracking-widest mb-2">Notice</h4>
+            <p className="text-xs font-medium text-orange-700 leading-relaxed">
+              Global programs (G-GMP/G-CMP) currently have 100% capacity. Please review waitlists before adding new students.
+            </p>
+          </Card>
         </div>
       </div>
     </div>
   );
 }
+

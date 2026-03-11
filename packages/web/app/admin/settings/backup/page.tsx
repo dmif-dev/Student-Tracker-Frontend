@@ -79,7 +79,7 @@ export default function BackupSettingsPage() {
                     onChange={(e) => setAutoBackupEnabled(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                 </label>
               </div>
 
@@ -91,7 +91,7 @@ export default function BackupSettingsPage() {
                   <select
                     value={backupFrequency}
                     onChange={(e) => setBackupFrequency(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="hourly">Hourly</option>
                     <option value="daily">Daily</option>
@@ -105,7 +105,7 @@ export default function BackupSettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Retention Period
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
                   <option value="7">7 days</option>
                   <option value="30">30 days</option>
                   <option value="90">90 days</option>
@@ -120,7 +120,7 @@ export default function BackupSettingsPage() {
             <button
               onClick={handleManualBackup}
               disabled={isBackingUp}
-              className="w-full flex items-center justify-center px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+              className="w-full flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
             >
               {isBackingUp ? (
                 <>
@@ -139,7 +139,7 @@ export default function BackupSettingsPage() {
           {/* Restore Options */}
           <div className="border-t border-gray-200 pt-6">
             <h3 className="font-medium mb-4">Restore</h3>
-            <button className="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors">
+            <button className="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors">
               <Upload size={18} className="mr-2" />
               Upload Backup File
             </button>
@@ -175,7 +175,7 @@ export default function BackupSettingsPage() {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-500">{backup.size}</span>
                   <span className={`px-2 py-1 rounded-full ${
-                    backup.type === 'auto' ? 'bg-primary-100 text-primary-700' : 'bg-green-100 text-green-700'
+                    backup.type === 'auto' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
                   }`}>
                     {backup.type}
                   </span>
@@ -185,7 +185,7 @@ export default function BackupSettingsPage() {
                   <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
                     Download
                   </button>
-                  <button className="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700">
+                  <button className="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700">
                     Restore
                   </button>
                 </div>

@@ -60,7 +60,7 @@ export default function EmailSettingsPage() {
                 onClick={() => setSelectedTemplate(template.id)}
                 className={`w-full text-left p-3 rounded-lg transition-colors ${
                   selectedTemplate === template.id
-                    ? 'bg-primary-50 border border-primary-200'
+                    ? 'bg-orange-50 border border-orange-200'
                     : 'hover:bg-gray-50 border border-transparent'
                 }`}
               >
@@ -85,7 +85,7 @@ export default function EmailSettingsPage() {
                     {previewMode ? <Edit size={16} className="mr-1" /> : <Eye size={16} className="mr-1" />}
                     {previewMode ? 'Edit' : 'Preview'}
                   </button>
-                  <button className="flex items-center px-3 py-1 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                  <button className="flex items-center px-3 py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
                     <Copy size={16} className="mr-1" />
                     Duplicate
                   </button>
@@ -121,7 +121,7 @@ export default function EmailSettingsPage() {
                     <input
                       type="text"
                       value="Welcome Email"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                   <div>
@@ -131,7 +131,7 @@ export default function EmailSettingsPage() {
                     <input
                       type="text"
                       value="Welcome to DMIF Student Tracker"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                   <div>
@@ -141,7 +141,7 @@ export default function EmailSettingsPage() {
                     <textarea
                       rows={10}
                       value="Dear [Student Name],\n\nWelcome to DMIF Student Tracker! We're excited to have you on board.\n\nYour journey with us starts now. Here's what you can do:\n- Track your daily progress\n- View weekly reports\n- Connect with your mentor\n\nBest regards,\nDMIF Team"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono text-sm"
                     />
                   </div>
                   <div>
@@ -161,7 +161,7 @@ export default function EmailSettingsPage() {
                 <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
                   Cancel
                 </button>
-                <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
                   Save Changes
                 </button>
               </div>

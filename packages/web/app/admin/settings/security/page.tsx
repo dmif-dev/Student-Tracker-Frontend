@@ -35,7 +35,7 @@ export default function SecuritySettingsPage() {
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
                 <button
                   onClick={() => setShowPassword(!showPassword)}
@@ -51,7 +51,7 @@ export default function SecuritySettingsPage() {
               </label>
               <input
                 type="password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -60,10 +60,10 @@ export default function SecuritySettingsPage() {
               </label>
               <input
                 type="password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
-            <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+            <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
               Update Password
             </button>
           </div>
@@ -91,12 +91,12 @@ export default function SecuritySettingsPage() {
                 onChange={(e) => setTwoFactorEnabled(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
             </label>
           </div>
           {twoFactorEnabled && (
-            <div className="mt-4 p-4 bg-primary-50 rounded-lg max-w-md">
-              <p className="text-sm text-primary-700">
+            <div className="mt-4 p-4 bg-orange-50 rounded-lg max-w-md">
+              <p className="text-sm text-orange-700">
                 Scan this QR code with your authenticator app
               </p>
               <div className="mt-3 p-3 bg-white rounded-lg text-center">
@@ -123,7 +123,7 @@ export default function SecuritySettingsPage() {
               type="number"
               value={sessionTimeout}
               onChange={(e) => setSessionTimeout(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               min="5"
               max="480"
             />
@@ -206,7 +206,7 @@ export default function SecuritySettingsPage() {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <button className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+          <button className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
             <Save size={18} className="mr-2" />
             Save Security Settings
           </button>

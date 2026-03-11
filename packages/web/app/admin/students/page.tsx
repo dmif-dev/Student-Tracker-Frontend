@@ -8,6 +8,7 @@ import { useAdvancedFilters } from '@/hooks/useAdvancedFilters';
 import Link from 'next/link';
 import { Search, Plus, Filter, Download, Upload } from 'lucide-react';
 import StudentTable from '@/components/admin/StudentTable';
+import { motion } from 'framer-motion';
 
 interface Student {
   id: string;
@@ -16,8 +17,8 @@ interface Student {
   registrationNumber: string;
   program: 'G-GMP' | 'G-CMP' | 'E-TIP' | 'PCP';
   track: string;
-  mentor: string;
-  status: 'active' | 'inactive' | 'pending';
+  mentor?: string;
+  status: 'active' | 'inactive' | 'pending' | 'completed';
   joinDate: string;
   lastActive: string;
   progress: number;
@@ -33,7 +34,7 @@ export default function StudentsPage() {
   const [filtersLoaded, setFiltersLoaded] = useState(false);
 
   // Get filters from AdvancedFilters with the correct storage key
-  const { filters, isInitialized } = useAdvancedFilters({ 
+  const { filters, isInitialized } = useAdvancedFilters({
     storageKey: 'studentsFilters' // Make sure this matches your localStorage key
   });
 
@@ -96,7 +97,7 @@ export default function StudentsPage() {
   if (loading || !isInitialized) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -134,43 +135,32 @@ export default function StudentsPage() {
     a.click();
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Debug info - remove after fixing
-      <div className="bg-gray-100 p-4 rounded-lg text-xs">
-        <p>Filters loaded: {JSON.stringify(filters)}</p>
-        <p>Filtered count: {filteredStudents.length}</p>
-        <p>Total students: {students.length}</p>
-      </div> */}
+    <div className="space-y-8 p-6 pb-20 bg-gradient-to-br from-white via-orange-50/5 to-white min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Students</h1>
-        <div className="flex space-x-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight font-montserrat text-gray-900">Students</h1>
+          <p className="text-muted-foreground mt-1">Manage and track your student directory across all programs.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={handleExport}
-            className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex items-center px-4 py-2 border border-orange-200 text-orange-600 rounded-xl hover:bg-orange-50 transition-all font-bold text-sm"
           >
             <Download size={18} className="mr-2" />
-            Export
+            Export CSV
           </button>
           <Link
             href="/admin/students/import"
-            className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex items-center px-4 py-2 border border-orange-200 text-orange-600 rounded-xl hover:bg-orange-50 transition-all font-bold text-sm"
           >
             <Upload size={18} className="mr-2" />
-            Import
+            Bulk Import
           </Link>
           <Link
             href="/admin/students/add"
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all font-bold text-sm"
           >
             <Plus size={18} className="mr-2" />
             Add Student
@@ -179,28 +169,27 @@ export default function StudentsPage() {
       </div>
 
       {/* Search and Basic Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 relative">
+      <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-xl border border-white p-6">
+        <div className="flex flex-col md:flex-row items-center gap-4">
+          <div className="flex-1 w-full relative group">
             <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors"
               size={20}
             />
             <input
               type="text"
-              placeholder="Search students by name, email, or registration number..."
+              placeholder="Search by name, email, or registration number..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg placeholder:text-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl placeholder:text-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 focus:bg-white transition-all shadow-inner"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
-              showFilters
-                ? 'bg-primary-50 border-primary-300 text-primary-600'
-                : 'border-gray-300 hover:bg-gray-50'
-            }`}
+            className={`flex items-center px-6 py-3 border rounded-2xl transition-all font-bold shadow-sm ${showFilters
+              ? 'bg-orange-500 border-orange-500 text-white shadow-orange-500/20'
+              : 'bg-white border-gray-200 text-gray-600 hover:border-orange-200 hover:text-orange-600'
+              }`}
           >
             <Filter size={18} className="mr-2" />
             Basic Filters
@@ -208,13 +197,17 @@ export default function StudentsPage() {
         </div>
 
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Program</label>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Program</label>
               <select
                 value={selectedProgram}
                 onChange={(e) => setSelectedProgram(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
               >
                 <option value="all">All Programs</option>
                 <option value="G-GMP">G-GMP</option>
@@ -223,12 +216,12 @@ export default function StudentsPage() {
                 <option value="PCP">PCP</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Status</label>
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -242,20 +235,24 @@ export default function StudentsPage() {
                   setSelectedProgram('all');
                   setSelectedStatus('all');
                 }}
-                className="px-4 py-2 text-gray-700 font-medium hover:text-gray-900"
+                className="px-6 py-2 text-sm font-bold text-gray-400 hover:text-orange-500 transition-colors"
               >
-                Clear Basic Filters
+                Clear All Filter Options
               </button>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
 
       {/* Advanced Filters */}
-      <AdvancedFilters context="students" />
+      <div className="mt-4">
+        <AdvancedFilters context="students" />
+      </div>
 
       {/* Students Table */}
-      <StudentTable students={filteredStudents} />
+      <div className="mt-8 rounded-2xl shadow-xl border-none overflow-hidden bg-white/70 backdrop-blur-md">
+        <StudentTable students={filteredStudents} />
+      </div>
     </div>
   );
 }

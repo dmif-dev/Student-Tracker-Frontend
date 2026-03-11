@@ -35,12 +35,12 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
           <div className="flex items-center">
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors mr-4"
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors mr-4 text-gray-900"
               aria-label="Toggle sidebar"
             >
               <Menu size={20} />
             </button>
-            <h1 className="text-xl font-semibold text-gray-800">Admin Dashboard</h1>
+            <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
           </div>
 
           {/* Right section - Notifications and User menu */}
@@ -56,7 +56,7 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
                 aria-label="User menu"
                 aria-expanded={showUserMenu}
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
                   {user.name.charAt(0)}
                 </div>
                 <div className="text-left hidden md:block">
@@ -69,11 +69,11 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
               {showUserMenu && (
                 <>
                   {/* Backdrop for closing on click outside */}
-                  <div 
-                    className="fixed inset-0 z-30" 
+                  <div
+                    className="fixed inset-0 z-30"
                     onClick={() => setShowUserMenu(false)}
                   />
-                  
+
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
                     {/* User info header */}
                     <div className="px-4 py-3 border-b border-gray-200">
@@ -93,7 +93,7 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
                         <User size={16} className="mr-3 text-gray-500" />
                         Your Profile
                       </button>
-                      
+
                       <button
                         onClick={() => {
                           router.push('/admin/settings');

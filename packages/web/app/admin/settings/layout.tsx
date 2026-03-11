@@ -50,7 +50,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                     href={section.href}
                     className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-primary-50 text-primary-600'
+                        ? 'bg-orange-50 text-orange-600'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >

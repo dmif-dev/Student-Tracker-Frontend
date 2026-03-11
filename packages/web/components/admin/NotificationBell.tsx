@@ -54,7 +54,7 @@ export default function NotificationBell() {
       case 'error':
         return <AlertTriangle size={18} className="text-red-500" />;
       default:
-        return <Info size={18} className="text-blue-500" />;
+        return <Info size={18} className="text-orange-500" />;
     }
   };
 
@@ -65,7 +65,7 @@ export default function NotificationBell() {
       case 'warning':
         return <AlertTriangle size={18} className="text-yellow-500" />;
       default:
-        return <Info size={18} className="text-blue-500" />;
+        return <Info size={18} className="text-orange-500" />;
     }
   };
 
@@ -100,7 +100,7 @@ export default function NotificationBell() {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="text-xs text-primary-600 hover:text-primary-700 flex items-center"
+                    className="text-xs text-orange-600 hover:text-orange-700 flex items-center"
                   >
                     <Check size={14} className="mr-1" />
                     Mark all as read
@@ -114,13 +114,13 @@ export default function NotificationBell() {
                   onClick={() => setActiveTab('notifications')}
                   className={`text-sm pb-2 px-1 border-b-2 transition-colors ${
                     activeTab === 'notifications'
-                      ? 'border-primary-600 text-primary-600'
+                      ? 'border-orange-600 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Notifications
                   {unreadCount > 0 && (
-                    <span className="ml-2 bg-primary-600 text-white text-xs rounded-full px-2 py-0.5">
+                    <span className="ml-2 bg-orange-600 text-white text-xs rounded-full px-2 py-0.5">
                       {unreadCount}
                     </span>
                   )}
@@ -129,7 +129,7 @@ export default function NotificationBell() {
                   onClick={() => setActiveTab('alerts')}
                   className={`text-sm pb-2 px-1 border-b-2 transition-colors ${
                     activeTab === 'alerts'
-                      ? 'border-primary-600 text-primary-600'
+                      ? 'border-orange-600 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -161,7 +161,7 @@ export default function NotificationBell() {
                           setIsOpen(false);
                         }}
                         className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0 ${
-                          !notification.isRead ? 'bg-primary-50/50' : ''
+                          !notification.isRead ? 'bg-orange-50/50' : ''
                         }`}
                       >
                         <div className="flex items-start space-x-3">
@@ -191,7 +191,7 @@ export default function NotificationBell() {
                                 {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                               </span>
                               {notification.actionUrl && (
-                                <span className="text-xs text-primary-600 hover:text-primary-700 flex items-center">
+                                <span className="text-xs text-orange-600 hover:text-orange-700 flex items-center">
                                   View
                                   <ExternalLink size={12} className="ml-1" />
                                 </span>
@@ -219,7 +219,7 @@ export default function NotificationBell() {
                         className={`px-4 py-3 border-b border-gray-100 last:border-0 ${
                           alert.type === 'error' ? 'bg-red-50' :
                           alert.type === 'warning' ? 'bg-yellow-50' :
-                          'bg-blue-50'
+                          'bg-orange-50'
                         }`}
                       >
                         <div className="flex items-start space-x-3">
@@ -247,7 +247,7 @@ export default function NotificationBell() {
                                   router.push(alert.action!.url);
                                   setIsOpen(false);
                                 }}
-                                className="mt-2 text-xs text-primary-600 hover:text-primary-700 flex items-center"
+                                className="mt-2 text-xs text-orange-600 hover:text-orange-700 flex items-center"
                               >
                                 {alert.action.text}
                                 <ExternalLink size={12} className="ml-1" />
@@ -280,3 +280,4 @@ export default function NotificationBell() {
     </div>
   );
 }
+

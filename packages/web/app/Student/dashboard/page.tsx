@@ -35,7 +35,7 @@ import {
 import { motion } from "framer-motion";
 import { format, subDays, startOfToday, isWithinInterval, parse, startOfWeek, getDay } from "date-fns";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
-import enUS from "date-fns/locale/en-US";
+import { enUS } from "date-fns/locale/en-US";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -381,15 +381,15 @@ export default function DashboardPage() {
 
                 <TabsContent value="calendar" className="m-0">
                     <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-card/70 backdrop-blur-md">
-                        <CardHeader className="bg-primary text-primary-foreground p-8">
+                        <CardHeader className="p-8 pb-0">
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <CardTitle className="text-3xl font-extrabold font-montserrat">Schedule & Events</CardTitle>
-                                    <CardDescription className="text-primary-foreground/80 font-medium text-lg mt-1">Track student exams, meetings, and project deadlines.</CardDescription>
+                                    <CardTitle className="text-4xl font-extrabold tracking-tight font-montserrat text-gray-900">Schedule & Events</CardTitle>
+                                    <CardDescription className="text-muted-foreground mt-2 text-lg">Track student exams, meetings, and project deadlines.</CardDescription>
                                 </div>
                                 <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
                                     <DialogTrigger asChild>
-                                        <Button variant="secondary" className="font-bold">Add Event</Button>
+                                        <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">Add Event</Button>
                                     </DialogTrigger>
                                     <DialogContent className="sm:max-w-[425px] rounded-[32px]">
                                         <DialogHeader>

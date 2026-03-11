@@ -123,7 +123,7 @@ export default function TagsPage() {
 
   const getCategoryColor = (category: TagCategory) => {
     const colors = {
-      skill: 'bg-primary-100 text-primary-700',
+      skill: 'bg-orange-100 text-orange-700',
       interest: 'bg-green-100 text-green-700',
       project: 'bg-purple-100 text-purple-700',
       achievement: 'bg-yellow-100 text-yellow-700',
@@ -134,7 +134,7 @@ export default function TagsPage() {
 
   const getTagColor = (color: string) => {
     const colors = {
-      blue: 'bg-primary-100 text-primary-700',
+      blue: 'bg-orange-100 text-orange-700',
       green: 'bg-green-100 text-green-700',
       purple: 'bg-purple-100 text-purple-700',
       orange: 'bg-orange-100 text-orange-700',
@@ -166,7 +166,7 @@ export default function TagsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -178,7 +178,7 @@ export default function TagsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Tag Management</h1>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
         >
           <Plus size={18} className="mr-2" />
           Create Tag
@@ -193,16 +193,16 @@ export default function TagsPage() {
               <p className="text-sm text-gray-600 mb-1">Total Tags</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <Tag size={20} className="text-primary-500" />
+            <Tag size={20} className="text-orange-500" />
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Skills</p>
-              <p className="text-2xl font-bold text-primary-600">{stats.skill}</p>
+              <p className="text-2xl font-bold text-orange-600">{stats.skill}</p>
             </div>
-            <Hash size={20} className="text-primary-500" />
+            <Hash size={20} className="text-orange-500" />
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -247,13 +247,13 @@ export default function TagsPage() {
               placeholder="Search tags by name or description..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg placeholder:text-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg placeholder:text-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="all">All Categories</option>
             <option value="skill">Skills</option>
@@ -357,7 +357,7 @@ function TagModal({ tag, onClose, onSave }: TagModalProps) {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
@@ -367,7 +367,7 @@ function TagModal({ tag, onClose, onSave }: TagModalProps) {
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -386,7 +386,7 @@ function TagModal({ tag, onClose, onSave }: TagModalProps) {
                   type="button"
                   onClick={() => setFormData({ ...formData, color })}
                   className={`w-8 h-8 rounded-full bg-${color}-500 ${
-                    formData.color === color ? 'ring-2 ring-offset-2 ring-primary-500' : ''
+                    formData.color === color ? 'ring-2 ring-offset-2 ring-orange-500' : ''
                   }`}
                 />
               ))}
@@ -399,7 +399,7 @@ function TagModal({ tag, onClose, onSave }: TagModalProps) {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
@@ -413,7 +413,7 @@ function TagModal({ tag, onClose, onSave }: TagModalProps) {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               {tag ? 'Update' : 'Create'}
             </button>
@@ -423,3 +423,4 @@ function TagModal({ tag, onClose, onSave }: TagModalProps) {
     </div>
   );
 }
+

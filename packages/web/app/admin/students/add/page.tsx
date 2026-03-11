@@ -172,7 +172,7 @@ export default function AddStudentPage() {
               <input
                 type="text"
                 {...register('name')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Enter full name"
               />
               {errors.name && (
@@ -187,7 +187,7 @@ export default function AddStudentPage() {
               <input
                 type="email"
                 {...register('email')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Enter email address"
               />
               {errors.email && (
@@ -202,7 +202,7 @@ export default function AddStudentPage() {
               <input
                 type="text"
                 {...register('registrationNumber')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="e.g., DMIF2024001"
               />
               {errors.registrationNumber && (
@@ -217,7 +217,7 @@ export default function AddStudentPage() {
               <input
                 type="tel"
                 {...register('phone')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Enter phone number"
               />
             </div>
@@ -229,7 +229,7 @@ export default function AddStudentPage() {
               <textarea
                 {...register('address')}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Enter full address"
               />
             </div>
@@ -242,8 +242,8 @@ export default function AddStudentPage() {
           
           {/* Program Info Alert for PCP */}
           {watchProgram === 'PCP' && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700">
+            <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-sm text-orange-700">
                 <strong>Note:</strong> PCP is a self-paced certification program. Students in this program 
                 do not require mentor assignment and progress independently through the curriculum.
               </p>
@@ -262,7 +262,7 @@ export default function AddStudentPage() {
                   setValue('track', '');
                   setValue('mentor', '');
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">Select Program</option>
                 {programs.map(program => (
@@ -283,7 +283,7 @@ export default function AddStudentPage() {
               <select
                 {...register('track')}
                 disabled={!selectedProgram}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">Select Track</option>
                 {selectedProgramData?.tracks.map(track => (
@@ -305,7 +305,7 @@ export default function AddStudentPage() {
                     </label>
                     <select
                       {...register('mentor', { required: true })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="">Select Mentor</option>
                       {availableMentors.map(mentor => (
@@ -344,7 +344,7 @@ export default function AddStudentPage() {
               </label>
               <select
                 {...register('status')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
@@ -360,7 +360,7 @@ export default function AddStudentPage() {
               <input
                 type="date"
                 {...register('joinDate')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -406,7 +406,7 @@ export default function AddStudentPage() {
             <textarea
               {...register('notes')}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Enter any additional notes or comments..."
             />
           </div>
@@ -423,7 +423,7 @@ export default function AddStudentPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>
@@ -442,3 +442,4 @@ export default function AddStudentPage() {
     </div>
   );
 }
+

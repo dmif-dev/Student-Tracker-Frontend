@@ -42,20 +42,20 @@ export default function StudentTable({ students }: StudentTableProps) {
 
   const getProgramColor = (program: string) => {
     const colors = {
-      'G-GMP': 'bg-purple-100 text-purple-700',
-      'G-CMP': 'bg-green-100 text-green-700',
-      'E-TIP': 'bg-blue-100 text-blue-700',
-      'PCP': 'bg-orange-100 text-orange-700',
+      'G-GMP': 'bg-orange-100 text-orange-700',
+      'G-CMP': 'bg-amber-100 text-amber-700',
+      'E-TIP': 'bg-orange-100 text-orange-700',
+      'PCP': 'bg-orange-50 text-orange-600',
     };
     return colors[program as keyof typeof colors] || 'bg-gray-100 text-gray-700';
   };
 
   const getStatusColor = (status: string) => {
     const colors = {
-      active: 'bg-green-100 text-green-700',
+      active: 'bg-orange-500 text-white',
       inactive: 'bg-gray-100 text-gray-700',
-      pending: 'bg-yellow-100 text-yellow-700',
-      completed: 'bg-indigo-100 text-indigo-700',
+      pending: 'bg-amber-100 text-amber-700',
+      completed: 'bg-orange-100 text-orange-700',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700';
   };
@@ -85,7 +85,7 @@ export default function StudentTable({ students }: StudentTableProps) {
       header: 'Student',
       cell: ({ row }) => (
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-semibold text-sm">
+          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-semibold text-sm">
             {row.original.name.charAt(0)}
           </div>
           <div className="ml-3">
@@ -137,7 +137,7 @@ export default function StudentTable({ students }: StudentTableProps) {
       cell: ({ row }) => {
         const program = row.original.program;
         const mentor = row.original.mentor;
-        
+
         if (program === 'PCP') {
           return (
             <div className="flex items-center space-x-1">
@@ -173,14 +173,13 @@ export default function StudentTable({ students }: StudentTableProps) {
       cell: ({ row }) => {
         const progress = row.original.progress;
         const program = row.original.program;
-        
+
         return (
           <div className="flex items-center space-x-2">
             <div className="w-16 bg-gray-200 rounded-full h-2">
               <div
-                className={`rounded-full h-2 ${
-                  program === 'PCP' ? 'bg-orange-500' : 'bg-primary-600'
-                }`}
+                className={`rounded-full h-2 ${program === 'PCP' ? 'bg-orange-500' : 'bg-orange-600'
+                  }`}
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
@@ -193,7 +192,7 @@ export default function StudentTable({ students }: StudentTableProps) {
       id: 'actions',
       cell: ({ row }) => {
         const isPCP = row.original.program === 'PCP';
-        
+
         return (
           <div className="relative">
             <button
@@ -202,7 +201,7 @@ export default function StudentTable({ students }: StudentTableProps) {
             >
               <MoreVertical size={18} />
             </button>
-            
+
             {activeMenu === row.id && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
                 <Link
@@ -220,7 +219,7 @@ export default function StudentTable({ students }: StudentTableProps) {
                   Edit
                 </Link>
                 <button
-                  onClick={() => {/* Handle email */}}
+                  onClick={() => {/* Handle email */ }}
                   className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
                 >
                   <Mail size={16} className="mr-2" />
@@ -228,7 +227,7 @@ export default function StudentTable({ students }: StudentTableProps) {
                 </button>
                 {!isPCP && (
                   <button
-                    onClick={() => {/* Handle reassign mentor */}}
+                    onClick={() => {/* Handle reassign mentor */ }}
                     className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
                   >
                     <UserCheck size={16} className="mr-2" />
@@ -237,7 +236,7 @@ export default function StudentTable({ students }: StudentTableProps) {
                 )}
                 <hr className="my-2 border-gray-200" />
                 <button
-                  onClick={() => {/* Handle delete */}}
+                  onClick={() => {/* Handle delete */ }}
                   className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center text-red-600"
                 >
                   <Trash2 size={16} className="mr-2" />
@@ -338,3 +337,4 @@ export default function StudentTable({ students }: StudentTableProps) {
     </div>
   );
 }
+

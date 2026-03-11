@@ -163,7 +163,7 @@ export default function ReportsPage() {
       case 'excel':
         return <FileText size={16} className="text-green-500" />;
       case 'csv':
-        return <FileText size={16} className="text-primary-500" />;
+        return <FileText size={16} className="text-orange-500" />;
       default:
         return <FileText size={16} />;
     }
@@ -278,7 +278,7 @@ export default function ReportsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
         <Link
           href="/admin/reports/generate"
-          className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
         >
           <FileText size={18} className="mr-2" />
           Generate Report
@@ -290,7 +290,7 @@ export default function ReportsPage() {
         {reportTemplates.map((template) => {
           const Icon = template.icon;
           const colorClasses = {
-            blue: 'bg-blue-50 text-blue-600 border-blue-200',
+            blue: 'bg-orange-50 text-orange-600 border-orange-200',
             green: 'bg-green-50 text-green-600 border-green-200',
           };
 
@@ -307,7 +307,7 @@ export default function ReportsPage() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">{template.name}</h3>
               <p className="text-sm text-gray-500 mb-4">{template.description}</p>
-              <span className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+              <span className="text-orange-600 hover:text-orange-700 text-sm font-medium">
                 Generate →
               </span>
             </Link>
@@ -325,7 +325,7 @@ export default function ReportsPage() {
               placeholder="Search reports by name or generator..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 pl-10"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 pl-10"
             />
             <FileText size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             {searchTerm && (
@@ -343,14 +343,14 @@ export default function ReportsPage() {
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center px-4 py-2 border rounded-lg transition-colors relative ${
               showFilters || getActiveFilterCount() > 0
-                ? 'bg-primary-50 border-primary-300 text-primary-600'
+                ? 'bg-orange-50 border-orange-300 text-orange-600'
                 : 'border-gray-300 hover:bg-gray-50'
             }`}
           >
             <Filter size={18} className="mr-2" />
             Filters
             {getActiveFilterCount() > 0 && (
-              <span className="ml-2 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="ml-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {getActiveFilterCount()}
               </span>
             )}
@@ -379,7 +379,7 @@ export default function ReportsPage() {
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="all">All Types</option>
                   <option value="weekly">Weekly</option>
@@ -395,7 +395,7 @@ export default function ReportsPage() {
                 <select
                   value={selectedFormat}
                   onChange={(e) => setSelectedFormat(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="all">All Formats</option>
                   <option value="pdf">PDF</option>
@@ -412,7 +412,7 @@ export default function ReportsPage() {
                 <select
                   value={selectedGenerator}
                   onChange={(e) => setSelectedGenerator(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   {uniqueGenerators.map((generator) => (
                     <option key={generator} value={generator}>
@@ -430,7 +430,7 @@ export default function ReportsPage() {
                 <select
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="7">Last 7 days</option>
                   <option value="30">Last 30 days</option>
@@ -508,7 +508,7 @@ export default function ReportsPage() {
             {getActiveFilterCount() > 0 && (
               <button
                 onClick={clearFilters}
-                className="mt-4 px-4 py-2 text-primary-600 border border-primary-300 rounded-lg hover:bg-primary-50"
+                className="mt-4 px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
               >
                 Clear all filters
               </button>
@@ -521,7 +521,7 @@ export default function ReportsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Scheduled Reports</h2>
-          <button className="text-sm text-primary-600 hover:text-primary-700">
+          <button className="text-sm text-orange-600 hover:text-orange-700">
             + Add Schedule
           </button>
         </div>
@@ -534,7 +534,7 @@ export default function ReportsPage() {
               <div key={schedule.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className={`w-2 h-2 rounded-full ${schedule.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
-                  <Calendar size={20} className={schedule.type === 'weekly' ? 'text-blue-500' : 'text-green-500'} />
+                  <Calendar size={20} className={schedule.type === 'weekly' ? 'text-orange-500' : 'text-green-500'} />
                   <div>
                     <div className="flex items-center space-x-2">
                       <p className="font-medium">{schedule.name}</p>
@@ -672,7 +672,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
@@ -685,7 +685,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'weekly' | 'monthly' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
@@ -699,7 +699,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
               <select
                 value={formData.format}
                 onChange={(e) => setFormData({ ...formData, format: e.target.value as 'pdf' | 'excel' | 'csv' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="pdf">PDF</option>
                 <option value="excel">Excel</option>
@@ -716,7 +716,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
               <select
                 value={formData.schedule}
                 onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="Every Monday">Every Monday</option>
                 <option value="Every Tuesday">Every Tuesday</option>
@@ -736,7 +736,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
                 type="time"
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -756,7 +756,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
                     formData.programs.includes(program)
                       ? program === 'G-GMP' ? 'bg-purple-100 text-purple-700' :
                         program === 'G-CMP' ? 'bg-green-100 text-green-700' :
-                        program === 'E-TIP' ? 'bg-blue-100 text-blue-700' :
+                        program === 'E-TIP' ? 'bg-orange-100 text-orange-700' :
                         'bg-orange-100 text-orange-700'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
@@ -776,7 +776,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
               value={formData.recipients}
               onChange={(e) => setFormData({ ...formData, recipients: e.target.value })}
               placeholder="email1@example.com, email2@example.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -820,7 +820,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               Save Changes
             </button>
@@ -830,3 +830,4 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
     </div>
   );
 }
+

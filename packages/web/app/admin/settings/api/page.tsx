@@ -54,7 +54,7 @@ export default function ApiSettingsPage() {
         <h2 className="text-lg font-semibold">API Keys</h2>
         <button
           onClick={() => setShowNewKeyForm(true)}
-          className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
         >
           <Plus size={18} className="mr-2" />
           Generate New Key
@@ -122,7 +122,7 @@ export default function ApiSettingsPage() {
                 <input
                   type="text"
                   placeholder="e.g., Production Key"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
 
@@ -130,7 +130,7 @@ export default function ApiSettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Expiration
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
                   <option value="30">30 days</option>
                   <option value="90">90 days</option>
                   <option value="365">1 year</option>
@@ -166,7 +166,7 @@ export default function ApiSettingsPage() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+              <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
                 Generate Key
               </button>
             </div>

@@ -101,12 +101,12 @@ export default function ExportModal({ isOpen, onClose, data, context, filename }
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center flex-1">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  step >= i ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'
+                  step >= i ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
                 }`}>
                   {i}
                 </div>
                 {i < 3 && <div className={`flex-1 h-1 mx-2 ${
-                  step > i ? 'bg-primary-600' : 'bg-gray-200'
+                  step > i ? 'bg-orange-600' : 'bg-gray-200'
                 }`} />}
               </div>
             ))}
@@ -127,15 +127,15 @@ export default function ExportModal({ isOpen, onClose, data, context, filename }
                     onClick={() => setFormat(fmt.id as any)}
                     className={`p-4 border rounded-lg text-center transition-colors ${
                       format === fmt.id
-                        ? 'border-primary-600 bg-primary-50'
+                        ? 'border-orange-600 bg-orange-50'
                         : 'border-gray-200 hover:bg-gray-50'
                     }`}
                   >
                     <fmt.icon size={24} className={`mx-auto mb-2 ${
-                      format === fmt.id ? 'text-primary-600' : 'text-gray-400'
+                      format === fmt.id ? 'text-orange-600' : 'text-gray-400'
                     }`} />
                     <span className={`text-sm ${
-                      format === fmt.id ? 'text-primary-600 font-medium' : 'text-gray-600'
+                      format === fmt.id ? 'text-orange-600 font-medium' : 'text-gray-600'
                     }`}>
                       {fmt.label}
                     </span>
@@ -151,7 +151,7 @@ export default function ExportModal({ isOpen, onClose, data, context, filename }
                   <select
                     value={orientation}
                     onChange={(e) => setOrientation(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="portrait">Portrait</option>
                     <option value="landscape">Landscape</option>
@@ -205,7 +205,7 @@ export default function ExportModal({ isOpen, onClose, data, context, filename }
                     <select
                       value={scheduleFrequency}
                       onChange={(e) => setScheduleFrequency(e.target.value as any)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
@@ -222,7 +222,7 @@ export default function ExportModal({ isOpen, onClose, data, context, filename }
                       value={recipients}
                       onChange={(e) => setRecipients(e.target.value)}
                       placeholder="email1@example.com, email2@example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Separate multiple emails with commas
@@ -283,7 +283,7 @@ export default function ExportModal({ isOpen, onClose, data, context, filename }
           <button
             onClick={step === 3 ? handleExport : () => setStep(step + 1)}
             disabled={isExporting}
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
           >
             {isExporting ? (
               <>

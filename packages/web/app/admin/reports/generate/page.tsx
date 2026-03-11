@@ -717,7 +717,7 @@ export default function GenerateReportPage() {
     const colors = {
       'G-GMP': 'bg-purple-100 text-purple-700',
       'G-CMP': 'bg-green-100 text-green-700',
-      'E-TIP': 'bg-blue-100 text-blue-700',
+      'E-TIP': 'bg-orange-100 text-orange-700',
       'PCP': 'bg-orange-100 text-orange-700'
     };
     return colors[program as keyof typeof colors] || 'bg-gray-100 text-gray-700';
@@ -730,7 +730,7 @@ export default function GenerateReportPage() {
       case 'G-CMP':
         return <Code size={16} className="text-green-500" />;
       case 'E-TIP':
-        return <Award size={16} className="text-blue-500" />;
+        return <Award size={16} className="text-orange-500" />;
       case 'PCP':
         return <GraduationCap size={16} className="text-orange-500" />;
       default:
@@ -741,7 +741,7 @@ export default function GenerateReportPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -763,18 +763,18 @@ export default function GenerateReportPage() {
 
       {/* Template Info Banner */}
       {template && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-center space-x-2">
             {template === 'weekly-progress' ? (
-              <Clock size={20} className="text-blue-500" />
+              <Clock size={20} className="text-orange-500" />
             ) : (
               <TrendingUp size={20} className="text-green-500" />
             )}
             <div>
-              <p className="text-sm text-blue-700">
+              <p className="text-sm text-orange-700">
                 <strong>Template:</strong> {config.name}
               </p>
-              <p className="text-xs text-blue-600 mt-1">
+              <p className="text-xs text-orange-600 mt-1">
                 {template === 'weekly-progress' 
                   ? 'Weekly report including progress, attendance, and activities'
                   : 'Monthly comprehensive analytics with trends and outcomes'}
@@ -790,12 +790,12 @@ export default function GenerateReportPage() {
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex items-center flex-1">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                step >= i ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'
+                step >= i ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
               }`}>
                 {step > i ? <CheckCircle size={16} /> : i}
               </div>
               {i < 4 && <div className={`flex-1 h-1 mx-2 ${
-                step > i ? 'bg-primary-600' : 'bg-gray-200'
+                step > i ? 'bg-orange-600' : 'bg-gray-200'
               }`} />}
             </div>
           ))}
@@ -817,7 +817,7 @@ export default function GenerateReportPage() {
                     type="text"
                     value={config.name}
                     onChange={(e) => setConfig({ ...config, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="e.g., Weekly Progress Report - Week 12"
                   />
                 </div>
@@ -830,7 +830,7 @@ export default function GenerateReportPage() {
                     <select
                       value={config.type}
                       onChange={(e) => setConfig({ ...config, type: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="weekly">Weekly Report</option>
                       <option value="monthly">Monthly Report</option>
@@ -845,7 +845,7 @@ export default function GenerateReportPage() {
                     <select
                       value={config.format}
                       onChange={(e) => setConfig({ ...config, format: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="pdf">PDF</option>
                       <option value="excel">Excel</option>
@@ -866,7 +866,7 @@ export default function GenerateReportPage() {
                         ...config,
                         dateRange: { ...config.dateRange, start: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                   <div>
@@ -880,7 +880,7 @@ export default function GenerateReportPage() {
                         ...config,
                         dateRange: { ...config.dateRange, end: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                 </div>
@@ -890,7 +890,7 @@ export default function GenerateReportPage() {
                 <button
                   onClick={() => setStep(2)}
                   disabled={!config.name}
-                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next: Select Candidates
                 </button>
@@ -939,7 +939,7 @@ export default function GenerateReportPage() {
                     onClick={() => setSelectedTab('students')}
                     className={`py-2 px-1 border-b-2 font-medium text-sm ${
                       selectedTab === 'students'
-                        ? 'border-primary-600 text-primary-600'
+                        ? 'border-orange-600 text-orange-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
@@ -949,7 +949,7 @@ export default function GenerateReportPage() {
                     onClick={() => setSelectedTab('mentors')}
                     className={`py-2 px-1 border-b-2 font-medium text-sm ${
                       selectedTab === 'mentors'
-                        ? 'border-primary-600 text-primary-600'
+                        ? 'border-orange-600 text-orange-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
@@ -966,7 +966,7 @@ export default function GenerateReportPage() {
                   placeholder={`Search ${selectedTab}...`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
                 {searchTerm && (
                   <button
@@ -982,7 +982,7 @@ export default function GenerateReportPage() {
               <div className="flex items-center justify-between mb-4">
                 <button
                   onClick={selectedTab === 'students' ? selectAllStudents : selectAllMentors}
-                  className="text-sm text-primary-600 hover:text-primary-700"
+                  className="text-sm text-orange-600 hover:text-orange-700"
                 >
                   {selectedTab === 'students' 
                     ? (config.students.length === filteredStudents.length ? 'Deselect All' : 'Select All')
@@ -1005,7 +1005,7 @@ export default function GenerateReportPage() {
                       key={student.id}
                       className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
                         config.students.includes(student.id)
-                          ? 'bg-primary-50 border border-primary-200'
+                          ? 'bg-orange-50 border border-orange-200'
                           : 'hover:bg-gray-50 border border-transparent'
                       }`}
                     >
@@ -1049,7 +1049,7 @@ export default function GenerateReportPage() {
                       key={mentor.id}
                       className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
                         config.mentors.includes(mentor.id)
-                          ? 'bg-primary-50 border border-primary-200'
+                          ? 'bg-orange-50 border border-orange-200'
                           : 'hover:bg-gray-50 border border-transparent'
                       }`}
                     >
@@ -1096,7 +1096,7 @@ export default function GenerateReportPage() {
                 <button
                   onClick={() => setStep(3)}
                   disabled={config.students.length === 0 && config.mentors.length === 0}
-                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next: Select Content
                 </button>
@@ -1197,7 +1197,7 @@ export default function GenerateReportPage() {
                 </button>
                 <button
                   onClick={() => setStep(4)}
-                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                 >
                   Next: Schedule & Generate
                 </button>
@@ -1236,7 +1236,7 @@ export default function GenerateReportPage() {
                           ...config,
                           schedule: { ...config.schedule, frequency: e.target.value as any }
                         })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       >
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
@@ -1251,7 +1251,7 @@ export default function GenerateReportPage() {
                       <input
                         type="text"
                         placeholder="Enter email addresses (comma separated)"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         Separate multiple emails with commas
@@ -1261,9 +1261,9 @@ export default function GenerateReportPage() {
                 )}
               </div>
 
-              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
-                <h4 className="font-medium text-primary-800 mb-2">Report Summary</h4>
-                <ul className="space-y-1 text-sm text-primary-700">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                <h4 className="font-medium text-orange-800 mb-2">Report Summary</h4>
+                <ul className="space-y-1 text-sm text-orange-700">
                   <li>• Name: {config.name}</li>
                   <li>• Type: {config.type} report</li>
                   <li>• Format: {config.format.toUpperCase()}</li>
@@ -1293,7 +1293,7 @@ export default function GenerateReportPage() {
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {generating ? (
                     <>
@@ -1324,7 +1324,7 @@ export default function GenerateReportPage() {
           <div className="flex justify-center space-x-4">
             <button
               onClick={handleDownload}
-              className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               <Download size={18} className="mr-2" />
               Download Report
@@ -1344,3 +1344,4 @@ export default function GenerateReportPage() {
     </div>
   );
 }
+

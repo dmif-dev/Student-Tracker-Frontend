@@ -101,14 +101,14 @@ export const MobileSidebar = ({
         {...props}
       >
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 bg-primary rounded-full" />
-          <span className="font-bold font-montserrat text-neutral-800 dark:text-neutral-200">
+          <div className="h-6 w-6 bg-gray-900 rounded-full" />
+          <span className="font-bold font-montserrat text-gray-900 dark:text-neutral-200">
             Student Tracker
           </span>
         </div>
         <div className="flex justify-end z-20">
           <Menu
-            className="text-neutral-800 dark:text-neutral-200 cursor-pointer"
+            className="text-gray-900 dark:text-neutral-200 cursor-pointer"
             onClick={() => setOpen(!open)}
           />
         </div>
@@ -160,12 +160,12 @@ export const SidebarLink = ({
       href={link.href}
       className={cn(
         "flex items-center justify-start gap-2 group/sidebar py-2 px-2 rounded-md transition-colors",
-        isActive ? "bg-primary text-primary-foreground shadow-sm" : "text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700",
+        isActive ? "bg-primary text-black shadow-sm" : "text-gray-900 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700",
         className
       )}
       {...props}
     >
-      <div className={cn("flex-shrink-0", isActive ? "text-primary-foreground" : "text-neutral-500 dark:text-neutral-400")}>
+      <div className={cn("flex-shrink-0", isActive ? "text-black" : "text-gray-900 dark:text-neutral-400")}>
         {link.icon}
       </div>
       <motion.span
@@ -235,13 +235,13 @@ export function Sidebar() {
         <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
           {/* Logo / Top Section */}
           <div className="flex items-center gap-2 px-2 py-4">
-            <div className="h-6 w-6 bg-primary rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] text-primary-foreground font-bold">
-              {letter}
+            <div className="h-6 w-6 bg-orange-500 rounded-md flex-shrink-0 flex items-center justify-center text-[10px] text-black overflow-hidden shadow-sm">
+              <LayoutDashboard className="h-4 w-4" />
             </div>
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: open ? 1 : 0 }}
-              className="font-bold text-neutral-800 dark:text-neutral-200 whitespace-nowrap font-montserrat"
+              className="font-bold text-gray-900 dark:text-neutral-200 whitespace-nowrap font-montserrat"
             >
               {roleTitle}
             </motion.span>

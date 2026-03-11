@@ -167,7 +167,7 @@ export default function DocumentsPage() {
       case 'G-CMP':
         return <Code size={16} className="text-green-500" />;
       case 'E-TIP':
-        return <Award size={16} className="text-blue-500" />;
+        return <Award size={16} className="text-orange-500" />;
       default:
         return <FileText size={16} className="text-gray-500" />;
     }
@@ -215,7 +215,7 @@ export default function DocumentsPage() {
 
   const getTypeBadge = (type: DocumentType) => {
     const colors = {
-      learning_material: 'bg-blue-100 text-blue-700',
+      learning_material: 'bg-orange-100 text-orange-700',
       assignment_material: 'bg-yellow-100 text-yellow-700',
       pre_reading_material: 'bg-purple-100 text-purple-700',
     };
@@ -234,7 +234,7 @@ export default function DocumentsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -251,7 +251,7 @@ export default function DocumentsPage() {
         </div>
         <button
           onClick={() => setShowUploadModal(true)}
-          className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
         >
           <Upload size={18} className="mr-2" />
           Upload Document
@@ -259,11 +259,11 @@ export default function DocumentsPage() {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
         <div className="flex items-start space-x-3">
-          <FileText size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
+          <FileText size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm text-blue-700">
+            <p className="text-sm text-orange-700">
               <strong>Document Management:</strong> Upload learning materials and assignments for G-CMP and E-TIP students. 
               Set permissions to control which students can view and download each document.
             </p>
@@ -281,14 +281,14 @@ export default function DocumentsPage() {
               placeholder="Search documents..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
           <select
             value={selectedProgram}
             onChange={(e) => setSelectedProgram(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="all">All Programs</option>
             <option value="G-CMP">G-CMP</option>
@@ -298,7 +298,7 @@ export default function DocumentsPage() {
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="all">All Types</option>
             <option value="learning_material">Learning Materials</option>
@@ -309,7 +309,7 @@ export default function DocumentsPage() {
           <select
             value={selectedMentor}
             onChange={(e) => setSelectedMentor(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="all">All Mentors</option>
             {mentors.map(mentor => (
@@ -432,7 +432,7 @@ export default function DocumentsPage() {
           <p className="text-gray-500 mb-4">Get started by uploading your first document.</p>
           <button
             onClick={() => setShowUploadModal(true)}
-            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
           >
             <Upload size={18} className="mr-2" />
             Upload Document
@@ -593,7 +593,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
@@ -607,7 +607,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
@@ -624,7 +624,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
                   program: e.target.value as 'G-CMP' | 'E-TIP',
                   track: '' 
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               >
                 <option value="G-CMP">G-CMP</option>
@@ -639,7 +639,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
               <select
                 value={formData.track}
                 onChange={(e) => setFormData({ ...formData, track: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">All Tracks</option>
                 {programs[formData.program].map((track: string) => (
@@ -658,7 +658,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as DocumentType })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               >
                 <option value="learning_material">Learning Material</option>
@@ -677,7 +677,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
                   ...formData, 
                   visibility: e.target.value as 'student_only' | 'mentor_only' | 'both' 
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               >
                 <option value="student_only">Students Only</option>
@@ -698,7 +698,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
                   type="date"
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               <div>
@@ -709,7 +709,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
                   type="number"
                   value={formData.points}
                   onChange={(e) => setFormData({ ...formData, points: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="e.g., 100"
                 />
               </div>
@@ -726,7 +726,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
                 type="number"
                 value={formData.readingTime}
                 onChange={(e) => setFormData({ ...formData, readingTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="e.g., 30"
               />
             </div>
@@ -753,7 +753,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
             <select
               value={formData.mentorId}
               onChange={(e) => setFormData({ ...formData, mentorId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             >
               <option value="">Select Mentor</option>
@@ -773,7 +773,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
             <input
               type="file"
               onChange={(e) => setFormData({ ...formData, file: e.target.files?.[0] || null })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
@@ -825,7 +825,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               Upload Document
             </button>
@@ -963,7 +963,7 @@ function PermissionModal({ documentId, documents, students, onClose, onUpdate }:
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               Save Permissions
             </button>
@@ -973,3 +973,4 @@ function PermissionModal({ documentId, documents, students, onClose, onUpdate }:
     </div>
   );
 }
+

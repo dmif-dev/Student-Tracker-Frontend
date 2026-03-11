@@ -78,7 +78,7 @@
 //                     onClick={() => setActiveSection(section.id)}
 //                     className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
 //                       activeSection === section.id
-//                         ? 'bg-primary-50 text-primary-600'
+//                         ? 'bg-orange-50 text-orange-600'
 //                         : 'text-gray-700 hover:bg-gray-50'
 //                     }`}
 //                   >
@@ -129,7 +129,7 @@
 //             type="text"
 //             value={settings.siteName}
 //             onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-//             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+//             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
 //           />
 //         </div>
 
@@ -141,7 +141,7 @@
 //             type="url"
 //             value={settings.siteUrl}
 //             onChange={(e) => setSettings({ ...settings, siteUrl: e.target.value })}
-//             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+//             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
 //           />
 //         </div>
 
@@ -153,7 +153,7 @@
 //             <select
 //               value={settings.timezone}
 //               onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
-//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
 //             >
 //               <option value="UTC+5:30">IST (UTC+5:30)</option>
 //               <option value="UTC+0">UTC</option>
@@ -169,7 +169,7 @@
 //             <select
 //               value={settings.dateFormat}
 //               onChange={(e) => setSettings({ ...settings, dateFormat: e.target.value })}
-//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
 //             >
 //               <option value="YYYY-MM-DD">YYYY-MM-DD</option>
 //               <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -185,7 +185,7 @@
 //           <select
 //             value={settings.language}
 //             onChange={(e) => setSettings({ ...settings, language: e.target.value })}
-//             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+//             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
 //           >
 //             <option value="en">English</option>
 //             <option value="es">Spanish</option>
@@ -206,14 +206,14 @@
 //               onChange={(e) => setSettings({ ...settings, maintenanceMode: e.target.checked })}
 //               className="sr-only peer"
 //             />
-//             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+//             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
 //           </label>
 //         </div>
 
 //         <div className="pt-6 border-t border-gray-200">
 //           <button
 //             onClick={handleSave}
-//             className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+//             className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
 //           >
 //             <Save size={18} className="mr-2" />
 //             Save Changes
@@ -254,14 +254,14 @@
 //                 onChange={(e) => setSettings({ ...settings, [key]: e.target.checked })}
 //                 className="sr-only peer"
 //               />
-//               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+//               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
 //             </label>
 //           </div>
 //         ))}
 //       </div>
 
 //       <div className="pt-6 border-t border-gray-200 mt-6">
-//         <button className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+//         <button className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
 //           <Save size={18} className="mr-2" />
 //           Save Changes
 //         </button>
@@ -343,7 +343,7 @@ export default function GeneralSettingsPage() {
             type="text"
             value={settings.siteName}
             onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
@@ -355,7 +355,7 @@ export default function GeneralSettingsPage() {
             type="url"
             value={settings.siteUrl}
             onChange={(e) => setSettings({ ...settings, siteUrl: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
@@ -367,7 +367,7 @@ export default function GeneralSettingsPage() {
             <select
               value={settings.timezone}
               onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               <option value="UTC+5:30">IST (UTC+5:30)</option>
               <option value="UTC+0">UTC</option>
@@ -383,7 +383,7 @@ export default function GeneralSettingsPage() {
             <select
               value={settings.dateFormat}
               onChange={(e) => setSettings({ ...settings, dateFormat: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               <option value="YYYY-MM-DD">YYYY-MM-DD</option>
               <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -399,7 +399,7 @@ export default function GeneralSettingsPage() {
           <select
             value={settings.language}
             onChange={(e) => setSettings({ ...settings, language: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="en">English</option>
             <option value="es">Spanish</option>
@@ -420,14 +420,14 @@ export default function GeneralSettingsPage() {
               onChange={(e) => setSettings({ ...settings, maintenanceMode: e.target.checked })}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
           </label>
         </div>
 
         <div className="pt-6 border-t border-gray-200">
           <button
             onClick={handleSave}
-            className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
           >
             <Save size={18} className="mr-2" />
             Save Changes

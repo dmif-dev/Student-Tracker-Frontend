@@ -98,7 +98,7 @@ export default function AddMentorPage() {
               <input
                 type="text"
                 {...register('name', { required: true })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Enter full name"
               />
             </div>
@@ -110,7 +110,7 @@ export default function AddMentorPage() {
               <input
                 type="email"
                 {...register('email', { required: true })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Enter email address"
               />
             </div>
@@ -122,7 +122,7 @@ export default function AddMentorPage() {
               <input
                 type="tel"
                 {...register('phone')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Enter phone number"
               />
             </div>
@@ -134,7 +134,7 @@ export default function AddMentorPage() {
               <input
                 type="text"
                 {...register('location')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="City, Country"
               />
             </div>
@@ -146,7 +146,7 @@ export default function AddMentorPage() {
               <textarea
                 {...register('bio')}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Enter mentor's biography, experience, etc."
               />
             </div>
@@ -162,13 +162,13 @@ export default function AddMentorPage() {
                 value={newExpertise}
                 onChange={(e) => setNewExpertise(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addExpertise())}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="e.g., AI/ML, Patents, Research"
               />
               <button
                 type="button"
                 onClick={addExpertise}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
               >
                 <Plus size={20} />
               </button>
@@ -178,13 +178,13 @@ export default function AddMentorPage() {
               {expertise.map((item) => (
                 <span
                   key={item}
-                  className="inline-flex items-center px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm"
+                  className="inline-flex items-center px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm"
                 >
                   {item}
                   <button
                     type="button"
                     onClick={() => removeExpertise(item)}
-                    className="ml-2 text-primary-500 hover:text-primary-700"
+                    className="ml-2 text-orange-500 hover:text-orange-700"
                   >
                     <X size={14} />
                   </button>
@@ -206,7 +206,7 @@ export default function AddMentorPage() {
                   key={program}
                   className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
                     selectedPrograms.includes(program)
-                      ? 'bg-primary-50 border-primary-300'
+                      ? 'bg-orange-50 border-orange-300'
                       : 'border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -232,7 +232,7 @@ export default function AddMentorPage() {
               </label>
               <select
                 {...register('status')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -246,7 +246,7 @@ export default function AddMentorPage() {
               <input
                 type="date"
                 {...register('joinDate')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -263,7 +263,7 @@ export default function AddMentorPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>

@@ -116,7 +116,7 @@ Jane Smith,jane.smith@example.com,DMIF2024002,G-CMP,AI Product Development,Prof.
             <h2 className="text-lg font-semibold mb-4">Upload CSV File</h2>
             
             <div
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary-500 transition-colors cursor-pointer"
+              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-orange-500 transition-colors cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
               <input
@@ -245,7 +245,7 @@ Jane Smith,jane.smith@example.com,DMIF2024002,G-CMP,AI Product Development,Prof.
               <button
                 onClick={handleImport}
                 disabled={uploading}
-                className="w-full flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+                className="w-full flex items-center justify-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
               >
                 {uploading ? (
                   <>

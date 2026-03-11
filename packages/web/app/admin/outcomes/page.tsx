@@ -68,7 +68,7 @@ export default function OutcomesPage() {
         case 'patent':
           return <FileText size={16} className="text-purple-500" />;
         case 'paper':
-          return <BookOpen size={16} className="text-blue-500" />;
+          return <BookOpen size={16} className="text-orange-500" />;
         case 'startup':
           return <Briefcase size={16} className="text-green-500" />;
         default:
@@ -87,7 +87,7 @@ export default function OutcomesPage() {
       case 'completed':
         return 'bg-green-100 text-green-700';
       case 'filed':
-        return 'bg-primary-100 text-primary-700';
+        return 'bg-orange-100 text-orange-700';
       case 'pending':
         return 'bg-yellow-100 text-yellow-700';
       default:
@@ -118,7 +118,7 @@ export default function OutcomesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -136,7 +136,7 @@ export default function OutcomesPage() {
             <Download size={18} className="mr-2" />
             Export
           </button>
-          <button className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+          <button className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
             <Award size={18} className="mr-2" />
             Add Outcome
           </button>
@@ -168,7 +168,7 @@ export default function OutcomesPage() {
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Papers</p>
-          <p className="text-2xl font-bold text-blue-600">{stats.papers}</p>
+          <p className="text-2xl font-bold text-orange-600">{stats.papers}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Startups</p>
@@ -193,14 +193,14 @@ export default function OutcomesPage() {
               placeholder="Search outcomes by title or student..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg placeholder:text-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg placeholder:text-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
               showFilters
-                ? 'bg-primary-50 border-primary-300 text-primary-600'
+                ? 'bg-orange-50 border-orange-300 text-orange-600'
                 : 'border-gray-300 hover:bg-gray-50'
             }`}
           >
@@ -216,7 +216,7 @@ export default function OutcomesPage() {
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="all">All Types</option>
                 <option value="patent">Patents (G-GMP)</option>
@@ -230,7 +230,7 @@ export default function OutcomesPage() {
               <select
                 value={selectedProgram}
                 onChange={(e) => setSelectedProgram(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="all">All Programs</option>
                 <option value="G-GMP">G-GMP (Innovation)</option>
@@ -242,7 +242,7 @@ export default function OutcomesPage() {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -321,7 +321,7 @@ export default function OutcomesPage() {
                 <td className="px-6 py-4">
                   <Link
                     href={`/admin/outcomes/${outcome.id}`}
-                    className="text-primary-600 hover:text-primary-700 text-sm"
+                    className="text-orange-600 hover:text-orange-700 text-sm"
                   >
                     View
                   </Link>
@@ -344,3 +344,4 @@ export default function OutcomesPage() {
     </div>
   );
 }
+
