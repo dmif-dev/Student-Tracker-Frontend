@@ -2,6 +2,7 @@
 
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -136,10 +137,10 @@ export default function OutcomesPage() {
             <Download size={18} className="mr-2" />
             Export
           </button>
-          <button className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+          <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
             <Award size={18} className="mr-2" />
             Add Outcome
-          </button>
+          </Button>
         </div>
       </div>
 

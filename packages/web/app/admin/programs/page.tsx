@@ -2,13 +2,14 @@
 
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiService } from '@/services/api';
-import { 
-  GraduationCap, 
-  Users, 
+import {
+  GraduationCap,
+  Users,
   TrendingUp,
   ArrowRight,
   BookOpen,
@@ -95,8 +96,8 @@ const programTypeDescriptions: Record<string, { type: string; description: strin
 
 // ==================== TrackEditor Component with Integrated Edit Functionality ====================
 
-function TrackEditor({ track, programId, hasOutcomes, onUpdate }: { 
-  track: Track; 
+function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
+  track: Track;
   programId: string;
   hasOutcomes: boolean;
   onUpdate: (trackId: string, updates: Partial<Track>) => void;
@@ -168,14 +169,13 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
             {track.students} students enrolled
           </p>
         </div>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          programId === 'g-gmp' ? 'bg-purple-100 text-purple-700' :
-          programId === 'pcp' ? 'bg-orange-100 text-orange-700' :
-          'bg-orange-100 text-orange-700'
-        }`}>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${programId === 'g-gmp' ? 'bg-purple-100 text-purple-700' :
+            programId === 'pcp' ? 'bg-orange-100 text-orange-700' :
+              'bg-orange-100 text-orange-700'
+          }`}>
           {programId === 'g-gmp' ? 'Innovation' :
-           programId === 'pcp' ? 'Certification' :
-           'Learning'}
+            programId === 'pcp' ? 'Certification' :
+              'Learning'}
         </span>
       </div>
 
@@ -284,13 +284,13 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
               <span className="text-xs text-gray-700">Requires Mentor</span>
             </label>
 
-            <button
+            <Button
               onClick={handleSaveDetails}
-              className="flex items-center px-3 py-1 bg-orange-600 text-white text-xs rounded hover:bg-orange-700"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               <Save size={12} className="mr-1" />
               Save Details
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -368,15 +368,15 @@ export default function ProgramsPage() {
       const programData = await ApiService.getProgramById(program.id);
       const students = await ApiService.getStudents();
       const outcomes = program.hasOutcomes ? await ApiService.getOutcomesByProgram(program.name) : [];
-      
+
       // Filter students by program
       const programStudents = students.filter(s => s.program === program.name);
-      
+
       // Calculate report metrics
       const activeStudents = programStudents.filter(s => s.status === 'active').length;
       const completionRate = program.completionRate;
       const avgProgress = Math.round(programStudents.reduce((sum, s) => sum + s.progress, 0) / programStudents.length);
-      
+
       // Build report data
       const reportData = {
         programName: program.name,
@@ -427,10 +427,10 @@ export default function ProgramsPage() {
 
       // Close modal after successful generation
       setShowReportModal(null);
-      
+
       // Show success message (you might want to use a toast notification here)
       alert(`Report generated successfully!`);
-      
+
     } catch (error) {
       console.error('Error generating report:', error);
       alert('Failed to generate report. Please try again.');
@@ -541,7 +541,7 @@ export default function ProgramsPage() {
     printWindow.document.write(html);
     printWindow.document.close();
     printWindow.focus();
-    
+
     setTimeout(() => {
       printWindow.print();
     }, 500);
@@ -603,14 +603,14 @@ export default function ProgramsPage() {
 
   const handleUpdateTrack = async (trackId: string, updates: Partial<Track>) => {
     console.log('Updating track:', trackId, updates);
-    
+
     // Update local state immediately for UI feedback
-    setPrograms(prevPrograms => 
+    setPrograms(prevPrograms =>
       prevPrograms.map(program => {
         if (program.id === showTrackModal?.id) {
           return {
             ...program,
-            tracks: program.tracks.map(track => 
+            tracks: program.tracks.map(track =>
               track.id === trackId ? { ...track, ...updates } : track
             )
           };
@@ -623,14 +623,14 @@ export default function ProgramsPage() {
     // await ApiService.updateTrack(trackId, updates);
   };
 
-  const filteredPrograms = selectedType === 'all' 
-    ? programs 
+  const filteredPrograms = selectedType === 'all'
+    ? programs
     : programs.filter(p => {
-        if (selectedType === 'innovation') return p.id === 'g-gmp';
-        if (selectedType === 'learning') return p.id === 'g-cmp' || p.id === 'e-tip';
-        if (selectedType === 'certification') return p.id === 'pcp';
-        return true;
-      });
+      if (selectedType === 'innovation') return p.id === 'g-gmp';
+      if (selectedType === 'learning') return p.id === 'g-cmp' || p.id === 'e-tip';
+      if (selectedType === 'certification') return p.id === 'pcp';
+      return true;
+    });
 
   if (loading) {
     return (
@@ -721,7 +721,7 @@ export default function ProgramsPage() {
             icon: BookOpen,
           };
           const TypeIcon = typeInfo.icon;
-          
+
           return (
             <div
               key={program.id}
@@ -742,7 +742,7 @@ export default function ProgramsPage() {
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mt-1 max-w-2xl">{program.description}</p>
-                      
+
                       {/* Program Type Description */}
                       <div className="flex items-center space-x-2 mt-2">
                         <TypeIcon size={14} className="text-gray-500" />
@@ -775,24 +775,23 @@ export default function ProgramsPage() {
                     <p className="text-xl font-bold text-gray-900">{program.completionRate}%</p>
                     <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
                       <div
-                        className={`rounded-full h-1.5 ${
-                          program.id === 'g-gmp' ? 'bg-purple-500' :
-                          program.id === 'pcp' ? 'bg-orange-500' :
-                          'bg-orange-500'
-                        }`}
+                        className={`rounded-full h-1.5 ${program.id === 'g-gmp' ? 'bg-purple-500' :
+                            program.id === 'pcp' ? 'bg-orange-500' :
+                              'bg-orange-500'
+                          }`}
                         style={{ width: `${program.completionRate}%` }}
                       />
                     </div>
                   </div>
-                  
+
                   {/* Mentor Stats - Only for programs with mentors */}
                   {program.hasMentors && (
                     <div className="bg-white/50 rounded-lg p-3">
                       <p className="text-xs text-gray-500">Mentors</p>
                       <p className="text-xl font-bold text-gray-900">
-                        {program.id === 'g-gmp' ? '18' : 
-                         program.id === 'g-cmp' ? '19' : 
-                         program.id === 'e-tip' ? '10' : '0'}
+                        {program.id === 'g-gmp' ? '18' :
+                          program.id === 'g-cmp' ? '19' :
+                            program.id === 'e-tip' ? '10' : '0'}
                       </p>
                       <p className="text-xs text-orange-600 mt-1">Active mentors</p>
                     </div>
@@ -871,9 +870,9 @@ export default function ProgramsPage() {
                           Enrolled Students
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {program.id === 'g-gmp' ? 'Outcomes' : 
-                           program.id === 'pcp' ? 'Certifications' : 
-                           'Progress'}
+                          {program.id === 'g-gmp' ? 'Outcomes' :
+                            program.id === 'pcp' ? 'Certifications' :
+                              'Progress'}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Type
@@ -897,11 +896,10 @@ export default function ProgramsPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center">
-                              <span className={`text-sm font-medium ${
-                                program.id === 'g-gmp' ? 'text-purple-600' :
-                                program.id === 'pcp' ? 'text-orange-600' :
-                                'text-green-600'
-                              }`}>
+                              <span className={`text-sm font-medium ${program.id === 'g-gmp' ? 'text-purple-600' :
+                                  program.id === 'pcp' ? 'text-orange-600' :
+                                    'text-green-600'
+                                }`}>
                                 {track.outcomes}
                                 {program.id !== 'g-gmp' && program.id !== 'pcp' && '%'}
                               </span>
@@ -916,25 +914,23 @@ export default function ProgramsPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              program.id === 'g-gmp' ? 'bg-purple-100 text-purple-700' :
-                              program.id === 'pcp' ? 'bg-orange-100 text-orange-700' :
-                              program.hasMentors ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
-                            }`}>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${program.id === 'g-gmp' ? 'bg-purple-100 text-purple-700' :
+                                program.id === 'pcp' ? 'bg-orange-100 text-orange-700' :
+                                  program.hasMentors ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
+                              }`}>
                               {program.id === 'g-gmp' ? 'Innovation Track' :
-                               program.id === 'pcp' ? 'Certification Track' :
-                               'Learning Track'}
+                                program.id === 'pcp' ? 'Certification Track' :
+                                  'Learning Track'}
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              track.outcomes > 20 ? 'bg-green-100 text-green-700' :
-                              track.outcomes > 10 ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${track.outcomes > 20 ? 'bg-green-100 text-green-700' :
+                                track.outcomes > 10 ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-gray-100 text-gray-700'
+                              }`}>
                               {track.outcomes > 20 ? 'High Performance' :
-                               track.outcomes > 10 ? 'On Track' :
-                               'Developing'}
+                                track.outcomes > 10 ? 'On Track' :
+                                  'Developing'}
                             </span>
                           </td>
                         </tr>
@@ -968,13 +964,13 @@ export default function ProgramsPage() {
                       <Download size={14} className="mr-1" />
                       Generate Report
                     </button>
-                    <button
+                    <Button
                       onClick={() => handleManageTracks(program)}
-                      className="flex items-center px-3 py-1 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                      className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
                     >
                       <Settings size={14} className="mr-1" />
                       Manage Tracks
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -1002,7 +998,7 @@ export default function ProgramsPage() {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="mb-4">
               <p className="text-sm text-gray-600">
                 Generate report for <span className="font-semibold">{showReportModal.name}</span>
@@ -1060,10 +1056,10 @@ export default function ProgramsPage() {
               >
                 Cancel
               </button>
-              <button
+              <Button
                 onClick={() => handleGenerateReport(showReportModal)}
                 disabled={generatingReport}
-                className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white disabled:opacity-50"
               >
                 {generatingReport ? (
                   <>
@@ -1076,7 +1072,7 @@ export default function ProgramsPage() {
                     Generate
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1104,7 +1100,7 @@ export default function ProgramsPage() {
                 />
               ))}
 
-              <button 
+              <button
                 onClick={() => {
                   // Add new track functionality here
                   console.log('Add new track for program:', showTrackModal.id);
@@ -1122,16 +1118,16 @@ export default function ProgramsPage() {
               >
                 Close
               </button>
-              <button
+              <Button
                 onClick={() => {
                   // Save all changes
                   setShowTrackModal(null);
                   alert('Track changes saved successfully!');
                 }}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
               >
                 Save Changes
-              </button>
+              </Button>
             </div>
           </div>
         </div>

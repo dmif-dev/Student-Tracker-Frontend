@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Plus, X } from 'lucide-react';
@@ -165,13 +166,13 @@ export default function AddMentorPage() {
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="e.g., AI/ML, Patents, Research"
               />
-              <button
+              <Button
                 type="button"
                 onClick={addExpertise}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
               >
                 <Plus size={20} />
-              </button>
+              </Button>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -260,10 +261,10 @@ export default function AddMentorPage() {
           >
             Cancel
           </Link>
-          <button
+          <Button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>
@@ -276,7 +277,7 @@ export default function AddMentorPage() {
                 Add Mentor
               </>
             )}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

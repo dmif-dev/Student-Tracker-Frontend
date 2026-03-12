@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Mail, Edit, Eye, Copy, CheckCircle } from 'lucide-react';
 
@@ -85,10 +86,10 @@ export default function EmailSettingsPage() {
                     {previewMode ? <Edit size={16} className="mr-1" /> : <Eye size={16} className="mr-1" />}
                     {previewMode ? 'Edit' : 'Preview'}
                   </button>
-                  <button className="flex items-center px-3 py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                  <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
                     <Copy size={16} className="mr-1" />
                     Duplicate
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -161,9 +162,9 @@ export default function EmailSettingsPage() {
                 <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
                   Cancel
                 </button>
-                <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
                   Save Changes
-                </button>
+                </Button>
               </div>
             </div>
           ) : (

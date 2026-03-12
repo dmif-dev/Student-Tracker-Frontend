@@ -2,6 +2,7 @@
 
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { ApiService } from '@/services/api';
 import {
@@ -95,10 +96,10 @@ interface AnalyticsData {
     hasMentors: boolean;
     hasOutcomes: boolean;
   }>;
-  trackProgress: Array<{ 
-    program: string; 
-    track: string; 
-    progress: number; 
+  trackProgress: Array<{
+    program: string;
+    track: string;
+    progress: number;
     students: number;
     hasMentor: boolean;
     completionRate: number;
@@ -226,7 +227,7 @@ export default function AnalyticsPage() {
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       const mockData = generateMockData(dateRange, selectedProgram, selectedTrack);
       setData(mockData);
     } catch (error) {
@@ -354,7 +355,7 @@ export default function AnalyticsPage() {
         .reduce((sum, p) => sum + p.stats.totalMentors, 0),
       totalOutcomes: filteredPrograms
         .filter(p => p.hasOutcomes)
-        .reduce((sum, p) => 
+        .reduce((sum, p) =>
           sum + (p.outcomes?.reduce((s, o) => s + o.count, 0) || 0), 0
         ),
       pcpStudents: filteredPrograms
@@ -379,13 +380,13 @@ export default function AnalyticsPage() {
         .map(p => ({ program: p.name, count: p.stats.totalMentors })),
       averageStudentsPerMentor: filteredPrograms.filter(p => p.hasMentors).length > 0
         ? Math.floor(
-            filteredPrograms
-              .filter(p => p.hasMentors)
-              .reduce((sum, p) => sum + p.stats.totalStudents, 0) /
-            filteredPrograms
-              .filter(p => p.hasMentors)
-              .reduce((sum, p) => sum + p.stats.totalMentors, 0)
-          )
+          filteredPrograms
+            .filter(p => p.hasMentors)
+            .reduce((sum, p) => sum + p.stats.totalStudents, 0) /
+          filteredPrograms
+            .filter(p => p.hasMentors)
+            .reduce((sum, p) => sum + p.stats.totalMentors, 0)
+        )
         : 0,
       totalSessionsPerMonth: filteredPrograms.filter(p => p.hasMentors).length > 0 ? 245 : 0
     };
@@ -434,7 +435,7 @@ export default function AnalyticsPage() {
     const baseTotal = 500;
     const basePCP = 150;
     const baseMentorLed = 350;
-    
+
     for (let i = 0; i < Math.min(months, 12); i++) {
       enrollmentTrend.push({
         month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i % 12],
@@ -455,7 +456,7 @@ export default function AnalyticsPage() {
     }));
 
     // Generate track progress
-    const trackProgress = filteredPrograms.flatMap(p => 
+    const trackProgress = filteredPrograms.flatMap(p =>
       p.tracks.map(t => ({
         program: p.name,
         track: t.name,
@@ -567,7 +568,7 @@ export default function AnalyticsPage() {
           ['Monthly Outcomes'],
           ['Month', 'Patents', 'Papers', 'Startups']
         );
-        
+
         data.outcomeStats.byMonth?.forEach(m => {
           rows.push([m.month, m.patents, m.papers, m.startups]);
         });
@@ -633,10 +634,10 @@ export default function AnalyticsPage() {
             <RefreshCw size={18} className="mr-2" />
             Refresh
           </button>
-          <button
+          <Button
             onClick={handleExport}
             disabled={exporting}
-            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+            className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white disabled:opacity-50"
           >
             {exporting ? (
               <>
@@ -649,7 +650,7 @@ export default function AnalyticsPage() {
                 Export Report
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -724,22 +725,21 @@ export default function AnalyticsPage() {
             </div>
           )}
 
-          <button
+          <Button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
-              showFilters || getActiveFilterCount() > 0
+            className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${showFilters || getActiveFilterCount() > 0
                 ? 'bg-orange-50 border-orange-300 text-orange-600'
                 : 'border-gray-300 hover:bg-gray-50'
-            }`}
+              }`}
           >
             <Filter size={18} className="mr-2" />
             Filters
             {getActiveFilterCount() > 0 && (
-              <span className="ml-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
                 {getActiveFilterCount()}
               </span>
             )}
-          </button>
+          </Button>
 
           {getActiveFilterCount() > 0 && (
             <button
@@ -894,8 +894,8 @@ export default function AnalyticsPage() {
                     <span className="font-medium">{Math.round(program.stats.averageProgress || 0)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5">
-                    <div 
-                      className={`rounded-full h-1.5 ${program.hasOutcomes ? 'bg-purple-500' : program.hasMentors ? 'bg-orange-600' : 'bg-orange-500'}`} 
+                    <div
+                      className={`rounded-full h-1.5 ${program.hasOutcomes ? 'bg-purple-500' : program.hasMentors ? 'bg-orange-600' : 'bg-orange-500'}`}
                       style={{ width: `${program.stats.completionRate}%` }}
                     />
                   </div>
@@ -965,7 +965,7 @@ export default function AnalyticsPage() {
               <p className="text-2xl font-bold text-orange-700">{data.pcpStats.completionRate}%</p>
             </div>
           </div>
-          
+
           {data.pcpStats.moduleProgress.length > 0 && (
             <>
               <h4 className="font-medium text-gray-700 mb-3">Module Completion Rates</h4>
@@ -1105,12 +1105,11 @@ export default function AnalyticsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center space-x-2">
                           <div className="w-20 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`rounded-full h-2 ${
-                                track.program === 'G-GMP' ? 'bg-purple-500' :
-                                track.hasMentor ? 'bg-orange-600' : 'bg-orange-500'
-                              }`} 
-                              style={{ width: `${track.progress}%` }} 
+                            <div
+                              className={`rounded-full h-2 ${track.program === 'G-GMP' ? 'bg-purple-500' :
+                                  track.hasMentor ? 'bg-orange-600' : 'bg-orange-500'
+                                }`}
+                              style={{ width: `${track.progress}%` }}
                             />
                           </div>
                           <span className="text-sm">{track.progress}%</span>
@@ -1119,33 +1118,30 @@ export default function AnalyticsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center space-x-2">
                           <div className="w-20 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`rounded-full h-2 ${
-                                track.program === 'G-GMP' ? 'bg-purple-500' :
-                                track.hasMentor ? 'bg-green-500' : 'bg-orange-500'
-                              }`} 
-                              style={{ width: `${track.completionRate}%` }} 
+                            <div
+                              className={`rounded-full h-2 ${track.program === 'G-GMP' ? 'bg-purple-500' :
+                                  track.hasMentor ? 'bg-green-500' : 'bg-orange-500'
+                                }`}
+                              style={{ width: `${track.completionRate}%` }}
                             />
                           </div>
                           <span className="text-sm">{track.completionRate}%</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          track.program === 'G-GMP' ? 'bg-purple-100 text-purple-700' :
-                          track.hasMentor ? 'bg-orange-100 text-orange-700' : 'bg-orange-100 text-orange-700'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${track.program === 'G-GMP' ? 'bg-purple-100 text-purple-700' :
+                            track.hasMentor ? 'bg-orange-100 text-orange-700' : 'bg-orange-100 text-orange-700'
+                          }`}>
                           {track.program === 'G-GMP' ? 'Innovation' : track.hasMentor ? 'Mentor-led' : 'Self-paced'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          track.completionRate >= 80 ? 'bg-green-100 text-green-700' :
-                          track.completionRate >= 60 ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${track.completionRate >= 80 ? 'bg-green-100 text-green-700' :
+                            track.completionRate >= 60 ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                          }`}>
                           {track.completionRate >= 80 ? 'Excellent' :
-                           track.completionRate >= 60 ? 'Good' : 'Needs Attention'}
+                            track.completionRate >= 60 ? 'Good' : 'Needs Attention'}
                         </span>
                       </td>
                     </tr>

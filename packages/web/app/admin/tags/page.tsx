@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -176,13 +177,13 @@ export default function TagsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Tag Management</h1>
-        <button
+        <Button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
         >
           <Plus size={18} className="mr-2" />
           Create Tag
-        </button>
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -411,12 +412,12 @@ function TagModal({ tag, onClose, onSave }: TagModalProps) {
             >
               Cancel
             </button>
-            <button
+            <Button
               type="submit"
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               {tag ? 'Update' : 'Create'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

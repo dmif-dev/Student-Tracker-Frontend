@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Save } from 'lucide-react';
+import { Button } from '../../../../components/ui/button';
 
 export default function NotificationsSettingsPage() {
   const [settings, setSettings] = useState({
@@ -39,10 +40,10 @@ export default function NotificationsSettingsPage() {
       </div>
 
       <div className="pt-6 border-t border-gray-200 mt-6">
-        <button className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+        <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20">
           <Save size={18} className="mr-2" />
           Save Changes
-        </button>
+        </Button>
       </div>
     </div>
   );

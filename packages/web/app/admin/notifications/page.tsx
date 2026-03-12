@@ -2,6 +2,7 @@
 
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotifications } from '@/contexts/AdminNotificationContext';
@@ -156,7 +157,7 @@ export default function NotificationsPage() {
         <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button
+              <Button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
                   showFilters || getActiveFilterCount() > 0
@@ -167,11 +168,11 @@ export default function NotificationsPage() {
                 <Filter size={18} className="mr-2" />
                 Filters
                 {getActiveFilterCount() > 0 && (
-                  <span className="ml-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
                     {getActiveFilterCount()}
                   </span>
                 )}
-              </button>
+              </Button>
 
               {getActiveFilterCount() > 0 && (
                 <button

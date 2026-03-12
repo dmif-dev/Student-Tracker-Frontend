@@ -2,6 +2,7 @@
 
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -887,13 +888,13 @@ export default function GenerateReportPage() {
               </div>
 
               <div className="flex justify-end mt-6">
-                <button
+                <Button
                   onClick={() => setStep(2)}
                   disabled={!config.name}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next: Select Candidates
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1093,13 +1094,13 @@ export default function GenerateReportPage() {
                 >
                   Back
                 </button>
-                <button
+                <Button
                   onClick={() => setStep(3)}
                   disabled={config.students.length === 0 && config.mentors.length === 0}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next: Select Content
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1195,12 +1196,12 @@ export default function GenerateReportPage() {
                 >
                   Back
                 </button>
-                <button
+                <Button
                   onClick={() => setStep(4)}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                  className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
                 >
                   Next: Schedule & Generate
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1290,10 +1291,10 @@ export default function GenerateReportPage() {
                 >
                   Back
                 </button>
-                <button
+                <Button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {generating ? (
                     <>
@@ -1306,7 +1307,7 @@ export default function GenerateReportPage() {
                       Generate Report
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1322,13 +1323,13 @@ export default function GenerateReportPage() {
             Your report "{config.name}" has been generated and is ready for download.
           </p>
           <div className="flex justify-center space-x-4">
-            <button
+            <Button
               onClick={handleDownload}
-              className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               <Download size={18} className="mr-2" />
               Download Report
-            </button>
+            </Button>
             {config.schedule.enabled && (
               <button
                 onClick={handleSchedule}

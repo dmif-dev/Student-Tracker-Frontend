@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Shield, Key, Lock, Eye, EyeOff, Save } from 'lucide-react';
 
@@ -63,9 +64,9 @@ export default function SecuritySettingsPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
-            <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+            <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
               Update Password
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -206,10 +207,10 @@ export default function SecuritySettingsPage() {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <button className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+          <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
             <Save size={18} className="mr-2" />
             Save Security Settings
-          </button>
+          </Button>
         </div>
       </div>
     </div>

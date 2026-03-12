@@ -2,6 +2,7 @@
 
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -197,7 +198,7 @@ export default function ReportsPage() {
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         return report.name.toLowerCase().includes(searchLower) ||
-               report.generatedBy.toLowerCase().includes(searchLower);
+          report.generatedBy.toLowerCase().includes(searchLower);
       }
 
       return true;
@@ -234,15 +235,15 @@ export default function ReportsPage() {
   };
 
   const handleToggleStatus = (scheduleId: string) => {
-    setScheduledReports(scheduledReports.map(s => 
-      s.id === scheduleId 
+    setScheduledReports(scheduledReports.map(s =>
+      s.id === scheduleId
         ? { ...s, status: s.status === 'active' ? 'paused' : 'active' }
         : s
     ));
   };
 
   const handleSaveSchedule = (updatedSchedule: ScheduledReport) => {
-    setScheduledReports(scheduledReports.map(s => 
+    setScheduledReports(scheduledReports.map(s =>
       s.id === updatedSchedule.id ? updatedSchedule : s
     ));
     setShowEditModal(false);
@@ -277,11 +278,11 @@ export default function ReportsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
         <Link
-          href="/admin/reports/generate"
-          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          <FileText size={18} className="mr-2" />
-          Generate Report
+          href="/admin/reports/generate">
+          <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
+            <FileText size={18} className="mr-2" />
+            Generate Report
+          </Button>
         </Link>
       </div>
 
@@ -337,24 +338,23 @@ export default function ReportsPage() {
               </button>
             )}
           </div>
-          
+
           {/* Filter Toggle Button */}
-          <button
+          <Button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center px-4 py-2 border rounded-lg transition-colors relative ${
-              showFilters || getActiveFilterCount() > 0
-                ? 'bg-orange-50 border-orange-300 text-orange-600'
-                : 'border-gray-300 hover:bg-gray-50'
-            }`}
+            className={`flex items-center px-4 py-2 border rounded-lg transition-colors relative ${showFilters || getActiveFilterCount() > 0
+              ? 'bg-orange-50 border-orange-300 text-orange-600'
+              : 'border-gray-300 hover:bg-gray-50'
+              }`}
           >
             <Filter size={18} className="mr-2" />
             Filters
             {getActiveFilterCount() > 0 && (
-              <span className="ml-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
                 {getActiveFilterCount()}
               </span>
             )}
-          </button>
+          </Button>
 
           {/* Clear Filters Button */}
           {getActiveFilterCount() > 0 && (
@@ -501,8 +501,8 @@ export default function ReportsPage() {
             <FileText size={48} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No reports found</h3>
             <p className="text-gray-500">
-              {getActiveFilterCount() > 0 
-                ? 'No reports match your current filters. Try adjusting your criteria.' 
+              {getActiveFilterCount() > 0
+                ? 'No reports match your current filters. Try adjusting your criteria.'
                 : 'Generate your first report to get started.'}
             </p>
             {getActiveFilterCount() > 0 && (
@@ -521,15 +521,15 @@ export default function ReportsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Scheduled Reports</h2>
-          <button className="text-sm text-orange-600 hover:text-orange-700">
+          <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
             + Add Schedule
-          </button>
+          </Button>
         </div>
         <div className="space-y-4">
           {scheduledReports.map((schedule) => {
             const lastGenFormatted = schedule.lastGenerated ? formatDate(schedule.lastGenerated) : null;
             const nextGenFormatted = schedule.nextGeneration ? formatDate(schedule.nextGeneration) : null;
-            
+
             return (
               <div key={schedule.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
@@ -538,11 +538,10 @@ export default function ReportsPage() {
                   <div>
                     <div className="flex items-center space-x-2">
                       <p className="font-medium">{schedule.name}</p>
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${
-                        schedule.status === 'active' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-gray-100 text-gray-700'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${schedule.status === 'active'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-700'
+                        }`}>
                         {schedule.status}
                       </span>
                     </div>
@@ -567,11 +566,10 @@ export default function ReportsPage() {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleToggleStatus(schedule.id)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      schedule.status === 'active' 
-                        ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
-                        : 'bg-green-50 text-green-600 hover:bg-green-100'
-                    }`}
+                    className={`p-2 rounded-lg transition-colors ${schedule.status === 'active'
+                      ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
+                      : 'bg-green-50 text-green-600 hover:bg-green-100'
+                      }`}
                     title={schedule.status === 'active' ? 'Pause' : 'Resume'}
                   >
                     {schedule.status === 'active' ? <Clock size={16} /> : <Check size={16} />}
@@ -613,9 +611,9 @@ export default function ReportsPage() {
 }
 
 // Edit Schedule Modal Component
-function EditScheduleModal({ schedule, onClose, onSave }: { 
-  schedule: ScheduledReport; 
-  onClose: () => void; 
+function EditScheduleModal({ schedule, onClose, onSave }: {
+  schedule: ScheduledReport;
+  onClose: () => void;
   onSave: (updated: ScheduledReport) => void;
 }) {
   const [formData, setFormData] = useState({
@@ -633,7 +631,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const updated: ScheduledReport = {
       ...schedule,
       name: formData.name,
@@ -645,7 +643,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
       recipients: formData.recipients.split(',').map(r => r.trim()),
       status: formData.status as 'active' | 'paused',
     };
-    
+
     onSave(updated);
   };
 
@@ -662,7 +660,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h3 className="text-lg font-semibold mb-4">Edit Scheduled Report</h3>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -752,14 +750,13 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
                   key={program}
                   type="button"
                   onClick={() => toggleProgram(program)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    formData.programs.includes(program)
-                      ? program === 'G-GMP' ? 'bg-purple-100 text-purple-700' :
-                        program === 'G-CMP' ? 'bg-green-100 text-green-700' :
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${formData.programs.includes(program)
+                    ? program === 'G-GMP' ? 'bg-purple-100 text-purple-700' :
+                      program === 'G-CMP' ? 'bg-green-100 text-green-700' :
                         program === 'E-TIP' ? 'bg-orange-100 text-orange-700' :
-                        'bg-orange-100 text-orange-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                          'bg-orange-100 text-orange-700'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   {program}
                 </button>
@@ -818,12 +815,12 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
             >
               Cancel
             </button>
-            <button
+            <Button
               type="submit"
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               Save Changes
-            </button>
+            </Button>
           </div>
         </form>
       </div>

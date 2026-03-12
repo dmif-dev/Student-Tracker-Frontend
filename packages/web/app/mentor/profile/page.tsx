@@ -2,6 +2,7 @@
 
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -112,7 +113,7 @@ export default function MentorProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -147,13 +148,13 @@ export default function MentorProfilePage() {
               <X size={18} className="mr-2" />
               Cancel
             </button>
-            <button
+            <Button
               onClick={handleSave}
-              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               <Save size={18} className="mr-2" />
               Save Changes
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -162,7 +163,7 @@ export default function MentorProfilePage() {
         {/* Profile Card */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-            <div className="w-24 h-24 bg-primary-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
+            <div className="w-24 h-24 bg-orange-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
               {profile.name.charAt(0)}
             </div>
             
@@ -278,7 +279,7 @@ export default function MentorProfilePage() {
                 value={editedProfile.bio || profile.bio || ''}
                 onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Tell us about yourself..."
               />
             ) : (
@@ -293,7 +294,7 @@ export default function MentorProfilePage() {
               {profile.expertise.map((exp, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm"
+                  className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm"
                 >
                   {exp}
                 </span>

@@ -307,7 +307,7 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <div className="space-y-6">
           <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-gray-900 text-white p-8">
-            <h3 className="text-xl font-black font-montserrat mb-6 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-xl font-black text-white font-montserrat mb-6 uppercase tracking-wider flex items-center gap-2">
               <TrendingUp className="text-orange-500 w-5 h-5" />
               Administrative
             </h3>

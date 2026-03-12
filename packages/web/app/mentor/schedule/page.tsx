@@ -1,7 +1,6 @@
-// packages/web/app/mentor/schedule/page.tsx
-
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -57,7 +56,7 @@ export default function MentorSchedulePage() {
   const [showSessionModal, setShowSessionModal] = useState<Session | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [students, setStudents] = useState<AssignedStudent[]>([]);
-  
+
   // Session notes state
   const [selectedSessionForNotes, setSelectedSessionForNotes] = useState<Session | null>(null);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -86,7 +85,7 @@ export default function MentorSchedulePage() {
         ApiService.getMentorSchedule(MENTOR_ID),
         ApiService.getMentorById(MENTOR_ID)
       ]);
-      
+
       // Transform the schedule data to match Session interface
       const transformedSessions: Session[] = schedule.map((s: any) => ({
         id: s.id,
@@ -104,9 +103,9 @@ export default function MentorSchedulePage() {
         createdAt: s.createdAt || new Date().toISOString(),
         updatedAt: s.updatedAt || new Date().toISOString(),
       }));
-      
+
       setSessions(transformedSessions);
-      
+
       // Get assigned students and filter out PCP, then map to our local type
       const assignedStudents = (mentor?.assignedStudents || [])
         .filter((s: MockAssignedStudent) => s.program !== 'PCP')
@@ -118,7 +117,7 @@ export default function MentorSchedulePage() {
           progress: s.progress,
           lastSession: s.lastSession,
         }));
-      
+
       setStudents(assignedStudents);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -223,12 +222,12 @@ export default function MentorSchedulePage() {
       // await ApiService.updateSession(editingSession.id, updatedData);
 
       // Update local state
-      setSessions(prev => prev.map(s => 
-        s.id === editingSession.id 
+      setSessions(prev => prev.map(s =>
+        s.id === editingSession.id
           ? { ...s, ...updatedData, updatedAt: new Date().toISOString() }
           : s
       ));
-      
+
       setShowEditModal(false);
       setEditingSession(null);
     } catch (error) {
@@ -258,7 +257,7 @@ export default function MentorSchedulePage() {
         noteData,
         MENTOR_ID
       );
-      
+
       // Update the session in the list
       setSessions(prev => prev.map(s => {
         if (s.id === sessionId) {
@@ -270,7 +269,7 @@ export default function MentorSchedulePage() {
         }
         return s;
       }));
-      
+
       setShowNotesModal(false);
       setSelectedSessionForNotes(null);
       setSessionNotes([]);
@@ -318,7 +317,7 @@ export default function MentorSchedulePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -342,31 +341,31 @@ export default function MentorSchedulePage() {
           >
             {view === 'calendar' ? 'List View' : 'Calendar View'}
           </button>
-          <button
+          <Button
             onClick={() => setShowScheduleModal(true)}
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
           >
             <Plus size={18} className="mr-2" />
             Schedule Session
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Upcoming Sessions Summary */}
-      <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-primary-600 mb-1">Upcoming Sessions</p>
-            <p className="text-2xl font-bold text-primary-700">{upcomingSessions.length}</p>
+            <p className="text-sm text-orange-600 mb-1">Upcoming Sessions</p>
+            <p className="text-2xl font-bold text-orange-700">{upcomingSessions.length}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-primary-600 mb-1">Next Session</p>
+            <p className="text-sm text-orange-600 mb-1">Next Session</p>
             {upcomingSessions.length > 0 ? (
-              <p className="text-sm font-medium text-primary-700">
+              <p className="text-sm font-medium text-orange-700">
                 {upcomingSessions[0].studentName} • {new Date(upcomingSessions[0].date).toLocaleDateString()}
               </p>
             ) : (
-              <p className="text-sm text-primary-500">No upcoming sessions</p>
+              <p className="text-sm text-orange-500">No upcoming sessions</p>
             )}
           </div>
         </div>
@@ -420,13 +419,11 @@ export default function MentorSchedulePage() {
                 <div
                   key={day}
                   onClick={() => setSelectedDate(date)}
-                  className={`bg-white p-2 h-32 overflow-y-auto cursor-pointer hover:bg-gray-50 transition-colors ${
-                    isSelected ? 'ring-2 ring-primary-500 ring-inset' : ''
-                  } ${isToday ? 'bg-primary-50' : ''}`}
+                  className={`bg-white p-2 h-32 overflow-y-auto cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? 'ring-2 ring-orange-500 ring-inset' : ''
+                    } ${isToday ? 'bg-orange-50' : ''}`}
                 >
-                  <span className={`text-sm font-medium ${
-                    isSelected ? 'text-primary-600' : isToday ? 'text-primary-600' : 'text-gray-700'
-                  }`}>
+                  <span className={`text-sm font-medium ${isSelected ? 'text-orange-600' : isToday ? 'text-orange-600' : 'text-gray-700'
+                    }`}>
                     {day}
                   </span>
                   <div className="mt-1 space-y-1">
@@ -459,19 +456,19 @@ export default function MentorSchedulePage() {
             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
               <h2 className="font-semibold">Upcoming Sessions ({upcomingSessions.length})</h2>
             </div>
-            
+
             {upcomingSessions.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No upcoming sessions</h3>
                 <p className="text-gray-500">Schedule your next mentoring session.</p>
-                <button
+                <Button
                   onClick={() => setShowScheduleModal(true)}
-                  className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
                 >
                   <Plus size={18} className="mr-2" />
                   Schedule Session
-                </button>
+                </Button>
               </div>
             ) : (
               <>
@@ -494,7 +491,7 @@ export default function MentorSchedulePage() {
                                 {session.status}
                               </span>
                             </div>
-                            
+
                             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500 flex-wrap gap-y-2">
                               <span className="flex items-center">
                                 <Calendar size={14} className="mr-1" />
@@ -505,17 +502,17 @@ export default function MentorSchedulePage() {
                                 {formatTime(session.startTime)} - {formatTime(session.endTime)}
                               </span>
                             </div>
-                            
+
                             <p className="text-sm text-gray-600 mt-2">
                               <span className="font-medium">Topic:</span> {session.topic}
                             </p>
-                            
+
                             {session.meetingLink && session.status === 'scheduled' && (
                               <a
                                 href={session.meetingLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center mt-2 text-sm text-primary-600 hover:text-primary-700"
+                                className="inline-flex items-center mt-2 text-sm text-orange-600 hover:text-orange-700"
                               >
                                 <Video size={14} className="mr-1" />
                                 Join Meeting
@@ -619,7 +616,7 @@ export default function MentorSchedulePage() {
               <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <h2 className="font-semibold">Past Sessions ({pastSessions.length})</h2>
               </div>
-              
+
               <div className="divide-y divide-gray-200">
                 {pastPaginatedSessions.map((session) => (
                   <div key={session.id} className="px-6 py-4 hover:bg-gray-50">
@@ -638,7 +635,7 @@ export default function MentorSchedulePage() {
                               {session.status}
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500 flex-wrap gap-y-2">
                             <span className="flex items-center">
                               <Calendar size={14} className="mr-1" />
@@ -649,7 +646,7 @@ export default function MentorSchedulePage() {
                               {formatTime(session.startTime)} - {formatTime(session.endTime)}
                             </span>
                           </div>
-                          
+
                           <p className="text-sm text-gray-600 mt-2">
                             <span className="font-medium">Topic:</span> {session.topic}
                           </p>
@@ -834,7 +831,7 @@ export default function MentorSchedulePage() {
                   href={showSessionModal.meetingLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full text-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  className="block w-full text-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                 >
                   Join Meeting
                 </a>
@@ -872,9 +869,9 @@ export default function MentorSchedulePage() {
 
 // ==================== ScheduleSessionModal Component ====================
 
-function ScheduleSessionModal({ students, onClose, onSchedule }: { 
-  students: AssignedStudent[]; 
-  onClose: () => void; 
+function ScheduleSessionModal({ students, onClose, onSchedule }: {
+  students: AssignedStudent[];
+  onClose: () => void;
   onSchedule: (sessionData: SessionFormData) => void;
 }) {
   const [formData, setFormData] = useState<SessionFormData>({
@@ -919,7 +916,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
             <X size={20} />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -928,7 +925,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
             <select
               value={formData.studentId}
               onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             >
               <option value="">Choose a student</option>
@@ -954,7 +951,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
               value={formData.date}
               min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
             {formData.studentId && (
@@ -973,7 +970,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -985,7 +982,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -999,7 +996,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
               type="text"
               value={formData.topic}
               onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="e.g., Weekly Progress Review"
             />
           </div>
@@ -1012,7 +1009,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
               type="url"
               value={formData.meetingLink}
               onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://meet.google.com/..."
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -1028,7 +1025,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Any additional notes or agenda items..."
             />
           </div>
@@ -1041,12 +1038,12 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
             >
               Cancel
             </button>
-            <button
+            <Button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               Schedule Session
-            </button>
+            </Button>
           </div>
         </form>
       </div>
@@ -1095,7 +1092,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
             <select
               value={formData.studentId}
               onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             >
               {students.map((student) => (
@@ -1114,7 +1111,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
@@ -1128,7 +1125,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -1140,7 +1137,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -1154,7 +1151,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
               type="text"
               value={formData.topic}
               onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
@@ -1167,7 +1164,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
               type="url"
               value={formData.meetingLink}
               onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://meet.google.com/..."
             />
           </div>
@@ -1180,12 +1177,12 @@ function EditSessionModal({ session, students, onClose, onSave }: {
             >
               Cancel
             </button>
-            <button
+            <Button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               Save Changes
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -32,7 +32,7 @@ import { Document, DocumentType } from '@student-tracker/shared/models/Document'
 import DocumentViewer from '@/components/common/DocumentViewer';
 import { DocumentViewerService } from '@/services/documentViewerService';
 import { FileHandlerService } from '@/services/fileHandlerService';
-
+import { Button } from '../../../components/ui/button';
 // Define types for the component
 interface Mentor {
   id: string;
@@ -186,18 +186,18 @@ export default function DocumentsPage() {
       fileSize: doc.fileSize,
     });
     setShowViewer(true);
-    
+
     // Track the view
     await DocumentViewerService.trackView(doc.id, ADMIN_ID, 'admin');
   };
 
   const handleDownload = async (doc: Document, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    
+
     try {
       // Track the download
       await DocumentViewerService.trackDownload(doc.id, ADMIN_ID, 'admin');
-      
+
       // Download the file
       await FileHandlerService.downloadFile({
         id: doc.id,
@@ -249,13 +249,13 @@ export default function DocumentsPage() {
             Manage documents for G-CMP and E-TIP students
           </p>
         </div>
-        <button
+        <Button
           onClick={() => setShowUploadModal(true)}
-          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+          className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
         >
           <Upload size={18} className="mr-2" />
           Upload Document
-        </button>
+        </Button>
       </div>
 
       {/* Info Banner */}
@@ -264,7 +264,7 @@ export default function DocumentsPage() {
           <FileText size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm text-orange-700">
-              <strong>Document Management:</strong> Upload learning materials and assignments for G-CMP and E-TIP students. 
+              <strong>Document Management:</strong> Upload learning materials and assignments for G-CMP and E-TIP students.
               Set permissions to control which students can view and download each document.
             </p>
           </div>
@@ -430,13 +430,13 @@ export default function DocumentsPage() {
           <FileText size={48} className="mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
           <p className="text-gray-500 mb-4">Get started by uploading your first document.</p>
-          <button
+          <Button
             onClick={() => setShowUploadModal(true)}
-            className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+            className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
           >
             <Upload size={18} className="mr-2" />
             Upload Document
-          </button>
+          </Button>
         </div>
       )}
 
@@ -528,7 +528,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
     if (!formData.file || !formData.mentorId) return;
 
     const selectedMentor = mentors.find((m: any) => m.id === formData.mentorId);
-    
+
     // Build metadata based on document type
     const metadata: any = {
       version: 1,
@@ -542,7 +542,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
     } else if (formData.type === 'pre_reading_material') {
       if (formData.readingTime) metadata.readingTime = parseInt(formData.readingTime);
     }
-    
+
     await onUpload({
       title: formData.title,
       description: formData.description,
@@ -568,8 +568,8 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
     });
   };
 
-  const filteredStudents = students.filter((s: any) => 
-    s.program === formData.program && 
+  const filteredStudents = students.filter((s: any) =>
+    s.program === formData.program &&
     (formData.track ? s.track === formData.track : true)
   );
 
@@ -619,10 +619,10 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
               </label>
               <select
                 value={formData.program}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
+                onChange={(e) => setFormData({
+                  ...formData,
                   program: e.target.value as 'G-CMP' | 'E-TIP',
-                  track: '' 
+                  track: ''
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
@@ -673,9 +673,9 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
               </label>
               <select
                 value={formData.visibility}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  visibility: e.target.value as 'student_only' | 'mentor_only' | 'both' 
+                onChange={(e) => setFormData({
+                  ...formData,
+                  visibility: e.target.value as 'student_only' | 'mentor_only' | 'both'
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
@@ -823,12 +823,12 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
             >
               Cancel
             </button>
-            <button
+            <Button
               type="submit"
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               Upload Document
-            </button>
+            </Button>
           </div>
         </form>
       </div>
@@ -879,7 +879,7 @@ function PermissionModal({ documentId, documents, students, onClose, onUpdate }:
     // Build permissions object
     const viewStudents = selectedStudents;
     const downloadStudents = selectedStudents.filter(id => canDownload[id]);
-    
+
     onUpdate(documentId, {
       viewStudents,
       downloadStudents,
@@ -961,12 +961,12 @@ function PermissionModal({ documentId, documents, students, onClose, onUpdate }:
             >
               Cancel
             </button>
-            <button
+            <Button
               onClick={handleSave}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               Save Permissions
-            </button>
+            </Button>
           </div>
         </div>
       </div>

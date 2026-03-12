@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -242,10 +243,10 @@ Jane Smith,jane.smith@example.com,DMIF2024002,G-CMP,AI Product Development,Prof.
           {/* Action Buttons */}
           {importStatus === 'preview' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <button
+              <Button
                 onClick={handleImport}
                 disabled={uploading}
-                className="w-full flex items-center justify-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+                className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white disabled:opacity-50 disabled:cursor-not-allowed w-full"
               >
                 {uploading ? (
                   <>
@@ -255,7 +256,7 @@ Jane Smith,jane.smith@example.com,DMIF2024002,G-CMP,AI Product Development,Prof.
                 ) : (
                   'Import Students'
                 )}
-              </button>
+              </Button>
               <button
                 onClick={() => {
                   setFile(null);

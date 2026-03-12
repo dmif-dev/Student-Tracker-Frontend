@@ -40,7 +40,7 @@ export default function MentorHeader() {
                                 onClick={() => setShowUserMenu(!showUserMenu)}
                                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                             >
-                                <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-semibold">
                                     {MOCK_MENTOR.name.charAt(0)}
                                 </div>
                                 <div className="text-left hidden md:block">
@@ -61,7 +61,7 @@ export default function MentorHeader() {
                                             <p className="text-xs text-gray-500 mt-1">{MOCK_MENTOR.email}</p>
                                             <div className="flex flex-wrap gap-1 mt-2">
                                                 {MOCK_MENTOR.programs.map((prog) => (
-                                                    <span key={prog} className="px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs">
+                                                    <span key={prog} className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
                                                         {prog}
                                                     </span>
                                                 ))}

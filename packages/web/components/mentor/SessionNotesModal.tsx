@@ -146,7 +146,7 @@ export default function SessionNotesModal({
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="What was covered in this session? Key discussions, progress, etc."
                   required
                 />
@@ -163,13 +163,13 @@ export default function SessionNotesModal({
                     value={newTopic}
                     onChange={(e) => setNewTopic(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTopic())}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Add a topic..."
                   />
                   <button
                     type="button"
                     onClick={handleAddTopic}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                   >
                     <Plus size={18} />
                   </button>
@@ -178,13 +178,13 @@ export default function SessionNotesModal({
                   {topics.map((topic) => (
                     <span
                       key={topic}
-                      className="inline-flex items-center px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm"
+                      className="inline-flex items-center px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm"
                     >
                       {topic}
                       <button
                         type="button"
                         onClick={() => handleRemoveTopic(topic)}
-                        className="ml-2 text-primary-500 hover:text-primary-700"
+                        className="ml-2 text-orange-500 hover:text-orange-700"
                       >
                         <X size={14} />
                       </button>
@@ -204,7 +204,7 @@ export default function SessionNotesModal({
                   onChange={(e) => setDuration(parseInt(e.target.value))}
                   min="15"
                   max="180"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
 
@@ -217,7 +217,7 @@ export default function SessionNotesModal({
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Any feedback for the student? Strengths, areas to improve, etc."
                 />
               </div>
@@ -231,7 +231,7 @@ export default function SessionNotesModal({
                   value={nextSteps}
                   onChange={(e) => setNextSteps(e.target.value)}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="What should the student work on before the next session?"
                 />
               </div>
@@ -247,13 +247,13 @@ export default function SessionNotesModal({
                     value={newResource}
                     onChange={(e) => setNewResource(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddResource())}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Add a resource link or name..."
                   />
                   <button
                     type="button"
                     onClick={handleAddResource}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                   >
                     <Plus size={18} />
                   </button>
@@ -291,7 +291,7 @@ export default function SessionNotesModal({
                       </span>
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="text-primary-600 hover:text-primary-700 text-sm"
+                        className="text-orange-600 hover:text-orange-700 text-sm"
                       >
                         Edit
                       </button>
@@ -311,7 +311,7 @@ export default function SessionNotesModal({
                           <h4 className="text-sm font-medium text-gray-700 mb-2">Topics Covered</h4>
                           <div className="flex flex-wrap gap-2">
                             {note.topics.map((topic: string) => (
-                              <span key={topic} className="px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-xs">
+                              <span key={topic} className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
                                 {topic}
                               </span>
                             ))}
@@ -345,7 +345,7 @@ export default function SessionNotesModal({
                           <h4 className="text-sm font-medium text-gray-700 mb-2">Resources Shared</h4>
                           <ul className="list-disc list-inside space-y-1">
                             {note.resources.map((resource: string) => (
-                              <li key={resource} className="text-sm text-primary-600 hover:text-primary-700">
+                              <li key={resource} className="text-sm text-orange-600 hover:text-orange-700">
                                 <a href={resource.startsWith('http') ? resource : '#'} target="_blank" rel="noopener noreferrer">
                                   {resource}
                                 </a>
@@ -375,7 +375,7 @@ export default function SessionNotesModal({
               </button>
               <button
                 onClick={handleSubmit}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
               >
                 Save Notes & Mark Complete
               </button>
@@ -392,7 +392,7 @@ export default function SessionNotesModal({
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                   >
                     Update Notes
                   </button>
@@ -400,7 +400,7 @@ export default function SessionNotesModal({
               ) : (
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                 >
                   Close
                 </button>

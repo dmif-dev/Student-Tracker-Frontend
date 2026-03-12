@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Download, Upload, Clock, Database, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -117,10 +118,10 @@ export default function BackupSettingsPage() {
 
           {/* Manual Backup */}
           <div>
-            <button
+            <Button
               onClick={handleManualBackup}
               disabled={isBackingUp}
-              className="w-full flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white disabled:opacity-50 w-full"
             >
               {isBackingUp ? (
                 <>
@@ -133,7 +134,7 @@ export default function BackupSettingsPage() {
                   Create Manual Backup
                 </>
               )}
-            </button>
+            </Button>
           </div>
 
           {/* Restore Options */}
@@ -185,9 +186,9 @@ export default function BackupSettingsPage() {
                   <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
                     Download
                   </button>
-                  <button className="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700">
+                  <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
                     Restore
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

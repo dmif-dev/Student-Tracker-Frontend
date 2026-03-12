@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Key, Copy, Eye, EyeOff, Plus, Trash2, Calendar } from 'lucide-react';
 
@@ -52,13 +53,13 @@ export default function ApiSettingsPage() {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">API Keys</h2>
-        <button
+        <Button
           onClick={() => setShowNewKeyForm(true)}
-          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+          className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
         >
           <Plus size={18} className="mr-2" />
           Generate New Key
-        </button>
+        </Button>
       </div>
 
       {/* API Keys List */}
@@ -166,9 +167,9 @@ export default function ApiSettingsPage() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+              <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
                 Generate Key
-              </button>
+              </Button>
             </div>
           </div>
         </div>

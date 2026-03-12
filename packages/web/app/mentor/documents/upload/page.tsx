@@ -2,6 +2,7 @@
 
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -306,7 +307,7 @@ export default function MentorUploadDocumentPage() {
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="e.g., Module 1: Introduction to AI"
                   required
                 />
@@ -320,7 +321,7 @@ export default function MentorUploadDocumentPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Brief description of the document..."
                 />
               </div>
@@ -333,7 +334,7 @@ export default function MentorUploadDocumentPage() {
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as DocumentType })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   >
                     <option value="learning_material">Learning Material</option>
@@ -349,7 +350,7 @@ export default function MentorUploadDocumentPage() {
                   <select
                     value={formData.track}
                     onChange={(e) => setFormData({ ...formData, track: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="">All Tracks</option>
                     {tracks.map(track => (
@@ -376,7 +377,7 @@ export default function MentorUploadDocumentPage() {
               
               {formData.file ? (
                 <div className="space-y-3">
-                  <FileText size={40} className="mx-auto text-primary-500" />
+                  <FileText size={40} className="mx-auto text-orange-500" />
                   <p className="font-medium text-gray-900">{formData.file.name}</p>
                   <p className="text-sm text-gray-500">
                     {(formData.file.size / 1024 / 1024).toFixed(2)} MB
@@ -396,7 +397,7 @@ export default function MentorUploadDocumentPage() {
                     Drag and drop your file here, or{' '}
                     <label
                       htmlFor="file-upload"
-                      className="text-primary-600 hover:text-primary-700 cursor-pointer"
+                      className="text-orange-600 hover:text-orange-700 cursor-pointer"
                     >
                       browse
                     </label>
@@ -423,7 +424,7 @@ export default function MentorUploadDocumentPage() {
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
                 <div>
@@ -434,7 +435,7 @@ export default function MentorUploadDocumentPage() {
                     type="number"
                     value={formData.points}
                     onChange={(e) => setFormData({ ...formData, points: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="e.g., 100"
                     min="0"
                   />
@@ -455,7 +456,7 @@ export default function MentorUploadDocumentPage() {
                   type="number"
                   value={formData.readingTime}
                   onChange={(e) => setFormData({ ...formData, readingTime: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="e.g., 30"
                   min="1"
                 />
@@ -509,14 +510,14 @@ export default function MentorUploadDocumentPage() {
                   placeholder="Search students by name or track..."
                   value={studentSearchTerm}
                   onChange={(e) => setStudentSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               
               <select
                 value={formData.track}
                 onChange={(e) => setFormData({ ...formData, track: e.target.value })}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[150px]"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 min-w-[150px]"
               >
                 <option value="">All Tracks</option>
                 {tracks.map(track => (
@@ -531,7 +532,7 @@ export default function MentorUploadDocumentPage() {
                 <button
                   type="button"
                   onClick={handleSelectAll}
-                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  className="text-sm text-orange-600 hover:text-orange-700 font-medium"
                 >
                   {selectAll ? 'Deselect All' : 'Select All'} ({filteredStudents.length} students)
                 </button>
@@ -586,11 +587,11 @@ export default function MentorUploadDocumentPage() {
 
             {/* Selection Summary */}
             {formData.selectedStudents.length > 0 && (
-              <div className="mt-4 p-3 bg-primary-50 border border-primary-200 rounded-lg">
-                <p className="text-sm text-primary-700">
+              <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-sm text-orange-700">
                   <span className="font-medium">{formData.selectedStudents.length}</span> student(s) selected
                 </p>
-                <p className="text-xs text-primary-600 mt-1">
+                <p className="text-xs text-orange-600 mt-1">
                   This document will be shared with the selected students.
                 </p>
               </div>
@@ -606,7 +607,7 @@ export default function MentorUploadDocumentPage() {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-primary-600 rounded-full h-2 transition-all duration-300"
+                  className="bg-orange-600 rounded-full h-2 transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -631,10 +632,10 @@ export default function MentorUploadDocumentPage() {
             >
               Cancel
             </Link>
-            <button
+            <Button
               type="submit"
               disabled={uploading || !formData.file || formData.selectedStudents.length === 0}
-              className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {uploading ? (
                 <>
@@ -647,7 +648,7 @@ export default function MentorUploadDocumentPage() {
                   Upload Document
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       )}
