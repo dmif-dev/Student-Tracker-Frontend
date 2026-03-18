@@ -16,7 +16,15 @@ import {
   type Outcome,
 } from './mockData';
 import { DocumentService } from './documentService';
-import { Document } from '@student-tracker/shared/models/Document'; // Add this import
+import { Document } from '@student-tracker/shared/models/Document';
+import { createClient } from '@/utils/supabase/client';
+
+// Helper function to get the current Supabase session token
+const getAuthToken = async () => {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token;
+};
 
 // Simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -635,5 +643,23 @@ export class ApiService {
 
   static async revokeDocumentAccess(documentId: string, studentId: string): Promise<Document | undefined> {
     return DocumentService.revokeStudentPermission(documentId, studentId);
+  }
+
+  // Backend Integration Example
+  static async getMe(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) return null;
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/user/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user info from backend');
+    }
+
+    return response.json();
   }
 }

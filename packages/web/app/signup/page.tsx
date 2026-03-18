@@ -3,32 +3,38 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
-import { login, signInWithGoogle } from './auth/actions';
+import { signup, signInWithGoogle } from '../auth/actions';
 
-export default function LandingPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleGoogleLogin = async () => {
     setError(null);
+    setSuccess(null);
     const result = await signInWithGoogle();
     if (result?.error) {
       setError(result.error);
     }
   };
 
-  const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSignupSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(null);
     
     const formData = new FormData(event.currentTarget);
-    const result = await login(formData);
+    const result = await signup(formData);
 
     if (result?.error) {
       setError(result.error);
+      setLoading(false);
+    } else if (result?.success) {
+      setSuccess(result.success);
       setLoading(false);
     }
   };
@@ -43,18 +49,17 @@ export default function LandingPage() {
           <div className="relative w-full max-w-sm">
             <img 
               src="/assets/auth_illustration.png" 
-              alt="Sign In Illustration" 
+              alt="Signup Illustration" 
               className="w-full h-auto object-contain"
             />
           </div>
         </div>
 
-        {/* Right Side: Sign In Form */}
+        {/* Right Side: Signup Form */}
         <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
             <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2 font-montserrat">Login</h2>
-              <p className="text-gray-500 text-sm">Unlock your world.</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2 font-montserrat">Create Account</h2>
             </div>
 
             {error && (
@@ -63,9 +68,29 @@ export default function LandingPage() {
               </div>
             )}
 
-            <form onSubmit={handleLoginSubmit} className="space-y-6">
+            {success && (
+              <div className="mb-6 p-3 rounded-xl bg-green-50 border border-green-100 text-green-600 text-sm">
+                {success}
+              </div>
+            )}
+
+            <form onSubmit={handleSignupSubmit} className="space-y-4">
+              {/* Full Name */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                  <span className="text-orange-500 font-serif">*</span> Full Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="Enter your full name"
+                  className="w-full h-11 px-4 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 placeholder:text-gray-300"
+                />
+              </div>
+
               {/* Email Field */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
                   <span className="text-orange-500 font-serif">*</span> Email
                 </label>
@@ -74,12 +99,12 @@ export default function LandingPage() {
                   name="email"
                   required
                   placeholder="Enter your email"
-                  className="w-full h-12 px-4 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 placeholder:text-gray-300"
+                  className="w-full h-11 px-4 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 placeholder:text-gray-300"
                 />
               </div>
 
               {/* Password Field */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
                   <span className="text-orange-500 font-serif">*</span> Password
                 </label>
@@ -88,8 +113,8 @@ export default function LandingPage() {
                     type={showPassword ? "text" : "password"}
                     name="password"
                     required
-                    placeholder="Enter your password"
-                    className="w-full h-12 px-4 pr-12 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 placeholder:text-gray-300"
+                    placeholder="Create a password"
+                    className="w-full h-11 px-4 pr-12 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 placeholder:text-gray-300"
                   />
                   <button
                     type="button"
@@ -101,8 +126,8 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Role Field - Important for Supabase Metadata */}
-              <div className="space-y-2">
+              {/* Role Field */}
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
                   <span className="text-orange-500 font-serif">*</span> Role
                 </label>
@@ -110,7 +135,7 @@ export default function LandingPage() {
                   name="role"
                   required
                   defaultValue=""
-                  className="w-full h-12 px-4 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 appearance-none cursor-pointer"
+                  className="w-full h-11 px-4 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 appearance-none cursor-pointer"
                 >
                   <option value="" disabled>Select your role</option>
                   <option value="Student">Student</option>
@@ -119,22 +144,22 @@ export default function LandingPage() {
                 </select>
               </div>
 
-              {/* Login Button */}
+              {/* Signup Button */}
               <div className="pt-2 flex flex-col gap-3">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-500/20 disabled:opacity-70"
+                  className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-500/20 disabled:opacity-70"
                 >
-                  {loading ? 'Logging In...' : 'Login'}
+                  {loading ? 'Signing Up...' : 'Sign Up'}
                 </button>
                 
                 <button
                   type="button"
-                  onClick={() => router.push('/signup')}
-                  className="w-full h-12 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                  onClick={() => router.push('/')}
+                  className="w-full h-11 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all font-montserrat"
                 >
-                  Create an account
+                  Already have an account? Login
                 </button>
               </div>
             </form>
@@ -146,11 +171,11 @@ export default function LandingPage() {
               <div className="flex-1 h-px bg-gray-100"></div>
             </div>
 
-            {/* Google Login */}
+            {/* Google Signup */}
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full h-12 flex items-center justify-center gap-3 bg-white border border-gray-100 rounded-xl hover:shadow-md transition-all font-medium text-gray-700 text-sm"
+              className="w-full h-11 flex items-center justify-center gap-3 bg-white border border-gray-100 rounded-xl hover:shadow-md transition-all font-medium text-gray-700 text-sm"
             >
               <img
                 src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png"
@@ -158,7 +183,7 @@ export default function LandingPage() {
                 height={20}
                 alt="Google Icon"
               />
-              Continue with Google
+              Sign up with Google
             </button>
           </div>
         </div>
