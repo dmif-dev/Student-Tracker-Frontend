@@ -1,8 +1,168 @@
-export default function Home() {
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
+import { login, signInWithGoogle } from './auth/actions';
+
+export default function LandingPage() {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    const result = await signInWithGoogle();
+    if (result?.error) {
+      setError(result.error);
+    }
+  };
+
+  const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+    
+    const formData = new FormData(event.currentTarget);
+    const result = await login(formData);
+
+    if (result?.error) {
+      setError(result.error);
+      setLoading(false);
+    }
+  };
+
   return (
-    <main>
-      <h1>Student Tracker</h1>
-      <p>Web app — coming soon.</p>
-    </main>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-orange-100 via-amber-100 to-orange-200 font-sans p-4">
+      {/* Main Container Card */}
+      <div className="flex flex-col md:flex-row w-full max-w-4xl bg-white rounded-[32px] shadow-2xl overflow-hidden min-h-[500px]">
+        
+        {/* Left Side: Illustration */}
+        <div className="hidden md:flex md:w-1/2 bg-orange-50 items-center justify-center p-8">
+          <div className="relative w-full max-w-sm">
+            <img 
+              src="/assets/auth_illustration.png" 
+              alt="Sign In Illustration" 
+              className="w-full h-auto object-contain"
+            />
+          </div>
+        </div>
+
+        {/* Right Side: Sign In Form */}
+        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+          <div className="max-w-md mx-auto w-full">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2 font-montserrat">Login</h2>
+              <p className="text-gray-500 text-sm">Unlock your world.</p>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleLoginSubmit} className="space-y-6">
+              {/* Email Field */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                  <span className="text-orange-500 font-serif">*</span> Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="Enter your email"
+                  className="w-full h-12 px-4 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 placeholder:text-gray-300"
+                />
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                  <span className="text-orange-500 font-serif">*</span> Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    required
+                    placeholder="Enter your password"
+                    className="w-full h-12 px-4 pr-12 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 placeholder:text-gray-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Role Field - Important for Supabase Metadata */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                  <span className="text-orange-500 font-serif">*</span> Role
+                </label>
+                <select
+                  name="role"
+                  required
+                  defaultValue=""
+                  className="w-full h-12 px-4 rounded-xl border border-gray-100 bg-gray-50/50 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 appearance-none cursor-pointer"
+                >
+                  <option value="" disabled>Select your role</option>
+                  <option value="Student">Student</option>
+                  <option value="Mentor">Mentor</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+
+              {/* Login Button */}
+              <div className="pt-2 flex flex-col gap-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-500/20 disabled:opacity-70"
+                >
+                  {loading ? 'Logging In...' : 'Login'}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => router.push('/signup')}
+                  className="w-full h-12 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                >
+                  Create an account
+                </button>
+              </div>
+            </form>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-px bg-gray-100"></div>
+              <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">or</span>
+              <div className="flex-1 h-px bg-gray-100"></div>
+            </div>
+
+            {/* Google Login */}
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="w-full h-12 flex items-center justify-center gap-3 bg-white border border-gray-100 rounded-xl hover:shadow-md transition-all font-medium text-gray-700 text-sm"
+            >
+              <img
+                src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png"
+                width={20}
+                height={20}
+                alt="Google Icon"
+              />
+              Continue with Google
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
