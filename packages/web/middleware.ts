@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
     
     if (pathname.startsWith('/admin') && role !== 'Admin') {
       // Non-admins redirected to their appropriate dashboard
-      return NextResponse.redirect(new URL(role === 'Mentor' ? '/mentor/notifications' : '/Student/dashboard', request.url));
+      return NextResponse.redirect(new URL(role === 'Mentor' ? '/mentor' : '/Student/dashboard', request.url));
     }
     
     if (pathname.startsWith('/mentor') && role !== 'Mentor' && role !== 'Admin') {
@@ -66,7 +66,7 @@ export async function middleware(request: NextRequest) {
     const role = user.user_metadata?.role || 'Student';
     let redirectUrl = '/Student/dashboard';
     if (role === 'Admin') redirectUrl = '/admin/students';
-    if (role === 'Mentor') redirectUrl = '/mentor/notifications';
+    if (role === 'Mentor') redirectUrl = '/mentor';
     
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   }

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Menu, User, LogOut, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import NotificationBell from './NotificationBell';
+import { signOut } from '@/app/auth/actions';
 
 interface AdminHeaderProps {
   toggleSidebar: () => void;
@@ -15,9 +16,8 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    router.push('/login');
+  const handleLogout = async () => {
+    await signOut();
   };
 
   // Mock user data - replace with actual auth

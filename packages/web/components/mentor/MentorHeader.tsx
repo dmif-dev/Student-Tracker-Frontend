@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User, LogOut, Settings, Menu } from 'lucide-react';
 import MentorNotificationBell from '@/components/mentor/MentorNotificationBell';
+import { signOut } from '@/app/auth/actions';
 
 const MOCK_MENTOR = {
     id: '1',
@@ -19,9 +20,8 @@ export default function MentorHeader() {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const router = useRouter();
 
-    const handleLogout = () => {
-        localStorage.removeItem('mentor');
-        router.push('/login');
+    const handleLogout = async () => {
+        await signOut();
     };
 
     return (

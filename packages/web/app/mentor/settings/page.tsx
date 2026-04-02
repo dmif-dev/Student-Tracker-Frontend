@@ -27,6 +27,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
+import { signOut } from '@/app/auth/actions';
 
 interface MentorProfile {
   id: string;
@@ -227,9 +228,8 @@ export default function MentorSettingsPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('mentor');
-    router.push('/login');
+  const handleLogout = async () => {
+    await signOut();
   };
 
   const getProgramColor = (program: string) => {

@@ -24,6 +24,8 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
     "@student-tracker/shared": "workspace:^",
+    "@supabase/ssr": "^0.10.0",
+    "@supabase/supabase-js": "^2.101.1",
     "@tabler/icons-react": "^3.36.1",
     "@tanstack/react-table": "^8.21.3",
     "@types/jspdf": "^2.0.0",

@@ -1,0 +1,5 @@
+2026-04-02T07:13:53.130226Z  WARN daemon_server: turborepo_lib::commands::daemon: daemon already running
+2026-04-02T07:13:53.139683Z  WARN daemon_server: turborepo_lib::commands::daemon: daemon already running
+2026-04-02T08:38:29.432013Z  WARN daemon_server: turborepo_lib::commands::daemon: daemon already running
+2026-04-02T08:38:29.472861Z  WARN turborepo_filewatch: failed to remove cookie file failed to remove file `D:\projects\5\Student-Tracker\Student-Tracker-Frontend\.turbo\cookies\.turbo-cookie`
+2026-04-02T08:38:29.615026Z  WARN daemon_server: turborepo_lib::commands::daemon: daemon already running

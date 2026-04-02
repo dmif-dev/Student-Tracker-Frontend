@@ -11,24 +11,38 @@ export async function login(formData: FormData) {
   const password = formData.get('password') as string
   const role = formData.get('role') as string
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
     return { error: error.message }
   }
 
-  // Update user metadata with role if it doesn't exist or just use it for redirection
-  // In a real app, you'd check the role from a profiles table
+  // Update user metadata with role to fix middleware redirection
+  let actualRole = role;
+  if (authData?.user) {
+    // Verify role against DB securely
+    const { data: dbUser } = await supabase.from('User').select('role').eq('id', authData.user.id).single();
+    if (dbUser?.role) {
+      if (dbUser.role === 'ADMIN') actualRole = 'Admin';
+      else if (dbUser.role === 'MENTOR') actualRole = 'Mentor';
+      else if (dbUser.role === 'STUDENT') actualRole = 'Student';
+    }
+    
+    // Sync metadata
+    if (authData.user.user_metadata?.role !== actualRole) {
+      await supabase.auth.updateUser({ data: { role: actualRole } });
+    }
+  }
   
   revalidatePath('/', 'layout')
   
   // Custom redirection based on role
-  if (role === 'Student') {
+  if (actualRole === 'Student') {
     redirect('/Student/dashboard')
-  } else if (role === 'Mentor') {
-    redirect('/mentor/notifications')
-  } else if (role === 'Admin') {
-    redirect('/admin/students')
+  } else if (actualRole === 'Mentor') {
+    redirect('/mentor') 
+  } else if (actualRole === 'Admin') {
+    redirect('/admin')
   } else {
     redirect('/')
   }

@@ -6,6 +6,7 @@ import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, LayoutDashboard, Users, FileText, Settings, LogOut, TrendingUp, Home, User, UserCircle, BookOpen, GraduationCap, UserCog, BarChart3, Bell, Calendar } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { signOut } from "@/app/auth/actions";
 
 // --- Types & Context ---
 interface Links {
@@ -253,13 +254,21 @@ export function Sidebar() {
           </div>
         </div>
         <div className="pb-4">
-          <SidebarLink
-            link={{
-              label: "Logout",
-              href: "#",
-              icon: <LogOut className="h-5 w-5 flex-shrink-0" />,
-            }}
-          />
+          <button 
+           onClick={(e) => {
+             e.preventDefault();
+             signOut();
+           }} 
+           className="w-full"
+          >
+            <SidebarLink
+              link={{
+                label: "Logout",
+                href: "#",
+                icon: <LogOut className="h-5 w-5 flex-shrink-0" />,
+              }}
+            />
+          </button>
         </div>
       </SidebarBody>
     </SidebarProvider>
