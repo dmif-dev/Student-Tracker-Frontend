@@ -662,4 +662,56 @@ export class ApiService {
 
     return response.json();
   }
+
+  private static getBaseUrl() {
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+  }
+
+  static async get(endpoint: string) {
+    const token = await getAuthToken(); // Ensure this helper exists in your file
+    const response = await fetch(`${await this.getBaseUrl()}${endpoint}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+    return { data, ok: response.ok };
+  }
+
+  static async post(endpoint: string, body: any) {
+    const token = await getAuthToken();
+    const response = await fetch(`${await this.getBaseUrl()}${endpoint}`, {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json();
+    return { data, ok: response.ok };
+  }
+
+  static async put(endpoint: string, body: any) {
+    const token = await getAuthToken();
+    const response = await fetch(`${await this.getBaseUrl()}${endpoint}`, {
+      method: 'PUT',
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json();
+    return { data, ok: response.ok };
+  }
+
+  static async delete(endpoint: string) {
+    const token = await getAuthToken();
+    const response = await fetch(`${await this.getBaseUrl()}${endpoint}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+    return { data, ok: response.ok };
+  }
+
 }

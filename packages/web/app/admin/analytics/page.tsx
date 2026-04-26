@@ -222,7 +222,7 @@ export default function AnalyticsPage() {
     fetchAnalytics();
   }, [dateRange, selectedProgram, selectedTrack]);
 
-  const fetchAnalytics = async () => {
+  /* const fetchAnalytics = async () => {
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -231,6 +231,21 @@ export default function AnalyticsPage() {
       setData(mockData);
     } catch (error) {
       console.error('Error fetching analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };  */
+
+  // My code changes to map analytics results with the Express server routes
+
+  const fetchAnalytics = async () => {
+    setLoading(true);
+    try {
+      const response = await ApiService.get(`/outcomes/analytics/insights?program=${selectedProgram}`);
+      
+      setData(response.data);
+    } catch (error) {
+      console.error('Error fetching analytics (data from backend):', error);
     } finally {
       setLoading(false);
     }
@@ -753,7 +768,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Toggle options - Only show when relevant data exists */}
-        {(data.pcpStats.totalStudents > 0 || data.outcomeStats) && (
+        {(data.pcpStats?.totalStudents > 0 || data.outcomeStats) && (
           <div className="mt-4 pt-4 border-t border-gray-200 flex items-center space-x-6">
             {data.pcpStats.totalStudents > 0 && (
               <label className="flex items-center space-x-2">
@@ -860,7 +875,9 @@ export default function AnalyticsPage() {
       {data.programData.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {data.programData.map(program => {
-            const Icon = program.icon;
+
+            const config = PROGRAM_CONFIG[program.id as keyof typeof PROGRAM_CONFIG];
+            const Icon = config?.icon || Activity;
             return (
               <div key={program.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div className="flex items-center space-x-3 mb-3">
@@ -1061,7 +1078,7 @@ export default function AnalyticsPage() {
         )}
 
         {/* Program Engagement - Only show if there are programs */}
-        {data.programEngagement.length > 0 && (
+        {data.programEngagement?.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold mb-4">Program Engagement</h3>
             <ResponsiveContainer width="100%" height={300}>
