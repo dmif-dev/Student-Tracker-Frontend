@@ -2,7 +2,9 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect , useCallback} from 'react';
+import { ApiService } from '@/services/api';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import {
   FileText,
@@ -34,19 +36,23 @@ interface Report {
 interface ScheduledReport {
   id: string;
   name: string;
-  type: 'weekly' | 'monthly';
-  schedule: string;
-  time: string;
+  frequency: 'daily' |'weekly' | 'monthly';
+  schedule: string;  
   recipients: string[];
+  isActive : boolean;
   format: 'pdf' | 'excel' | 'csv';
   programs: string[];
-  status: 'active' | 'paused';
+  time: string;
+  //status: 'active' | 'paused';
   lastGenerated?: string;
   nextGeneration?: string;
 }
 
 export default function ReportsPage() {
   const [isMounted, setIsMounted] = useState(false);
+  const [scheduledReports, setScheduledReports] = useState<any[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('30');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -100,7 +106,9 @@ export default function ReportsPage() {
     },
   ];
 
+  /*
   // Mock scheduled reports data
+  
   const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([
     {
       id: 'sched1',
@@ -129,6 +137,173 @@ export default function ReportsPage() {
       nextGeneration: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
     },
   ]);
+*/
+  
+
+  
+ /// My integration code changes start here - DIVYA
+
+  // 1. Updated code to Fetch Scheduled Reports from Backend 
+  const fetchScheduledReports = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const result = await ApiService.get('/reports/scheduled');
+    
+    setScheduledReports(result.data || []);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Could not load scheduled reports');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setIsMounted(true);
+    fetchScheduledReports();
+  }, [fetchScheduledReports]);
+
+  // 2. Handle Delete
+  const handleDeleteSchedule = async (scheduleId: string) => {
+    if (!confirm('Are you sure you want to delete this scheduled report?')) return;
+
+    try {
+      const data = await ApiService.delete(`/reports/scheduled/${scheduleId}`);
+        setScheduledReports(prev => prev.filter(s => s.id !== scheduleId));
+        toast.success('Report deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete report');
+    }
+  };
+
+  // 3. Handle Toggle Status (Update)
+  const handleToggleStatus = async (scheduleId: string) => {
+    const report = scheduledReports.find(s => s.id === scheduleId);
+    if (!report) return;
+
+    try {
+      const updated = await ApiService.put(`/reports/scheduled/${scheduleId}`, { 
+      isActive: !report.isActive 
+    });
+        setScheduledReports(prev => prev.map(s => s.id === scheduleId ? updated : s));
+    } catch (error) {
+      toast.error('Failed to update status');
+    }
+  };
+
+  // 4. Handle Save (Edit Modal)
+  const handleEditSchedule = async (updatedData: any) => {
+    try {
+      const result = await ApiService.put(`/reports/scheduled/${updatedData.id}`, updatedData);
+      const updatedReport = result.data;
+
+        setScheduledReports(prev => prev.map(s => s.id === updatedReport.id ? updatedReport : s));
+        setShowEditModal(false);
+        toast.success('Report updated');
+    } catch (error) {
+      toast.error('Failed to save changes');
+    }
+  };
+
+  // Adding a function for ADD Schedule button to work and integrate the "POST" endpoint
+
+  const handleCreateSchedule = async (newScheduleData: any) => {
+  try {
+      const data = await ApiService.post('/reports/schedule', {
+      name: newScheduleData.name,
+      frequency: newScheduleData.frequency,
+      config: newScheduleData.config,
+      recipients: newScheduleData.recipients,
+      startDate: new Date().toISOString()
+      });
+      
+      // Update the list immediately so the user sees the new item
+      setScheduledReports(prev => [...prev, data]);
+      setShowAddModal(false); // Close modal on success
+      toast.success('Report scheduled successfully!');
+    } catch (error) {
+    console.error('Create error:', error);
+    toast.error('Network error. Could not connect to server.');
+  }
+};
+
+
+/* function CreateScheduleModal({ onClose, onSave }: { 
+  onClose: () => void; 
+  onSave: (data: any) => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: '',
+    type: 'weekly',
+    frequency: 'weekly', // Match backend: 'daily', 'weekly', 'monthly'
+    time: '09:00',
+    format: 'pdf',
+    programs: [] as string[],
+    recipients: '',
+  }); */
+
+// My code changes - Divya Adding the form state and handleSubmit function for the CreateScheduleModal. 
+  function CreateScheduleModal({ onClose, onSave }: { onClose: () => void; onSave: (data: any) => void }) {
+  
+    const [formData, setFormData] = useState({
+    name: '',
+    type: 'weekly',
+    schedule: 'weekly',
+    time: '09:00',
+    format: 'pdf',
+    programs: [] as string[],
+    recipients: '',
+    status: 'active',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Construct the object the backend expects
+    const payload = {
+      name: formData.name,
+      frequency: formData.schedule,
+      recipients: formData.recipients.split(',').map(r => r.trim()).filter(Boolean),
+      config: {
+        type: formData.type,
+        format: formData.format,
+        programs: formData.programs,
+        time: formData.time
+      }
+    };
+    
+    onSave(payload);
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+       <div className="bg-white p-6 rounded-xl w-full max-w-md">
+         <h2>Schedule New Report</h2>
+         {/* Form fields here */}
+         <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Report Name</label>
+              <input 
+                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                placeholder="e.g., Weekly Progress"
+                required
+              />
+            </div>
+            {/* Add other inputs for frequency, recipients, etc. here */}
+            <div className="flex justify-end gap-2 mt-6">
+              <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">Save Schedule</button>
+            </div>
+         </form>
+       </div>
+    </div>
+  );
+}
+
+  
+  // My code changes End here -- DIVYA
 
   // Only two report templates as requested
   const reportTemplates = [
@@ -222,11 +397,13 @@ export default function ReportsPage() {
     return count;
   };
 
+   /*
   const handleEditSchedule = (schedule: ScheduledReport) => {
     setEditingSchedule(schedule);
     setShowEditModal(true);
   };
 
+ 
   const handleDeleteSchedule = (scheduleId: string) => {
     if (confirm('Are you sure you want to delete this scheduled report?')) {
       setScheduledReports(scheduledReports.filter(s => s.id !== scheduleId));
@@ -239,7 +416,7 @@ export default function ReportsPage() {
         ? { ...s, status: s.status === 'active' ? 'paused' : 'active' }
         : s
     ));
-  };
+  };  
 
   const handleSaveSchedule = (updatedSchedule: ScheduledReport) => {
     setScheduledReports(scheduledReports.map(s => 
@@ -248,6 +425,7 @@ export default function ReportsPage() {
     setShowEditModal(false);
     setEditingSchedule(null);
   };
+  */
 
   // Don't render dynamic content until mounted to prevent hydration mismatch
   if (!isMounted) {
@@ -521,7 +699,8 @@ export default function ReportsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Scheduled Reports</h2>
-          <button className="text-sm text-orange-600 hover:text-orange-700">
+          <button className="text-sm text-orange-600 hover:text-orange-700"
+          onClick={() => setShowAddModal(true)}>
             + Add Schedule
           </button>
         </div>
@@ -529,29 +708,30 @@ export default function ReportsPage() {
           {scheduledReports.map((schedule) => {
             const lastGenFormatted = schedule.lastGenerated ? formatDate(schedule.lastGenerated) : null;
             const nextGenFormatted = schedule.nextGeneration ? formatDate(schedule.nextGeneration) : null;
-            
+            console.log("Supabase Data:", schedule);
+
             return (
               <div key={schedule.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <div className={`w-2 h-2 rounded-full ${schedule.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
+                  <div className={`w-2 h-2 rounded-full ${schedule.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
                   <Calendar size={20} className={schedule.type === 'weekly' ? 'text-orange-500' : 'text-green-500'} />
                   <div>
                     <div className="flex items-center space-x-2">
                       <p className="font-medium">{schedule.name}</p>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${
-                        schedule.status === 'active' 
+                        schedule.isActive 
                           ? 'bg-green-100 text-green-700' 
                           : 'bg-gray-100 text-gray-700'
                       }`}>
-                        {schedule.status}
+                        {schedule.isActive ? 'Active' : 'Paused'}
                       </span>
                     </div>
                     <div className="flex items-center space-x-3 text-sm text-gray-500 mt-1">
-                      <span>{schedule.schedule} at {schedule.time}</span>
+                      <span>{schedule.frequency} at {schedule.config?.time}</span>
                       <span>•</span>
-                      <span>Format: {schedule.format.toUpperCase()}</span>
+                      <span>Format: {schedule.config?.format?.toUpperCase() || 'PDF'}</span>
                       <span>•</span>
-                      <span>Programs: {schedule.programs.join(', ')}</span>
+                      <span>Programs: {schedule.config?.programs?.join(', ') || 'None'}</span>
                     </div>
                     <div className="flex items-center space-x-3 text-xs text-gray-400 mt-1">
                       <span suppressHydrationWarning>
@@ -574,7 +754,7 @@ export default function ReportsPage() {
                     }`}
                     title={schedule.status === 'active' ? 'Pause' : 'Resume'}
                   >
-                    {schedule.status === 'active' ? <Clock size={16} /> : <Check size={16} />}
+                    {schedule.isActive ? <Clock size={16} /> : <Check size={16} />}
                   </button>
                   <button
                     onClick={() => handleEditSchedule(schedule)}
@@ -605,9 +785,17 @@ export default function ReportsPage() {
             setShowEditModal(false);
             setEditingSchedule(null);
           }}
-          onSave={handleSaveSchedule}
+          onSave={handleEditSchedule}
         />
       )}
+
+      {showAddModal && (
+        <CreateScheduleModal
+         onClose={() => setShowAddModal(false)}
+         onSave={handleCreateSchedule}
+        />
+      )}
+
     </div>
   );
 }
@@ -620,13 +808,13 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
 }) {
   const [formData, setFormData] = useState({
     name: schedule.name,
-    type: schedule.type,
+    type: schedule.format,
     schedule: schedule.schedule,
     time: schedule.time,
     format: schedule.format,
     programs: schedule.programs,
     recipients: schedule.recipients.join(', '),
-    status: schedule.status,
+    status: schedule.isActive ? 'active' : 'paused',
   });
 
   const programs = ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'];
@@ -637,13 +825,13 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
     const updated: ScheduledReport = {
       ...schedule,
       name: formData.name,
-      type: formData.type as 'weekly' | 'monthly',
+      frequency: formData.type as 'daily' | 'weekly' | 'monthly',
       schedule: formData.schedule,
       time: formData.time,
       format: formData.format as 'pdf' | 'excel' | 'csv',
       programs: formData.programs,
       recipients: formData.recipients.split(',').map(r => r.trim()),
-      status: formData.status as 'active' | 'paused',
+      isActive: formData.status === 'active',
     };
     
     onSave(updated);
