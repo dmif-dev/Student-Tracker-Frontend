@@ -6,23 +6,20 @@ import { ReactNode } from 'react';
 import { MentorNotificationProvider } from '@/contexts/MentorNotificationContext';
 import DashboardLayout from '@/components/layout/dashboard-layout';
 import MentorHeader from '@/components/mentor/MentorHeader';
+import { useCurrentMentor } from '@/hooks/api/useMentor';
 
 interface MentorLayoutProps {
   children: ReactNode;
 }
 
-const MOCK_MENTOR = {
-  id: '1',
-  name: 'Dr. Smith',
-  email: 'smith@dmif.org',
-  avatar: '/avatars/smith.jpg',
-  role: 'Mentor',
-  programs: ['G-GMP', 'G-CMP'],
-};
-
 export default function MentorLayout({ children }: MentorLayoutProps) {
+  const { data: mentor, isLoading } = useCurrentMentor();
+
+  // We could show a loading spinner here while fetching the mentor
+  // if (!mentor && isLoading) return <div>Loading...</div>;
+
   return (
-    <MentorNotificationProvider mentorId={MOCK_MENTOR.id}>
+    <MentorNotificationProvider mentorId={mentor?.id || ''}>
       <DashboardLayout header={<MentorHeader />}>
         {children}
       </DashboardLayout>

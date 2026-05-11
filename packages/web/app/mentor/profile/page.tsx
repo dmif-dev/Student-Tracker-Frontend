@@ -20,7 +20,7 @@ import {
   Clock,
   Users
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
+import { useCurrentMentor } from '@/hooks/api/useMentor';
 
 interface MentorProfile {
   id: string;
@@ -38,42 +38,9 @@ interface MentorProfile {
 }
 
 export default function MentorProfilePage() {
-  const [profile, setProfile] = useState<MentorProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: profile, isLoading, refetch } = useCurrentMentor();
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState<Partial<MentorProfile>>({});
-
-  // Mock mentor ID - replace with actual auth
-  const MENTOR_ID = '1';
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const mentor = await ApiService.getMentorById(MENTOR_ID);
-      if (mentor) {
-        setProfile({
-          id: mentor.id,
-          name: mentor.name,
-          email: mentor.email,
-          phone: mentor.phone,
-          location: mentor.location,
-          bio: mentor.bio,
-          expertise: mentor.expertise,
-          programs: mentor.programs,
-          students: mentor.students,
-          rating: mentor.rating,
-          joinDate: mentor.joinDate,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEdit = () => {
     setEditedProfile({
@@ -87,7 +54,8 @@ export default function MentorProfilePage() {
 
   const handleSave = async () => {
     // In a real app, this would call an API to update the profile
-    setProfile(prev => prev ? { ...prev, ...editedProfile } : null);
+    // await apiClient.patch('mentor/profile', editedProfile);
+    // refetch();
     setIsEditing(false);
   };
 
@@ -109,7 +77,7 @@ export default function MentorProfilePage() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -163,7 +131,7 @@ export default function MentorProfilePage() {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
             <div className="w-24 h-24 bg-primary-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
-              {profile.name.charAt(0)}
+              {profile.name?.charAt(0) || '?'}
             </div>
             
             {isEditing ? (
@@ -215,7 +183,7 @@ export default function MentorProfilePage() {
                   <Calendar size={16} className="mr-2" />
                   <span className="text-sm">Joined</span>
                 </div>
-                <span className="font-semibold">{new Date(profile.joinDate).toLocaleDateString()}</span>
+                <span className="font-semibold">{profile.joinDate ? new Date(profile.joinDate).toLocaleDateString() : 'N/A'}</span>
               </div>
             </div>
           </div>

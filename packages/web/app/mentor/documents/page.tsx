@@ -20,6 +20,8 @@ import {
   X
 } from 'lucide-react';
 import { DocumentService } from '@/services/documentService';
+import { useMentorDocuments } from '@/hooks/api/useMentor';
+import { apiClient } from '@/utils/apiClient';
 import { Document, DocumentType } from '@student-tracker/shared/models/Document';
 import DocumentViewer from '@/components/common/DocumentViewer';
 import { DocumentViewerService } from '@/services/documentViewerService';
@@ -37,14 +39,19 @@ interface ViewerDocument {
 }
 
 export default function MentorDocumentsPage() {
+  const { data: fetchedDocuments, isLoading: documentsLoading, refetch } = useMentorDocuments();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocs, setFilteredDocs] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | DocumentType>('all');
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<ViewerDocument | null>(null);
   const [showViewer, setShowViewer] = useState(false);
+  
+  // Edit State
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [editForm, setEditForm] = useState({ title: '', description: '' });
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Mock mentor ID - replace with actual auth
   const MENTOR_ID = '1';
@@ -90,24 +97,17 @@ export default function MentorDocumentsPage() {
   };
 
   useEffect(() => {
-    fetchDocuments();
-  }, []);
+    if (fetchedDocuments) {
+      setDocuments(fetchedDocuments);
+      setFilteredDocs(fetchedDocuments);
+    }
+  }, [fetchedDocuments]);
 
   useEffect(() => {
     filterDocuments();
   }, [documents, searchTerm, selectedType]);
 
-  const fetchDocuments = async () => {
-    try {
-      const docs = await DocumentService.getMentorDocuments(MENTOR_ID);
-      setDocuments(docs);
-      setFilteredDocs(docs);
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const filterDocuments = () => {
     let filtered = [...documents];
@@ -128,11 +128,35 @@ export default function MentorDocumentsPage() {
 
   const handleDelete = async (docId: string) => {
     try {
-      await DocumentService.deleteDocument(docId);
+      await apiClient.delete(`documents/${docId}`);
       setDocuments(documents.filter(d => d.id !== docId));
       setShowDeleteModal(null);
+      refetch();
     } catch (error) {
       console.error('Error deleting document:', error);
+    }
+  };
+
+  const openEditModal = (doc: Document) => {
+    setEditingDocument(doc);
+    setEditForm({ title: doc.title, description: doc.description || '' });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDocument) return;
+    
+    setIsUpdating(true);
+    try {
+      await apiClient.put(`documents/${editingDocument.id}`, editForm);
+      setDocuments(documents.map(d => d.id === editingDocument.id ? { ...d, ...editForm } as Document : d));
+      setEditingDocument(null);
+      refetch();
+    } catch (error) {
+      console.error('Error updating document:', error);
+      alert('Failed to update document');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -160,7 +184,7 @@ export default function MentorDocumentsPage() {
     );
   };
 
-  if (loading) {
+  if (documentsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -253,7 +277,11 @@ export default function MentorDocumentsPage() {
                 {getTypeBadge(doc.type)}
               </div>
               <div className="flex items-center space-x-1">
-                <button className="p-1 hover:bg-gray-100 rounded" title="Edit">
+                <button 
+                  onClick={() => openEditModal(doc)}
+                  className="p-1 hover:bg-gray-100 rounded" 
+                  title="Edit"
+                >
                   <Edit size={16} className="text-gray-600" />
                 </button>
                 <button
@@ -361,6 +389,60 @@ export default function MentorDocumentsPage() {
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Document Modal */}
+      {editingDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Edit Document</h3>
+              <button onClick={() => setEditingDocument(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.title}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    rows={3}
+                    value={editForm.description}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setEditingDocument(null)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                  disabled={isUpdating}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                >
+                  {isUpdating ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

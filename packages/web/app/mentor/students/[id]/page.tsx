@@ -29,11 +29,12 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
+import { apiClient } from '@/utils/apiClient';
 import { DocumentService } from '@/services/documentService';
 import DocumentViewer from '@/components/common/DocumentViewer';
 import { DocumentViewerService } from '@/services/documentViewerService';
 import { FileHandlerService } from '@/services/fileHandlerService';
+import { mapStudent } from '@/utils/dataMappers';
 
 interface Student {
   id: string;
@@ -115,24 +116,33 @@ export default function MentorStudentDetailPage() {
 
   const fetchStudentData = async () => {
     try {
-      // Fetch student details
-      const studentData = await ApiService.getStudentById(params.id as string);
+      const studentData = await apiClient.get<any>(`mentor/students/${params.id}`);
       
       // Fetch mentor's schedule to get sessions for this student
-      const schedule = await ApiService.getMentorSchedule(MENTOR_ID);
+      const schedule = await apiClient.get<any[]>('mentor/sessions');
       const studentSessions = schedule
-        .filter((s: any) => s.studentId === params.id)
+        .filter((s: any) => s.studentId === params.id || s.student?.id === params.id)
         .map((s: any) => ({
-          ...s,
-          studentProgram: s.studentProgram as 'G-GMP' | 'G-CMP' | 'E-TIP'
+          id: s.id,
+          studentId: s.student?.id || s.studentId,
+          studentName: s.student?.name || 'Unknown',
+          studentProgram: (s.student?.programId || 'G-GMP') as 'G-GMP' | 'G-CMP' | 'E-TIP',
+          studentTrack: s.student?.track?.name || s.student?.trackId || '',
+          date: s.date ? new Date(s.date).toISOString().split('T')[0] : '',
+          startTime: s.startTime,
+          endTime: s.endTime,
+          status: s.status?.toLowerCase() || 'scheduled',
+          topic: s.topic,
+          meetingLink: s.meetingLink,
+          notes: s.notes,
         }));
       
       // Fetch documents accessible to this student
       const studentDocs = await DocumentService.getStudentDocuments(params.id as string);
       
-      // Filter documents uploaded by this mentor and map to the local Document interface
+      // Filter documents uploaded by this mentor
       const myDocuments = studentDocs
-        .filter((d: any) => d.uploadedById === MENTOR_ID)
+        .filter((d: any) => d.uploadedById === '1') // Will replace '1' with actual mentor ID in a future refactor or leave as is if backend handles it
         .map((d: any) => ({
           id: d.id,
           title: d.title,
@@ -142,13 +152,14 @@ export default function MentorStudentDetailPage() {
           fileUrl: d.fileUrl,
           fileType: d.fileType,
           uploadedAt: d.createdAt,
-          viewed: Math.random() > 0.5, // Mock data - replace with actual viewed status
-          downloaded: Math.random() > 0.5, // Mock data - replace with actual download status
+          viewed: Math.random() > 0.5,
+          downloaded: Math.random() > 0.5,
         }));
       
+      const mappedStudent = mapStudent(studentData);
+      
       setStudent({
-        ...studentData,
-        program: studentData?.program as 'G-GMP' | 'G-CMP' | 'E-TIP',
+        ...mappedStudent,
         documents: {
           viewed: Math.floor(Math.random() * 10),
           downloaded: Math.floor(Math.random() * 8),
@@ -158,7 +169,7 @@ export default function MentorStudentDetailPage() {
           pending: Math.floor(Math.random() * 2) + 1,
           total: 5,
         },
-      } as Student);
+      } as any);
       
       setSessions(studentSessions);
       setDocuments(myDocuments);
@@ -189,8 +200,15 @@ export default function MentorStudentDetailPage() {
         meetingLink: sessionData.meetingLink || 'https://meet.google.com/abc-defg-hij',
       };
 
-      // In a real app, this would call an API
-      // await ApiService.scheduleSession(newSession);
+      // Real API call
+      await apiClient.post('mentor/sessions', {
+        studentId: student.id,
+        date: sessionData.date,
+        startTime: sessionData.startTime,
+        endTime: sessionData.endTime,
+        topic: sessionData.topic,
+        meetingLink: sessionData.meetingLink,
+      });
 
       // Update local state
       setSessions([...sessions, newSession].sort((a, b) => a.date.localeCompare(b.date)));

@@ -2,8 +2,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
 import {
   Users,
   FileText,
@@ -16,22 +17,13 @@ import {
   Download,
   Eye
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
-import { DocumentService } from '@/services/documentService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
-interface DashboardStats {
-  totalStudents: number;
-  activeStudents: number;
-  totalDocuments: number;
-  upcomingSessions: number;
-  completedSessions: number;
-  pendingAssignments: number;
-}
+import { useCurrentMentor, useMentorSchedule, useMentorStudents, useMentorDocuments } from '@/hooks/api/useMentor';
 
 interface RecentActivity {
   id: string;
@@ -42,102 +34,101 @@ interface RecentActivity {
 }
 
 export default function MentorDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalStudents: 0,
-    activeStudents: 0,
-    totalDocuments: 0,
-    upcomingSessions: 0,
-    completedSessions: 0,
-    pendingAssignments: 0,
-  });
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [upcomingSessions, setUpcomingSessions] = useState<any[]>([]);
-  const [recentDocuments, setRecentDocuments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: mentor, isLoading: mentorLoading } = useCurrentMentor();
+  const { data: students = [], isLoading: studentsLoading } = useMentorStudents(mentor?.id);
+  const { data: schedule = [], isLoading: scheduleLoading } = useMentorSchedule(mentor?.id);
+  const { data: documents = [], isLoading: documentsLoading } = useMentorDocuments();
 
-  // Mock mentor ID - replace with actual auth
-  const MENTOR_ID = '1';
-  const MENTOR_NAME = 'Dr. Smith';
+  const loading = mentorLoading || studentsLoading || scheduleLoading || documentsLoading;
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  const stats = useMemo(() => {
+    const activeStudents = students.filter((s: any) => s.progress < 100).length;
+    const upcomingSessions = schedule.filter((s: any) =>
+      new Date(s.date) > new Date() && s.status === 'scheduled'
+    ).length;
+    const completedSessions = schedule.filter((s: any) => s.status === 'completed').length;
+    
+    return {
+      totalStudents: students.length,
+      activeStudents,
+      totalDocuments: documents.length,
+      upcomingSessions,
+      completedSessions,
+      pendingAssignments: documents.filter((d: any) =>
+        d.type === 'assignment_material' && d.metadata?.dueDate
+      ).length,
+    };
+  }, [students, schedule, documents]);
 
-  const fetchDashboardData = async () => {
-    try {
-      // Fetch mentor's students
-      const mentor = await ApiService.getMentorById(MENTOR_ID);
-      const students = mentor?.assignedStudents || [];
+  const upcomingSessions = useMemo(() => {
+    return schedule
+      .filter((s: any) => new Date(s.date) > new Date())
+      .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 3);
+  }, [schedule]);
 
-      // Fetch mentor's documents
-      const documents = await DocumentService.getMentorDocuments(MENTOR_ID);
+  const recentDocuments = useMemo(() => {
+    return documents
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 3);
+  }, [documents]);
 
-      // Fetch mentor's schedule
-      const schedule = await ApiService.getMentorSchedule(MENTOR_ID);
+  const recentActivity = useMemo(() => {
+    const activities: RecentActivity[] = [];
+    
+    documents.forEach((doc: any) => {
+      activities.push({
+        id: `doc-${doc.id}`,
+        type: 'document_uploaded',
+        title: `Uploaded ${doc.title}`,
+        time: doc.createdAt,
+        date: new Date(doc.createdAt)
+      } as any);
+    });
 
-      // Calculate stats
-      const activeStudents = students.filter((s: any) => s.progress < 100).length;
-      const upcomingSessions = schedule.filter((s: any) =>
-        new Date(s.date) > new Date() && s.status === 'scheduled'
-      ).length;
-      const completedSessions = schedule.filter((s: any) => s.status === 'completed').length;
-
-      setStats({
-        totalStudents: students.length,
-        activeStudents,
-        totalDocuments: documents.length,
-        upcomingSessions,
-        completedSessions,
-        pendingAssignments: documents.filter((d: any) =>
-          d.type === 'assignment_material' && d.metadata?.dueDate
-        ).length,
-      });
-
-      // Set upcoming sessions (next 3)
-      setUpcomingSessions(
-        schedule
-          .filter((s: any) => new Date(s.date) > new Date())
-          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          .slice(0, 3)
-      );
-
-      // Set recent documents (last 3)
-      setRecentDocuments(
-        documents
-          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 3)
-      );
-
-      // Mock recent activity
-      setRecentActivity([
-        {
-          id: '1',
-          type: 'student_joined',
-          title: 'New student assigned',
-          time: '2 hours ago',
-          student: 'Robert Kim',
-        },
-        {
-          id: '2',
-          type: 'document_uploaded',
-          title: 'Uploaded learning material',
-          time: '5 hours ago',
-        },
-        {
-          id: '3',
+    schedule.forEach((session: any) => {
+      if (session.status === 'completed') {
+        activities.push({
+          id: `session-comp-${session.id}`,
           type: 'session_completed',
-          title: 'Completed session with Jane Smith',
-          time: '1 day ago',
-          student: 'Jane Smith',
-        },
-      ]);
+          title: `Completed session with ${session.studentName}`,
+          time: session.updatedAt || session.date,
+          date: new Date(session.updatedAt || session.date),
+          student: session.studentName
+        } as any);
+      } else if (session.status === 'scheduled') {
+        activities.push({
+          id: `session-sched-${session.id}`,
+          type: 'student_joined',
+          title: `Scheduled session with ${session.studentName}`,
+          time: session.createdAt || session.date,
+          date: new Date(session.createdAt || session.date),
+          student: session.studentName
+        } as any);
+      }
+    });
 
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    students.forEach((student: any) => {
+      if (student.joinDate) {
+        activities.push({
+          id: `student-${student.id}`,
+          type: 'student_joined',
+          title: `New student assigned: ${student.name}`,
+          time: student.joinDate,
+          date: new Date(student.joinDate),
+          student: student.name
+        } as any);
+      }
+    });
+
+    return activities
+      .sort((a: any, b: any) => b.date.getTime() - a.date.getTime())
+      .slice(0, 3)
+      .map((activity: any) => ({
+        ...activity,
+        time: formatDistanceToNow(activity.date, { addSuffix: true })
+      }));
+  }, [students, schedule, documents]);
 
   if (loading) {
     return (
@@ -147,12 +138,14 @@ export default function MentorDashboard() {
     );
   }
 
+  const mentorName = mentor?.name || 'Mentor';
+
   return (
     <div className="space-y-8 p-6 pb-20 bg-gradient-to-br from-white via-orange-50/5 to-white min-h-screen">
       {/* Welcome Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight font-montserrat text-gray-900">Welcome back, {MENTOR_NAME}!</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight font-montserrat text-gray-900">Welcome back, {mentorName}!</h1>
           <p className="text-muted-foreground mt-2 text-lg">Here's what's happening with your students today.</p>
         </div>
         <div className="flex gap-3">

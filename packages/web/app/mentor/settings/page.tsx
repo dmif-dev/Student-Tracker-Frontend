@@ -26,8 +26,8 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
 import { signOut } from '@/app/auth/actions';
+import { useCurrentMentor } from '@/hooks/api/useMentor';
 
 interface MentorProfile {
   id: string;
@@ -89,50 +89,26 @@ export default function MentorSettingsPage() {
     confirm: false,
   });
 
-  // Mock mentor ID - replace with actual auth
-  const MENTOR_ID = '1';
+  const { data: profileData, isLoading, refetch } = useCurrentMentor();
 
   useEffect(() => {
-    fetchMentorProfile();
-  }, []);
-
-  const fetchMentorProfile = async () => {
-    try {
-      const mentor = await ApiService.getMentorById(MENTOR_ID);
-      if (mentor) {
-        const profileData: MentorProfile = {
-          id: mentor.id,
-          name: mentor.name,
-          email: mentor.email,
-          phone: mentor.phone,
-          location: mentor.location,
-          bio: mentor.bio,
-          expertise: mentor.expertise,
-          programs: mentor.programs,
-          notificationPreferences: {
-            emailNotifications: true,
-            sessionReminders: true,
-            studentUpdates: true,
-            documentUploads: true,
-            weeklyDigest: false,
-          },
-          privacySettings: {
-            profileVisibility: 'mentors_only',
-            showEmail: false,
-            showPhone: false,
-          },
-        };
-        setProfile(profileData);
-        setEditedProfile(profileData);
-        setNotificationSettings(profileData.notificationPreferences);
-        setPrivacySettings(profileData.privacySettings);
-      }
-    } catch (error) {
-      console.error('Error fetching mentor profile:', error);
-    } finally {
-      setLoading(false);
+    if (profileData) {
+      setProfile(profileData as any);
+      setEditedProfile(profileData as any);
+      setNotificationSettings({
+        emailNotifications: true,
+        sessionReminders: true,
+        studentUpdates: true,
+        documentUploads: true,
+        weeklyDigest: false,
+      });
+      setPrivacySettings({
+        profileVisibility: 'mentors_only',
+        showEmail: false,
+        showPhone: false,
+      });
     }
-  };
+  }, [profileData]);
 
   const handleProfileSave = async () => {
     setSaving(true);
@@ -241,7 +217,7 @@ export default function MentorSettingsPage() {
     return colors[program as keyof typeof colors] || 'bg-gray-100 text-gray-700';
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>

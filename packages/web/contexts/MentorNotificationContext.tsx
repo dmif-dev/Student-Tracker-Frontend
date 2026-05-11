@@ -45,17 +45,13 @@ export function MentorNotificationProvider({
 
   const loadAlerts = useCallback(async () => {
     try {
-      const systemAlerts = await MentorNotificationService.generateMentorAlerts(mentorId);
       const existingAlerts = await MentorNotificationService.getAlerts();
       // Filter alerts relevant to mentors
       const mentorAlerts = existingAlerts.filter(alert => 
-        alert.category === 'session' || alert.category === 'student' || alert.category === 'system'
+        alert.category === 'session' || alert.category === 'student' || alert.category === 'system' || alert.category === 'progress'
       );
-      const allAlerts = [...systemAlerts, ...mentorAlerts];
-      const uniqueAlerts = Array.from(
-        new Map(allAlerts.map(alert => [alert.id, alert])).values()
-      );
-      setAlerts(uniqueAlerts);
+      
+      setAlerts(mentorAlerts);
     } catch (error) {
       console.error('Error loading alerts:', error);
     } finally {

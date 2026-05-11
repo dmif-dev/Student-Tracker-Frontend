@@ -20,7 +20,7 @@ import {
   Download,
   Eye
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
+import { useCurrentMentor } from '@/hooks/api/useMentor';
 
 interface Student {
   id: string;
@@ -37,45 +37,30 @@ interface Student {
 }
 
 export default function MentorStudentsPage() {
+  const { data: mentor, isLoading } = useCurrentMentor();
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Mock mentor ID - replace with actual auth
-  const MENTOR_ID = '1';
-
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    if (mentor?.assignedStudents) {
+      // Enhance student data with additional info (or rely on what backend gives)
+      const enhancedStudents = mentor.assignedStudents.map((s: any) => ({
+        ...s,
+        email: s.email || `${s.name.toLowerCase().replace(' ', '.')}@example.com`,
+        documents: s.documents || Math.floor(Math.random() * 10) + 5,
+        assignments: s.assignments || Math.floor(Math.random() * 5) + 1,
+      }));
+      setStudents(enhancedStudents as any);
+      setFilteredStudents(enhancedStudents as any);
+    }
+  }, [mentor]);
 
   useEffect(() => {
     filterStudents();
   }, [searchTerm, selectedProgram, students]);
-
-  const fetchStudents = async () => {
-    try {
-      const mentor = await ApiService.getMentorById(MENTOR_ID);
-      const assignedStudents = mentor?.assignedStudents || [];
-      
-      // Enhance student data with additional info
-      const enhancedStudents = assignedStudents.map((s: any) => ({
-        ...s,
-        email: `${s.name.toLowerCase().replace(' ', '.')}@example.com`,
-        documents: Math.floor(Math.random() * 10) + 5,
-        assignments: Math.floor(Math.random() * 5) + 1,
-      }));
-      
-      setStudents(enhancedStudents);
-      setFilteredStudents(enhancedStudents);
-    } catch (error) {
-      console.error('Error fetching students:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filterStudents = () => {
     let filtered = [...students];
@@ -130,7 +115,7 @@ export default function MentorStudentsPage() {
     return { label: 'Scheduled', color: 'bg-blue-100 text-blue-600' };
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>

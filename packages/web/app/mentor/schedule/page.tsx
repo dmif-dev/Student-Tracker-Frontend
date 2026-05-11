@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
 import { SessionService } from '@/services/sessionService';
+import { useCurrentMentor, useMentorSchedule } from '@/hooks/api/useMentor';
+import { apiClient } from '@/utils/apiClient';
 import SessionNotesModal from '@/components/mentor/SessionNotesModal';
 import { Session, SessionNote } from '@student-tracker/shared/models/Session';
 import { AssignedStudent as MockAssignedStudent } from '@/services/mockData';
@@ -49,14 +51,27 @@ interface SessionFormData {
 }
 
 export default function MentorSchedulePage() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: mentor, isLoading: mentorLoading } = useCurrentMentor();
+  const { data: sessions = [], isLoading: sessionsLoading, refetch: refetchSessions } = useMentorSchedule(mentor?.id);
+  const loading = mentorLoading || sessionsLoading;
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [showSessionModal, setShowSessionModal] = useState<Session | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [students, setStudents] = useState<AssignedStudent[]>([]);
+  
+  // Get assigned students and filter out PCP
+  const students = (mentor?.assignedStudents || [])
+    .filter((s: any) => s.program !== 'PCP')
+    .map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      program: s.program as 'G-GMP' | 'G-CMP' | 'E-TIP',
+      track: s.track,
+      progress: s.progress,
+      lastSession: s.lastSession,
+    }));
   
   // Session notes state
   const [selectedSessionForNotes, setSelectedSessionForNotes] = useState<Session | null>(null);
@@ -73,59 +88,7 @@ export default function MentorSchedulePage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
-  // Mock mentor ID - replace with actual auth
-  const MENTOR_ID = '1';
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [schedule, mentor] = await Promise.all([
-        ApiService.getMentorSchedule(MENTOR_ID),
-        ApiService.getMentorById(MENTOR_ID)
-      ]);
-      
-      // Transform the schedule data to match Session interface
-      const transformedSessions: Session[] = schedule.map((s: any) => ({
-        id: s.id,
-        studentId: s.studentId,
-        studentName: s.studentName,
-        studentProgram: s.studentProgram as 'G-GMP' | 'G-CMP' | 'E-TIP',
-        studentTrack: s.studentTrack || '',
-        date: s.date,
-        startTime: s.startTime,
-        endTime: s.endTime,
-        status: s.status,
-        topic: s.topic,
-        meetingLink: s.meetingLink,
-        notes: s.notes || [],
-        createdAt: s.createdAt || new Date().toISOString(),
-        updatedAt: s.updatedAt || new Date().toISOString(),
-      }));
-      
-      setSessions(transformedSessions);
-      
-      // Get assigned students and filter out PCP, then map to our local type
-      const assignedStudents = (mentor?.assignedStudents || [])
-        .filter((s: MockAssignedStudent) => s.program !== 'PCP')
-        .map((s: MockAssignedStudent) => ({
-          id: s.id,
-          name: s.name,
-          program: s.program as 'G-GMP' | 'G-CMP' | 'E-TIP',
-          track: s.track,
-          progress: s.progress,
-          lastSession: s.lastSession,
-        }));
-      
-      setStudents(assignedStudents);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -198,11 +161,17 @@ export default function MentorSchedulePage() {
         updatedAt: new Date().toISOString(),
       };
 
-      // In a real app, this would call an API
-      // await ApiService.scheduleSession(newSession);
+      // Real API call
+      await apiClient.post('mentor/sessions', {
+        studentId: sessionData.studentId,
+        date: sessionData.date,
+        startTime: sessionData.startTime,
+        endTime: sessionData.endTime,
+        topic: sessionData.topic,
+        meetingLink: sessionData.meetingLink,
+      });
 
-      // Update local state
-      setSessions([...sessions, newSession].sort((a, b) => a.date.localeCompare(b.date)));
+      refetchSessions();
       setShowScheduleModal(false);
     } catch (error) {
       console.error('Error scheduling session:', error);
@@ -219,16 +188,10 @@ export default function MentorSchedulePage() {
     if (!editingSession) return;
 
     try {
-      // In a real app, this would call an API
-      // await ApiService.updateSession(editingSession.id, updatedData);
+      // Real API call
+      await apiClient.put(`mentor/sessions/${editingSession.id}`, updatedData);
 
-      // Update local state
-      setSessions(prev => prev.map(s => 
-        s.id === editingSession.id 
-          ? { ...s, ...updatedData, updatedAt: new Date().toISOString() }
-          : s
-      ));
-      
+      refetchSessions();
       setShowEditModal(false);
       setEditingSession(null);
     } catch (error) {
@@ -239,11 +202,10 @@ export default function MentorSchedulePage() {
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
-      // In a real app, this would call an API
-      // await ApiService.deleteSession(sessionId);
+      // Real API call
+      await apiClient.delete(`mentor/sessions/${sessionId}`);
 
-      // Update local state
-      setSessions(prev => prev.filter(s => s.id !== sessionId));
+      refetchSessions();
       setShowDeleteConfirm(null);
     } catch (error) {
       console.error('Error deleting session:', error);
@@ -253,24 +215,12 @@ export default function MentorSchedulePage() {
 
   const handleAddNotes = async (sessionId: string, noteData: any) => {
     try {
-      const newNote = await SessionService.addSessionNotes(
-        sessionId,
-        noteData,
-        MENTOR_ID
-      );
+      await apiClient.post(`mentor/sessions/${sessionId}/notes`, {
+        ...noteData,
+        mentorId: mentor?.id
+      });
       
-      // Update the session in the list
-      setSessions(prev => prev.map(s => {
-        if (s.id === sessionId) {
-          return {
-            ...s,
-            status: 'completed',
-            notes: [...(s.notes || []), newNote]
-          };
-        }
-        return s;
-      }));
-      
+      refetchSessions();
       setShowNotesModal(false);
       setSelectedSessionForNotes(null);
       setSessionNotes([]);

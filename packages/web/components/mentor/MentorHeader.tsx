@@ -6,19 +6,12 @@ import { useRouter } from 'next/navigation';
 import { User, LogOut, Settings, Menu } from 'lucide-react';
 import MentorNotificationBell from '@/components/mentor/MentorNotificationBell';
 import { signOut } from '@/app/auth/actions';
-
-const MOCK_MENTOR = {
-    id: '1',
-    name: 'Dr. Smith',
-    email: 'smith@dmif.org',
-    avatar: '/avatars/smith.jpg',
-    role: 'Mentor',
-    programs: ['G-GMP', 'G-CMP'],
-};
+import { useCurrentMentor } from '@/hooks/api/useMentor';
 
 export default function MentorHeader() {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const router = useRouter();
+    const { data: mentor, isLoading } = useCurrentMentor();
 
     const handleLogout = async () => {
         await signOut();
@@ -41,15 +34,21 @@ export default function MentorHeader() {
                                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                             >
                                 <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                    {MOCK_MENTOR.name.charAt(0)}
+                                    {isLoading || !mentor ? '?' : mentor.name?.charAt(0)}
                                 </div>
                                 <div className="text-left hidden md:block">
-                                    <p className="text-sm font-medium text-gray-700">{MOCK_MENTOR.name}</p>
-                                    <p className="text-xs text-gray-500">{MOCK_MENTOR.email}</p>
+                                    {isLoading || !mentor ? (
+                                        <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div>
+                                    ) : (
+                                        <>
+                                            <p className="text-sm font-medium text-gray-700">{mentor.name}</p>
+                                            <p className="text-xs text-gray-500">{mentor.email}</p>
+                                        </>
+                                    )}
                                 </div>
                             </button>
 
-                            {showUserMenu && (
+                            {showUserMenu && mentor && (
                                 <>
                                     <div
                                         className="fixed inset-0 z-30"
@@ -57,10 +56,10 @@ export default function MentorHeader() {
                                     />
                                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
                                         <div className="px-4 py-3 border-b border-gray-200">
-                                            <p className="text-sm font-medium text-gray-900">{MOCK_MENTOR.name}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{MOCK_MENTOR.email}</p>
+                                            <p className="text-sm font-medium text-gray-900">{mentor.name}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{mentor.email}</p>
                                             <div className="flex flex-wrap gap-1 mt-2">
-                                                {MOCK_MENTOR.programs.map((prog) => (
+                                                {mentor.programs?.map((prog) => (
                                                     <span key={prog} className="px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs">
                                                         {prog}
                                                     </span>

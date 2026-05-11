@@ -16,8 +16,8 @@ import {
   CheckCircle,
   Search
 } from 'lucide-react';
-import { DocumentService } from '@/services/documentService';
-import { ApiService } from '@/services/api';
+import { apiClient } from '@/utils/apiClient';
+import { useCurrentMentor } from '@/hooks/api/useMentor';
 import { DocumentType } from '@student-tracker/shared/models/Document';
 
 interface Student {
@@ -54,15 +54,22 @@ export default function MentorUploadDocumentPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [selectAll, setSelectAll] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Mock mentor data - replace with actual auth
-  const MENTOR_ID = '1';
-  const MENTOR_NAME = 'Dr. Smith';
-  const MENTOR_PROGRAMS = ['G-CMP', 'G-GMP', 'E-TIP'];
+  const { data: mentor } = useCurrentMentor();
 
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    if (mentor?.assignedStudents) {
+      const enhancedStudents = mentor.assignedStudents.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        program: s.program,
+        track: s.track,
+      }));
+      setStudents(enhancedStudents);
+      setFilteredStudents(enhancedStudents);
+    }
+  }, [mentor]);
 
   useEffect(() => {
     if (preSelectedStudent) {
@@ -103,44 +110,48 @@ export default function MentorUploadDocumentPage() {
     }
   }, [formData.selectedStudents, filteredStudents]);
 
-  const fetchStudents = async () => {
-    try {
-      const mentor = await ApiService.getMentorById(MENTOR_ID);
-      const assignedStudents = mentor?.assignedStudents || [];
-      
-      // Enhance student data
-      const enhancedStudents = assignedStudents.map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        program: s.program,
-        track: s.track,
-      }));
-      
-      setStudents(enhancedStudents);
-      setFilteredStudents(enhancedStudents);
-    } catch (error) {
-      console.error('Error fetching students:', error);
+
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelection(e.dataTransfer.files[0]);
     }
+  };
+
+  const handleFileSelection = (file: File) => {
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB');
+      return;
+    }
+    
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Only PDF, DOC, DOCX, and TXT files are allowed');
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, file }));
+    setError(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setError('File size must be less than 10MB');
-        return;
-      }
-      
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-      if (!allowedTypes.includes(file.type)) {
-        setError('Only PDF, DOC, DOCX, and TXT files are allowed');
-        return;
-      }
-
-      setFormData({ ...formData, file });
-      setError(null);
+      handleFileSelection(file);
     }
   };
 
@@ -213,33 +224,26 @@ export default function MentorUploadDocumentPage() {
         if (formData.readingTime) metadata.readingTime = parseInt(formData.readingTime);
       }
 
-      // Get program from first selected student (assuming all selected students are from same program)
+      // Get program from first selected student, convert G-CMP -> G_CMP for backend
       const firstStudent = students.find(s => s.id === formData.selectedStudents[0]);
-      const program = firstStudent?.program as 'G-CMP' | 'E-TIP' || 'G-CMP';
+      const rawProgram = firstStudent?.program || 'G-CMP';
+      const program = rawProgram.replace(/-/g, '_').toUpperCase(); // G_CMP / E_TIP
+
+      const uploadData = new FormData();
+      uploadData.append('title', formData.title);
+      uploadData.append('description', formData.description);
+      // Always send uppercase type to match Prisma enum
+      uploadData.append('type', formData.type.toUpperCase());
+      uploadData.append('program', program);
+      if (formData.track) uploadData.append('track', formData.track);
+      uploadData.append('file', formData.file);
+      uploadData.append('visibility', formData.visibility.toUpperCase());
+      uploadData.append('metadata', JSON.stringify(metadata));
+      // Send studentIds as a single JSON string so backend can parse reliably
+      uploadData.append('studentIds', JSON.stringify(formData.selectedStudents));
 
       // Upload document
-      await DocumentService.uploadDocument({
-        title: formData.title,
-        description: formData.description,
-        type: formData.type,
-        program: program,
-        track: formData.track || undefined,
-        file: formData.file,
-        fileName: formData.file.name,
-        fileSize: formData.file.size,
-        fileType: formData.file.type,
-        uploadedBy: MENTOR_NAME,
-        uploadedById: MENTOR_ID,
-        visibility: formData.visibility,
-        metadata,
-        permissions: {
-          viewStudents: formData.selectedStudents,
-          downloadStudents: formData.selectedStudents,
-          viewMentors: [MENTOR_ID],
-          downloadMentors: [MENTOR_ID],
-        },
-        status: 'published',
-      });
+      await apiClient.post('documents/upload', uploadData);
 
       setUploadProgress(100);
       setSuccess(true);
@@ -365,7 +369,17 @@ export default function MentorUploadDocumentPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold mb-4">File Upload</h2>
             
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            <label
+              htmlFor="file-upload"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`block border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                isDragging 
+                  ? 'border-primary-500 bg-primary-50' 
+                  : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
+              }`}
+            >
               <input
                 type="file"
                 id="file-upload"
@@ -383,7 +397,10 @@ export default function MentorUploadDocumentPage() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, file: null })}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setFormData({ ...formData, file: null });
+                    }}
                     className="text-sm text-red-600 hover:text-red-700"
                   >
                     Remove file
@@ -391,22 +408,17 @@ export default function MentorUploadDocumentPage() {
                 </div>
               ) : (
                 <div>
-                  <Upload size={40} className="mx-auto text-gray-400 mb-4" />
+                  <Upload size={40} className={`mx-auto mb-4 ${isDragging ? 'text-primary-500' : 'text-gray-400'}`} />
                   <p className="text-gray-600 mb-2">
                     Drag and drop your file here, or{' '}
-                    <label
-                      htmlFor="file-upload"
-                      className="text-primary-600 hover:text-primary-700 cursor-pointer"
-                    >
-                      browse
-                    </label>
+                    <span className="text-primary-600 font-medium">browse</span>
                   </p>
                   <p className="text-sm text-gray-500">
                     PDF, DOC, DOCX, TXT (Max 10MB)
                   </p>
                 </div>
               )}
-            </div>
+            </label>
           </div>
 
           {/* Document Type Specific Fields */}
@@ -486,7 +498,7 @@ export default function MentorUploadDocumentPage() {
                 Uploading Mentor
               </label>
               <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-700">
-                {MENTOR_NAME}
+                {mentor?.name || 'Mentor'}
               </div>
             </div>
           </div>

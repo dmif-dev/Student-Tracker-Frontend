@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   description: "Track student progress and performance",
 };
 
-import { AuthProvider } from "@/contexts/AuthContext";
+import { Providers } from "./providers";
 
 export default function RootLayout({
   children,
@@ -30,9 +30,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn(inter.variable, montserrat.variable, "antialiased")}>
-        <AuthProvider>
+        <Providers>
           {children}
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   );
