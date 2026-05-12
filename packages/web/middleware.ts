@@ -37,24 +37,24 @@ export async function middleware(request: NextRequest) {
 
   // 1.1 Role Protection: Ensure users can only access their respective role sections
   if (user) {
-    const role = user.user_metadata?.role || 'Student';
+    const role = (user.user_metadata?.role || 'Student').toLowerCase();
     
     // Admin has complete access, so we only need to restrict non-admins from /admin
     // and restrict others from their respective non-role sections.
     
-    if (pathname.startsWith('/admin') && role !== 'Admin') {
+    if (pathname.startsWith('/admin') && role !== 'admin') {
       // Non-admins redirected to their appropriate dashboard
-      return NextResponse.redirect(new URL(role === 'Mentor' ? '/mentor' : '/Student/dashboard', request.url));
+      return NextResponse.redirect(new URL(role === 'mentor' ? '/mentor' : '/Student/dashboard', request.url));
     }
     
-    if (pathname.startsWith('/mentor') && role !== 'Mentor' && role !== 'Admin') {
+    if (pathname.startsWith('/mentor') && role !== 'mentor' && role !== 'admin') {
       // Only Mentors and Admins can access mentor section
-      return NextResponse.redirect(new URL(role === 'Student' ? '/Student/dashboard' : '/admin/students', request.url));
+      return NextResponse.redirect(new URL(role === 'student' ? '/Student/dashboard' : '/admin/students', request.url));
     }
 
-    if (pathname.startsWith('/Student') && role !== 'Student' && role !== 'Admin') {
+    if (pathname.startsWith('/Student') && role !== 'student' && role !== 'admin') {
       // Only Students and Admins can access student section
-      return NextResponse.redirect(new URL(role === 'Mentor' ? '/mentor/notifications' : '/admin/students', request.url));
+      return NextResponse.redirect(new URL(role === 'mentor' ? '/mentor/notifications' : '/admin/students', request.url));
     }
   }
 
@@ -63,10 +63,10 @@ export async function middleware(request: NextRequest) {
   const isAuthPath = authPaths.includes(pathname);
 
   if (isAuthPath && user) {
-    const role = user.user_metadata?.role || 'Student';
+    const role = (user.user_metadata?.role || 'Student').toLowerCase();
     let redirectUrl = '/Student/dashboard';
-    if (role === 'Admin') redirectUrl = '/admin/students';
-    if (role === 'Mentor') redirectUrl = '/mentor';
+    if (role === 'admin') redirectUrl = '/admin/students';
+    if (role === 'mentor') redirectUrl = '/mentor';
     
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
