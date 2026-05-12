@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ApiService } from "@/services/api";
+import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -89,8 +92,47 @@ const defaultProfile: UserProfile = {
 
 export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
-    const [profile, setProfile] = useState<UserProfile>(defaultProfile);
     const [formData, setFormData] = useState<UserProfile>(defaultProfile);
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
+
+    const { data: profile = defaultProfile, isLoading } = useQuery<UserProfile>({
+        queryKey: ['studentProfile'],
+        queryFn: async () => {
+            try {
+                const data = await ApiService.getStudentProfile();
+                return data || defaultProfile;
+            } catch (error) {
+                console.error("Failed to load profile:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load profile data. Using default data for now.",
+                    variant: "destructive",
+                });
+                return defaultProfile;
+            }
+        }
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: (updates: Partial<UserProfile>) => ApiService.updateStudentProfile(updates),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['studentProfile'] });
+            setIsEditing(false);
+            toast({
+                title: "Success",
+                description: "Profile updated successfully.",
+            });
+        },
+        onError: (error) => {
+            console.error("Failed to update profile:", error);
+            toast({
+                title: "Error",
+                description: "Failed to update profile. Please try again later.",
+                variant: "destructive",
+            });
+        }
+    });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -100,9 +142,22 @@ export default function ProfilePage() {
         }));
     };
 
+    const handleEditClick = () => {
+        setFormData(profile);
+        setIsEditing(true);
+    };
+
     const handleSave = () => {
-        setProfile(formData);
-        setIsEditing(false);
+        updateMutation.mutate({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            phone: formData.phone,
+            location: formData.location,
+            bio: formData.bio,
+            website: formData.website,
+            linkedin: formData.linkedin,
+            github: formData.github,
+        });
     };
 
     const handleCancel = () => {
@@ -174,7 +229,7 @@ export default function ProfilePage() {
                         {/* Edit Button */}
                         {!isEditing ? (
                             <Button
-                                onClick={() => setIsEditing(true)}
+                                onClick={handleEditClick}
                                 className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold gap-2"
                             >
                                 <Edit className="w-4 h-4" />
@@ -459,10 +514,11 @@ export default function ProfilePage() {
                         </Button>
                         <Button
                             onClick={handleSave}
-                            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold gap-2 rounded-full px-6 py-6 shadow-lg"
+                            disabled={updateMutation.isPending}
+                            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold gap-2 rounded-full px-6 py-6 shadow-lg disabled:opacity-50"
                         >
                             <Save className="w-5 h-5" />
-                            Save Changes
+                            {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </div>
                 )}

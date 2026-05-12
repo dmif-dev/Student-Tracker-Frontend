@@ -2,7 +2,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
   User,
@@ -38,42 +39,40 @@ interface MentorProfile {
 }
 
 export default function MentorProfilePage() {
-  const [profile, setProfile] = useState<MentorProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState<Partial<MentorProfile>>({});
+  const queryClient = useQueryClient();
 
-  // Mock mentor ID - replace with actual auth
-  const MENTOR_ID = '1';
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const mentor = await ApiService.getMentorById(MENTOR_ID);
-      if (mentor) {
-        setProfile({
-          id: mentor.id,
-          name: mentor.name,
-          email: mentor.email,
-          phone: mentor.phone,
-          location: mentor.location,
-          bio: mentor.bio,
-          expertise: mentor.expertise,
-          programs: mentor.programs,
-          students: mentor.students,
-          rating: mentor.rating,
-          joinDate: mentor.joinDate,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
+  const { data: profile, isLoading: loading, isError } = useQuery<MentorProfile>({
+    queryKey: ['mentorProfile'],
+    queryFn: async () => {
+      const mentor = await ApiService.getMentorProfile();
+      return {
+        id: mentor.id,
+        name: mentor.name || '',
+        email: mentor.user?.email || '',
+        phone: mentor.phone || '',
+        location: mentor.location || '',
+        bio: mentor.bio || '',
+        expertise: mentor.expertise || [],
+        programs: mentor.programs || [],
+        students: mentor._count?.assignedStudents || mentor.students || 0,
+        rating: mentor.rating || 0,
+        joinDate: mentor.joinDate || new Date().toISOString(),
+      };
     }
-  };
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (updates: Partial<MentorProfile>) => ApiService.updateMentorProfile(updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mentorProfile'] });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      console.error('Error updating profile:', error);
+    }
+  });
 
   const handleEdit = () => {
     setEditedProfile({
@@ -85,10 +84,8 @@ export default function MentorProfilePage() {
     setIsEditing(true);
   };
 
-  const handleSave = async () => {
-    // In a real app, this would call an API to update the profile
-    setProfile(prev => prev ? { ...prev, ...editedProfile } : null);
-    setIsEditing(false);
+  const handleSave = () => {
+    updateMutation.mutate(editedProfile);
   };
 
   const handleCancel = () => {
@@ -149,10 +146,11 @@ export default function MentorProfilePage() {
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              disabled={updateMutation.isPending}
+              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
             >
               <Save size={18} className="mr-2" />
-              Save Changes
+              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         )}
