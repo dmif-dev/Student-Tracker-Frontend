@@ -650,7 +650,7 @@ export class ApiService {
     const token = await getAuthToken();
     if (!token) return null;
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/user/me`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/user/me`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -668,7 +668,7 @@ export class ApiService {
     const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated');
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/student/profile`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/student/profile`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -685,7 +685,7 @@ export class ApiService {
     const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated');
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/student/profile`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/student/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -706,7 +706,7 @@ export class ApiService {
     const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated');
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/mentor/profile`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/mentor/profile`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -723,7 +723,7 @@ export class ApiService {
     const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated');
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/mentor/profile`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/mentor/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
