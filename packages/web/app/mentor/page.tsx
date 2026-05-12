@@ -133,7 +133,7 @@ export default function MentorDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -268,15 +268,15 @@ export default function MentorDashboard() {
 
         {/* Quick Actions */}
         <div className="space-y-6">
-          <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-gray-900 text-white p-8">
-            <h2 className="text-xl font-black font-montserrat mb-6 uppercase tracking-wider flex items-center gap-2">
+          <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-gray-900 p-8">
+            <h2 className="text-xl font-black font-montserrat mb-6 uppercase tracking-wider flex items-center gap-2 text-white">
               <TrendingUp className="text-orange-500 w-5 h-5" />
               Quick Actions
             </h2>
             <div className="grid gap-3">
               <Link
                 href="/mentor/documents/upload"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300 text-white"
               >
                 <div className="flex items-center gap-3">
                   <FileText size={20} className="text-orange-500 group-hover:text-white" />
@@ -286,7 +286,7 @@ export default function MentorDashboard() {
               </Link>
               <Link
                 href="/mentor/schedule"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300 text-white"
               >
                 <div className="flex items-center gap-3">
                   <Calendar size={20} className="text-orange-500 group-hover:text-white" />
@@ -296,7 +296,7 @@ export default function MentorDashboard() {
               </Link>
               <Link
                 href="/mentor/students"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300 text-white"
               >
                 <div className="flex items-center gap-3">
                   <Users size={20} className="text-orange-500 group-hover:text-white" />

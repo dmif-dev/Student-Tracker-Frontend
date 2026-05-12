@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { signOut } from '@/app/auth/actions';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
+import { apiClient } from '@/utils/apiClient';
+import { createClient } from '@/utils/supabase/client';
 
 interface MentorProfile {
   id: string;
@@ -92,22 +94,23 @@ export default function MentorSettingsPage() {
   const { data: profileData, isLoading, refetch } = useCurrentMentor();
 
   useEffect(() => {
-    if (profileData) {
+    const loadSettings = async () => {
+      if (!profileData) return;
       setProfile(profileData as any);
       setEditedProfile(profileData as any);
-      setNotificationSettings({
-        emailNotifications: true,
-        sessionReminders: true,
-        studentUpdates: true,
-        documentUploads: true,
-        weeklyDigest: false,
-      });
-      setPrivacySettings({
-        profileVisibility: 'mentors_only',
-        showEmail: false,
-        showPhone: false,
-      });
-    }
+      try {
+        const settings = await apiClient.get<any>('mentor/settings');
+        if (settings.notificationSettings) {
+          setNotificationSettings(settings.notificationSettings);
+        }
+        if (settings.privacySettings) {
+          setPrivacySettings(settings.privacySettings);
+        }
+      } catch {
+        // keep defaults
+      }
+    };
+    loadSettings();
   }, [profileData]);
 
   const handleProfileSave = async () => {
@@ -116,13 +119,16 @@ export default function MentorSettingsPage() {
     setErrorMessage(null);
     
     try {
-      // In a real app, this would call an API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const updated = await apiClient.put<any>('mentor/profile/me', {
+        name: editedProfile.name,
+        phone: editedProfile.phone,
+        location: editedProfile.location,
+        bio: editedProfile.bio,
+      });
       
-      setProfile(prev => prev ? { ...prev, ...editedProfile } : null);
+      setProfile(prev => prev ? { ...prev, ...updated } : null);
+      refetch(); // re-sync React Query cache
       setSuccessMessage('Profile updated successfully!');
-      
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (error) {
       setErrorMessage('Failed to update profile. Please try again.');
@@ -137,11 +143,10 @@ export default function MentorSettingsPage() {
     setErrorMessage(null);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setProfile(prev => prev ? { 
-        ...prev, 
-        notificationPreferences: notificationSettings 
-      } : null);
+      await apiClient.put('mentor/settings', {
+        section: 'notifications',
+        notificationSettings,
+      });
       setSuccessMessage('Notification preferences updated!');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (error) {
@@ -157,11 +162,10 @@ export default function MentorSettingsPage() {
     setErrorMessage(null);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setProfile(prev => prev ? { 
-        ...prev, 
-        privacySettings 
-      } : null);
+      await apiClient.put('mentor/settings', {
+        section: 'privacy',
+        privacySettings,
+      });
       setSuccessMessage('Privacy settings updated!');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (error) {
@@ -189,7 +193,30 @@ export default function MentorSettingsPage() {
     setSuccessMessage(null);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      const supabase = createClient();
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user?.email) throw new Error('Could not identify current user');
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordData.currentPassword,
+      });
+
+      if (signInError) {
+        setErrorMessage('Current password is incorrect');
+        setSaving(false);
+        return;
+      }
+
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+      
       setSuccessMessage('Password changed successfully!');
       setPasswordData({
         currentPassword: '',
@@ -197,8 +224,8 @@ export default function MentorSettingsPage() {
         confirmPassword: '',
       });
       setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (error) {
-      setErrorMessage('Failed to change password. Please check your current password.');
+    } catch (error: any) {
+      setErrorMessage(error.message || 'Failed to change password. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -220,7 +247,7 @@ export default function MentorSettingsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -268,7 +295,7 @@ export default function MentorSettingsPage() {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex-1 px-6 py-4 text-sm font-medium transition-colors relative ${
                   activeTab === tab.id
-                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    ? 'text-orange-600 border-b-2 border-orange-600'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -297,7 +324,7 @@ export default function MentorSettingsPage() {
                       type="text"
                       value={editedProfile.name || ''}
                       onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
 
@@ -309,7 +336,7 @@ export default function MentorSettingsPage() {
                       type="email"
                       value={editedProfile.email || ''}
                       onChange={(e) => setEditedProfile({ ...editedProfile, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
 
@@ -322,7 +349,7 @@ export default function MentorSettingsPage() {
                         type="tel"
                         value={editedProfile.phone || ''}
                         onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         placeholder="+1 234 567 890"
                       />
                     </div>
@@ -334,7 +361,7 @@ export default function MentorSettingsPage() {
                         type="text"
                         value={editedProfile.location || ''}
                         onChange={(e) => setEditedProfile({ ...editedProfile, location: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         placeholder="City, Country"
                       />
                     </div>
@@ -348,7 +375,7 @@ export default function MentorSettingsPage() {
                       value={editedProfile.bio || ''}
                       onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="Tell us about yourself..."
                     />
                   </div>
@@ -361,7 +388,7 @@ export default function MentorSettingsPage() {
                       {profile.expertise.map((exp, index) => (
                         <span
                           key={index}
-                          className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm"
+                          className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm"
                         >
                           {exp}
                         </span>
@@ -391,7 +418,7 @@ export default function MentorSettingsPage() {
                 <button
                   onClick={handleProfileSave}
                   disabled={saving}
-                  className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                  className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
                 >
                   {saving ? (
                     <>
@@ -430,7 +457,7 @@ export default function MentorSettingsPage() {
                         })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                     </label>
                   </div>
 
@@ -449,7 +476,7 @@ export default function MentorSettingsPage() {
                         })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                     </label>
                   </div>
 
@@ -468,7 +495,7 @@ export default function MentorSettingsPage() {
                         })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                     </label>
                   </div>
 
@@ -487,7 +514,7 @@ export default function MentorSettingsPage() {
                         })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                     </label>
                   </div>
 
@@ -506,7 +533,7 @@ export default function MentorSettingsPage() {
                         })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                     </label>
                   </div>
                 </div>
@@ -516,7 +543,7 @@ export default function MentorSettingsPage() {
                 <button
                   onClick={handleNotificationSave}
                   disabled={saving}
-                  className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                  className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
                 >
                   {saving ? (
                     <>
@@ -549,7 +576,7 @@ export default function MentorSettingsPage() {
                         type={showPasswords.current ? 'text' : 'password'}
                         value={passwordData.currentPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         required
                       />
                       <button
@@ -571,7 +598,7 @@ export default function MentorSettingsPage() {
                         type={showPasswords.new ? 'text' : 'password'}
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         required
                         minLength={8}
                       />
@@ -595,7 +622,7 @@ export default function MentorSettingsPage() {
                         type={showPasswords.confirm ? 'text' : 'password'}
                         value={passwordData.confirmPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         required
                       />
                       <button
@@ -612,7 +639,7 @@ export default function MentorSettingsPage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                      className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
                     >
                       {saving ? 'Changing...' : 'Change Password'}
                     </button>
@@ -675,7 +702,7 @@ export default function MentorSettingsPage() {
                         ...privacySettings,
                         profileVisibility: e.target.value as any
                       })}
-                      className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="public">Public - Anyone can see</option>
                       <option value="mentors_only">Mentors Only</option>
@@ -698,7 +725,7 @@ export default function MentorSettingsPage() {
                         })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                     </label>
                   </div>
 
@@ -717,7 +744,7 @@ export default function MentorSettingsPage() {
                         })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                     </label>
                   </div>
                 </div>
@@ -727,7 +754,7 @@ export default function MentorSettingsPage() {
                 <button
                   onClick={handlePrivacySave}
                   disabled={saving}
-                  className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                  className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
                 >
                   {saving ? (
                     <>

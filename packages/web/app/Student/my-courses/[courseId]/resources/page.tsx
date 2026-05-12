@@ -203,7 +203,7 @@ export default function TrackResourcesPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             <AnimatePresence mode="popLayout">
-                                {filteredResources.map((res, i) => (
+                                {filteredResources.map((res: any, i: number) => (
                                     <ResourceCard key={res.id} resource={res} index={i} />
                                 ))}
                             </AnimatePresence>

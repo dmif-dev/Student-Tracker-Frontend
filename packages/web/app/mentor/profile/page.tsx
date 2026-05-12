@@ -21,6 +21,7 @@ import {
   Users
 } from 'lucide-react';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
+import { apiClient } from '@/utils/apiClient';
 
 interface MentorProfile {
   id: string;
@@ -35,12 +36,36 @@ interface MentorProfile {
   rating: number;
   joinDate: string;
   avatar?: string;
+  stats?: {
+    totalStudents: number;
+    activeStudents: number;
+    totalSessions: number;
+    averageStudentProgress: number;
+    totalOutcomes: number;
+    completionRate: number;
+    rating: number;
+    averageSessionDuration: number;
+    documentsShared: number;
+  };
+  performance?: {
+    period: string;
+    summary: {
+      totalSessions: number;
+      averageStudentProgress: number;
+      outcomesAchieved: number;
+      completionRate: number;
+    };
+  };
 }
 
 export default function MentorProfilePage() {
-  const { data: profile, isLoading, refetch } = useCurrentMentor();
+  const { data, isLoading, refetch } = useCurrentMentor();
+  const profile = data as MentorProfile | undefined;
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState<Partial<MentorProfile>>({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleEdit = () => {
     setEditedProfile({
@@ -49,19 +74,36 @@ export default function MentorProfilePage() {
       location: profile?.location,
       bio: profile?.bio,
     });
+    setSaveError(null);
+    setSaveSuccess(false);
     setIsEditing(true);
   };
 
   const handleSave = async () => {
-    // In a real app, this would call an API to update the profile
-    // await apiClient.patch('mentor/profile', editedProfile);
-    // refetch();
-    setIsEditing(false);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await apiClient.put('mentor/profile/me', {
+        name: editedProfile.name,
+        phone: editedProfile.phone,
+        location: editedProfile.location,
+        bio: editedProfile.bio,
+      });
+      await refetch();
+      setSaveSuccess(true);
+      setIsEditing(false);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to save profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditedProfile({});
+    setSaveError(null);
   };
 
   const getProgramIcon = (program: string) => {
@@ -80,7 +122,7 @@ export default function MentorProfilePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -107,30 +149,54 @@ export default function MentorProfilePage() {
             Edit Profile
           </button>
         ) : (
-          <div className="flex space-x-2">
+        <div className="flex space-x-2">
             <button
               onClick={handleCancel}
-              className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              disabled={saving}
+              className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
             >
               <X size={18} className="mr-2" />
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              disabled={saving}
+              className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
             >
-              <Save size={18} className="mr-2" />
-              Save Changes
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save size={18} className="mr-2" />
+                  Save Changes
+                </>
+              )}
             </button>
           </div>
         )}
       </div>
 
+      {/* Success / Error banners */}
+      {saveSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2 text-green-700 text-sm">
+          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+          Profile updated successfully!
+        </div>
+      )}
+      {saveError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-red-700 text-sm">
+          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+          {saveError}
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-            <div className="w-24 h-24 bg-primary-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
+            <div className="w-24 h-24 bg-orange-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
               {profile.name?.charAt(0) || '?'}
             </div>
             
@@ -246,7 +312,7 @@ export default function MentorProfilePage() {
                 value={editedProfile.bio || profile.bio || ''}
                 onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Tell us about yourself..."
               />
             ) : (
@@ -261,7 +327,7 @@ export default function MentorProfilePage() {
               {profile.expertise.map((exp, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm"
+                  className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm"
                 >
                   {exp}
                 </span>
@@ -275,19 +341,19 @@ export default function MentorProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-600 mb-1">Sessions This Month</p>
-                <p className="text-2xl font-bold text-blue-700">24</p>
+                <p className="text-2xl font-bold text-blue-700">{profile.performance?.summary?.totalSessions || 0}</p>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">
                 <p className="text-sm text-green-600 mb-1">Documents Shared</p>
-                <p className="text-2xl font-bold text-green-700">18</p>
+                <p className="text-2xl font-bold text-green-700">{profile.stats?.documentsShared || 0}</p>
               </div>
               <div className="p-4 bg-purple-50 rounded-lg">
                 <p className="text-sm text-purple-600 mb-1">Avg Session Duration</p>
-                <p className="text-2xl font-bold text-purple-700">45 min</p>
+                <p className="text-2xl font-bold text-purple-700">{profile.stats?.averageSessionDuration || 0} min</p>
               </div>
               <div className="p-4 bg-orange-50 rounded-lg">
-                <p className="text-sm text-orange-600 mb-1">Response Rate</p>
-                <p className="text-2xl font-bold text-orange-700">95%</p>
+                <p className="text-sm text-orange-600 mb-1">Completion Rate</p>
+                <p className="text-2xl font-bold text-orange-700">{profile.stats?.completionRate || 0}%</p>
               </div>
             </div>
           </div>

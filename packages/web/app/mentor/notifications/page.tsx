@@ -142,7 +142,7 @@ export default function MentorNotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="flex items-center px-4 py-2 text-primary-600 border border-primary-300 rounded-lg hover:bg-primary-50 transition-colors"
+            className="flex items-center px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors"
           >
             <Check size={18} className="mr-2" />
             Mark all as read
@@ -159,14 +159,14 @@ export default function MentorNotificationsPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
                   showFilters || getActiveFilterCount() > 0
-                    ? 'bg-primary-50 border-primary-300 text-primary-600'
+                    ? 'bg-orange-50 border-orange-300 text-orange-600'
                     : 'border-gray-300 hover:bg-gray-50'
                 }`}
               >
                 <Filter size={18} className="mr-2" />
                 Filters
                 {getActiveFilterCount() > 0 && (
-                  <span className="ml-2 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="ml-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {getActiveFilterCount()}
                   </span>
                 )}
@@ -199,7 +199,7 @@ export default function MentorNotificationsPage() {
                   <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value as FilterType)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="all">All Status</option>
                     <option value="unread">Unread ({unreadCount})</option>
@@ -215,7 +215,7 @@ export default function MentorNotificationsPage() {
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value as CategoryFilterType)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="all">All Categories</option>
                     <option value="student">Students</option>
@@ -233,7 +233,7 @@ export default function MentorNotificationsPage() {
                   <select
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value as DateFilterType)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="all">All Time</option>
                     <option value="today">Today</option>
@@ -278,7 +278,7 @@ export default function MentorNotificationsPage() {
                     {alert.action && (
                       <button
                         onClick={() => router.push(alert.action!.url)}
-                        className="mt-2 text-sm text-primary-600 hover:text-primary-700 flex items-center"
+                        className="mt-2 text-sm text-orange-600 hover:text-orange-700 flex items-center"
                       >
                         {alert.action.text}
                         <ExternalLink size={14} className="ml-1" />
@@ -306,7 +306,7 @@ export default function MentorNotificationsPage() {
           {filteredNotifications.length > 0 && (
             <button
               onClick={markAllAsRead}
-              className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+              className="text-sm text-orange-600 hover:text-orange-700 flex items-center"
             >
               <Check size={16} className="mr-1" />
               Mark all as read
@@ -326,7 +326,7 @@ export default function MentorNotificationsPage() {
             {getActiveFilterCount() > 0 && (
               <button
                 onClick={clearFilters}
-                className="mt-4 px-4 py-2 text-primary-600 border border-primary-300 rounded-lg hover:bg-primary-50"
+                className="mt-4 px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
               >
                 Clear all filters
               </button>
@@ -339,7 +339,7 @@ export default function MentorNotificationsPage() {
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
                 className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                  !notification.isRead ? 'bg-primary-50/50' : ''
+                  !notification.isRead ? 'bg-orange-50/50' : ''
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -354,7 +354,7 @@ export default function MentorNotificationsPage() {
                         {getCategoryIcon(notification.category)}
                         <h4 className="font-medium text-gray-900">{notification.title}</h4>
                         {!notification.isRead && (
-                          <span className="px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs">
+                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
                             New
                           </span>
                         )}
@@ -369,7 +369,7 @@ export default function MentorNotificationsPage() {
                           {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                         </p>
                         {notification.actionUrl && (
-                          <span className="text-xs text-primary-600 hover:text-primary-700 flex items-center">
+                          <span className="text-xs text-orange-600 hover:text-orange-700 flex items-center">
                             Click to view
                             <ExternalLink size={12} className="ml-1" />
                           </span>

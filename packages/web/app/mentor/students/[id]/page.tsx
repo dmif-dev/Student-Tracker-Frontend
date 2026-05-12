@@ -292,7 +292,7 @@ export default function MentorStudentDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -301,7 +301,7 @@ export default function MentorStudentDetailPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Student not found</h2>
-        <Link href="/mentor/students" className="text-primary-600 hover:text-primary-700">
+        <Link href="/mentor/students" className="text-orange-600 hover:text-orange-700">
           Back to My Students
         </Link>
       </div>
@@ -334,7 +334,7 @@ export default function MentorStudentDetailPage() {
             <Mail size={18} className="mr-2" />
             Send Email
           </button>
-          <button className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+          <button className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
             <MessageCircle size={18} className="mr-2" />
             Message
           </button>
@@ -391,7 +391,7 @@ export default function MentorStudentDetailPage() {
             onClick={() => setActiveTab('overview')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'overview'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -401,7 +401,7 @@ export default function MentorStudentDetailPage() {
             onClick={() => setActiveTab('sessions')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'sessions'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -411,7 +411,7 @@ export default function MentorStudentDetailPage() {
             onClick={() => setActiveTab('documents')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'documents'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -421,7 +421,7 @@ export default function MentorStudentDetailPage() {
             onClick={() => setActiveTab('assignments')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'assignments'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -507,7 +507,7 @@ export default function MentorStudentDetailPage() {
                     {sessions[0].startTime} - {sessions[0].endTime}
                   </p>
                   <p className="text-sm mt-3">{sessions[0].topic}</p>
-                  <button className="mt-4 w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                  <button className="mt-4 w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
                     Join Session
                   </button>
                 </div>
@@ -530,7 +530,7 @@ export default function MentorStudentDetailPage() {
               <div className="space-y-2">
                 <Link
                   href={`/mentor/documents/upload?student=${student.id}`}
-                  className="block w-full px-4 py-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 text-center text-sm"
+                  className="block w-full px-4 py-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 text-center text-sm"
                 >
                   <Plus size={16} className="inline mr-2" />
                   Upload Document
@@ -556,7 +556,7 @@ export default function MentorStudentDetailPage() {
             <h3 className="text-lg font-semibold">Session History</h3>
             <button
               onClick={() => setShowScheduleModal(true)}
-              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               <Plus size={18} className="mr-2" />
               Schedule New Session
@@ -611,7 +611,7 @@ export default function MentorStudentDetailPage() {
                         className="p-2 hover:bg-gray-200 rounded-lg"
                         title="Join Meeting"
                       >
-                        <Video size={16} className="text-primary-600" />
+                        <Video size={16} className="text-orange-600" />
                       </a>
                     )}
                   </div>
@@ -628,7 +628,7 @@ export default function MentorStudentDetailPage() {
             <h3 className="text-lg font-semibold">Shared Documents</h3>
             <Link
               href={`/mentor/documents/upload?student=${student.id}`}
-              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               <Plus size={18} className="mr-2" />
               Upload New
@@ -711,8 +711,8 @@ export default function MentorStudentDetailPage() {
               </div>
               <p className="text-sm text-gray-600 mb-3">Due: March 15, 2024</p>
               <div className="flex items-center space-x-2">
-                <button className="text-sm text-primary-600 hover:text-primary-700">View Details</button>
-                <button className="text-sm text-primary-600 hover:text-primary-700">Add Feedback</button>
+                <button className="text-sm text-orange-600 hover:text-orange-700">View Details</button>
+                <button className="text-sm text-orange-600 hover:text-orange-700">Add Feedback</button>
               </div>
             </div>
 
@@ -723,8 +723,8 @@ export default function MentorStudentDetailPage() {
               </div>
               <p className="text-sm text-gray-600 mb-3">Submitted: March 10, 2024</p>
               <div className="flex items-center space-x-2">
-                <button className="text-sm text-primary-600 hover:text-primary-700">View Submission</button>
-                <button className="text-sm text-primary-600 hover:text-primary-700">View Feedback</button>
+                <button className="text-sm text-orange-600 hover:text-orange-700">View Submission</button>
+                <button className="text-sm text-orange-600 hover:text-orange-700">View Feedback</button>
               </div>
             </div>
           </div>
@@ -820,7 +820,7 @@ function ScheduleSessionModal({ student, onClose, onSchedule }: {
               value={formData.date}
               min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -837,7 +837,7 @@ function ScheduleSessionModal({ student, onClose, onSchedule }: {
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -849,7 +849,7 @@ function ScheduleSessionModal({ student, onClose, onSchedule }: {
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -863,7 +863,7 @@ function ScheduleSessionModal({ student, onClose, onSchedule }: {
               type="text"
               value={formData.topic}
               onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="e.g., Weekly Progress Review"
             />
           </div>
@@ -876,7 +876,7 @@ function ScheduleSessionModal({ student, onClose, onSchedule }: {
               type="url"
               value={formData.meetingLink}
               onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://meet.google.com/..."
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -892,7 +892,7 @@ function ScheduleSessionModal({ student, onClose, onSchedule }: {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Any additional notes or agenda items..."
             />
           </div>
@@ -907,7 +907,7 @@ function ScheduleSessionModal({ student, onClose, onSchedule }: {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               Schedule Session
             </button>

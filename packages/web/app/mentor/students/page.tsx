@@ -118,7 +118,7 @@ export default function MentorStudentsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -149,13 +149,13 @@ export default function MentorStudentsPage() {
               placeholder="Search students by name, email, or track..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
-              showFilters ? 'bg-primary-50 border-primary-300 text-primary-600' : 'border-gray-300 hover:bg-gray-50'
+              showFilters ? 'bg-orange-50 border-orange-300 text-orange-600' : 'border-gray-300 hover:bg-gray-50'
             }`}
           >
             <Filter size={18} className="mr-2" />
@@ -170,7 +170,7 @@ export default function MentorStudentsPage() {
               <select
                 value={selectedProgram}
                 onChange={(e) => setSelectedProgram(e.target.value)}
-                className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="all">All Programs</option>
                 <option value="G-GMP">G-GMP</option>
@@ -195,7 +195,7 @@ export default function MentorStudentsPage() {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-semibold text-lg">
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-semibold text-lg">
                     {student.name.charAt(0)}
                   </div>
                   <div>
@@ -257,7 +257,7 @@ export default function MentorStudentsPage() {
                   <Mail size={14} className="mr-1" />
                   Message
                 </button>
-                <span className="text-primary-600 text-sm flex items-center">
+                <span className="text-orange-600 text-sm flex items-center">
                   View Profile
                   <ChevronRight size={16} className="ml-1" />
                 </span>

@@ -268,7 +268,7 @@ export default function MentorSchedulePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -294,7 +294,7 @@ export default function MentorSchedulePage() {
           </button>
           <button
             onClick={() => setShowScheduleModal(true)}
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
           >
             <Plus size={18} className="mr-2" />
             Schedule Session
@@ -303,20 +303,20 @@ export default function MentorSchedulePage() {
       </div>
 
       {/* Upcoming Sessions Summary */}
-      <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-primary-600 mb-1">Upcoming Sessions</p>
-            <p className="text-2xl font-bold text-primary-700">{upcomingSessions.length}</p>
+            <p className="text-sm text-orange-600 mb-1">Upcoming Sessions</p>
+            <p className="text-2xl font-bold text-orange-700">{upcomingSessions.length}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-primary-600 mb-1">Next Session</p>
+            <p className="text-sm text-orange-600 mb-1">Next Session</p>
             {upcomingSessions.length > 0 ? (
-              <p className="text-sm font-medium text-primary-700">
+              <p className="text-sm font-medium text-orange-700">
                 {upcomingSessions[0].studentName} • {new Date(upcomingSessions[0].date).toLocaleDateString()}
               </p>
             ) : (
-              <p className="text-sm text-primary-500">No upcoming sessions</p>
+              <p className="text-sm text-orange-500">No upcoming sessions</p>
             )}
           </div>
         </div>
@@ -371,11 +371,11 @@ export default function MentorSchedulePage() {
                   key={day}
                   onClick={() => setSelectedDate(date)}
                   className={`bg-white p-2 h-32 overflow-y-auto cursor-pointer hover:bg-gray-50 transition-colors ${
-                    isSelected ? 'ring-2 ring-primary-500 ring-inset' : ''
-                  } ${isToday ? 'bg-primary-50' : ''}`}
+                    isSelected ? 'ring-2 ring-orange-500 ring-inset' : ''
+                  } ${isToday ? 'bg-orange-50' : ''}`}
                 >
                   <span className={`text-sm font-medium ${
-                    isSelected ? 'text-primary-600' : isToday ? 'text-primary-600' : 'text-gray-700'
+                    isSelected ? 'text-orange-600' : isToday ? 'text-orange-600' : 'text-gray-700'
                   }`}>
                     {day}
                   </span>
@@ -417,7 +417,7 @@ export default function MentorSchedulePage() {
                 <p className="text-gray-500">Schedule your next mentoring session.</p>
                 <button
                   onClick={() => setShowScheduleModal(true)}
-                  className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                 >
                   <Plus size={18} className="mr-2" />
                   Schedule Session
@@ -465,7 +465,7 @@ export default function MentorSchedulePage() {
                                 href={session.meetingLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center mt-2 text-sm text-primary-600 hover:text-primary-700"
+                                className="inline-flex items-center mt-2 text-sm text-orange-600 hover:text-orange-700"
                               >
                                 <Video size={14} className="mr-1" />
                                 Join Meeting
@@ -784,7 +784,7 @@ export default function MentorSchedulePage() {
                   href={showSessionModal.meetingLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full text-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  className="block w-full text-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                 >
                   Join Meeting
                 </a>
@@ -878,7 +878,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
             <select
               value={formData.studentId}
               onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             >
               <option value="">Choose a student</option>
@@ -904,7 +904,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
               value={formData.date}
               min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
             {formData.studentId && (
@@ -923,7 +923,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -935,7 +935,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -949,7 +949,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
               type="text"
               value={formData.topic}
               onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="e.g., Weekly Progress Review"
             />
           </div>
@@ -962,7 +962,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
               type="url"
               value={formData.meetingLink}
               onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://meet.google.com/..."
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -978,7 +978,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Any additional notes or agenda items..."
             />
           </div>
@@ -993,7 +993,7 @@ function ScheduleSessionModal({ students, onClose, onSchedule }: {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               Schedule Session
             </button>
@@ -1045,7 +1045,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
             <select
               value={formData.studentId}
               onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             >
               {students.map((student) => (
@@ -1064,7 +1064,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
@@ -1078,7 +1078,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -1090,7 +1090,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -1104,7 +1104,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
               type="text"
               value={formData.topic}
               onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
@@ -1117,7 +1117,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
               type="url"
               value={formData.meetingLink}
               onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://meet.google.com/..."
             />
           </div>
@@ -1132,7 +1132,7 @@ function EditSessionModal({ session, students, onClose, onSave }: {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               Save Changes
             </button>
