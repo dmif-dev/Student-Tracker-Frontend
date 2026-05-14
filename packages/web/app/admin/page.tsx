@@ -3,16 +3,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Users,
-  GraduationCap,
-  Award,
-  TrendingUp,
-  Clock,
-  CheckCircle
-} from 'lucide-react';
+import { Users, GraduationCap, Award, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { ApiService } from '@/services/api';
+import { useAdminDashboardStats, useSystemActivities } from '@/hooks/api/useAdmin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,46 +54,33 @@ const mapActivityType = (type: string, program?: string): ActivityItem['type'] =
 };
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalStudents: 0,
-    activeStudents: 0,
-    totalMentors: 0,
-    programsCount: 0,
-    pendingReviews: 0,
-    outcomesThisMonth: 0,
-  });
-  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: statsData, isLoading: statsLoading } = useAdminDashboardStats();
+  const { data: activitiesData, isLoading: activitiesLoading } = useSystemActivities(4);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [statsData, activities] = await Promise.all([
-          ApiService.getDashboardStats(),
-          ApiService.getRecentActivities(4)
-        ]);
+  const loading = statsLoading || activitiesLoading;
 
-        setStats(statsData);
-        setRecentActivity(activities.map(a => ({
-          id: a.id,
-          type: mapActivityType(a.type, a.program),
-          title: a.title,
-          time: a.time,
-          user: a.user,
-          program: a.program,
-        })));
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const stats: DashboardStats = {
+    totalStudents: statsData?.stats?.totalStudents || 0,
+    activeStudents: statsData?.stats?.activeStudents || 0,
+    totalMentors: statsData?.stats?.totalMentors || 0,
+    programsCount: statsData?.stats?.totalPrograms || 0,
+    pendingReviews: statsData?.stats?.pendingReviews || 0,
+    outcomesThisMonth: statsData?.stats?.totalOutcomes || 0,
+  };
 
-    fetchDashboardData();
-  }, []);
+  const activitySource = statsData?.recentActivity || activitiesData || [];
+
+  const recentActivity: ActivityItem[] = activitySource.map((a: any) => ({
+    id: a.id,
+    type: mapActivityType(a.type || a.action, a.program),
+    title: a.title || `${a.action || 'Activity'} - ${a.details || ''}`,
+    time: a.createdAt ? new Date(a.createdAt).toLocaleString() : a.time || 'Just now',
+    user: a.user?.name || a.user?.email || a.user,
+    program: a.program,
+  }));
 
   const StatCard = ({ title, value, icon: Icon, color, trend }: any) => (
-    <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm transition-all hover:translate-y-[-4px] hover:shadow-lg">
+    <Card className="border border-gray-100 shadow-md bg-white transition-all hover:translate-y-[-4px] hover:shadow-lg">
       <CardContent className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div className={cn("p-3 rounded-2xl bg-orange-100 text-orange-600", color.replace('bg-', 'text-').replace('-500', '-600'))}>
@@ -114,8 +94,8 @@ export default function AdminDashboard() {
           )}
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground font-montserrat uppercase tracking-wider">{title}</p>
-          <p className="text-3xl font-extrabold tracking-tighter">{value}</p>
+          <p className="text-sm font-medium text-gray-500 font-montserrat uppercase tracking-wider">{title}</p>
+          <p className="text-3xl font-extrabold tracking-tighter text-gray-900">{value}</p>
         </div>
       </CardContent>
     </Card>
@@ -306,36 +286,36 @@ export default function AdminDashboard() {
 
         {/* Quick Actions */}
         <div className="space-y-6">
-          <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-gray-900 text-white p-8">
-            <h3 className="text-xl font-black font-montserrat mb-6 uppercase tracking-wider flex items-center gap-2">
+          <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-gray-900 p-8">
+            <h3 className="text-xl font-black font-montserrat mb-6 uppercase tracking-wider flex items-center gap-2 text-white">
               <TrendingUp className="text-orange-500 w-5 h-5" />
               Administrative
             </h3>
             <div className="grid gap-3">
               <Link
                 href="/admin/students/add"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 text-white rounded-2xl transition-all duration-300"
               >
                 <span className="font-bold text-sm tracking-wide">Add Student</span>
                 <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </Link>
               <Link
                 href="/admin/mentors/add"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 text-white rounded-2xl transition-all duration-300"
               >
                 <span className="font-bold text-sm tracking-wide">Assign Mentor</span>
                 <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </Link>
               <Link
                 href="/admin/analytics"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 text-white rounded-2xl transition-all duration-300"
               >
                 <span className="font-bold text-sm tracking-wide">View Analytics</span>
                 <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </Link>
               <Link
                 href="/admin/students/import"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300"
+                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 text-white rounded-2xl transition-all duration-300"
               >
                 <span className="font-bold text-sm tracking-wide">Bulk Import</span>
                 <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />

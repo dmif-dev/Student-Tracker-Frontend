@@ -18,7 +18,7 @@ import {
   Video,
   ChevronRight
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
+import { useAdminMentor } from '@/hooks/api/useAdmin';
 
 interface MentorDetails {
   id: string;
@@ -53,9 +53,8 @@ export default function MentorDetailPage() {
   const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [mentor, setMentor] = useState<MentorDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([])
+  const { data: mentor, isLoading: loading } = useAdminMentor(params.id as string);
+  const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
 
   // Get current tab from URL
   const currentTab = pathname.split('/').pop() || 'overview';
@@ -63,29 +62,11 @@ export default function MentorDetailPage() {
   const activeTab = validTabs.includes(currentTab) ? currentTab : 'overview';
 
   useEffect(() => {
-    const fetchMentor = async () => {
-      try {
-        const data = await ApiService.getMentorById(params.id as string);
-        if (data) {
-          setMentor(data);
-          
-          // Generate upcoming sessions from assigned students
-          if (data.assignedStudents) {
-            const sessions = generateUpcomingSessions(data);
-            setUpcomingSessions(sessions);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching mentor:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (params.id) {
-      fetchMentor();
+    if (mentor?.assignedStudents) {
+      const sessions = generateUpcomingSessions(mentor);
+      setUpcomingSessions(sessions);
     }
-  }, [params.id]);
+  }, [mentor]);
 
   const generateUpcomingSessions = (mentorData: any) => {
     const sessions: UpcomingSession[] = [];
@@ -140,7 +121,7 @@ export default function MentorDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -151,7 +132,7 @@ export default function MentorDetailPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Mentor not found</h2>
         <Link
           href="/admin/mentors"
-          className="text-primary-600 hover:text-primary-700"
+          className="text-orange-600 hover:text-orange-700"
         >
           Back to Mentors
         </Link>
@@ -176,13 +157,16 @@ export default function MentorDetailPage() {
           </div>
         </div>
         <div className="flex space-x-3">
-          <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <a 
+            href={`mailto:${mentor.email}`}
+            className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
             <Mail size={18} className="mr-2" />
             Send Email
-          </button>
+          </a>
           <Link
             href={`/admin/mentors/${mentor.id}/schedule`}
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
           >
             <Calendar size={18} className="mr-2" />
             View Schedule
@@ -221,7 +205,7 @@ export default function MentorDetailPage() {
             href={`/admin/mentors/${params.id}`}
             className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
               activeTab === 'overview'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -231,7 +215,7 @@ export default function MentorDetailPage() {
             href={`/admin/mentors/${params.id}/students`}
             className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
               activeTab === 'students'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -241,7 +225,7 @@ export default function MentorDetailPage() {
             href={`/admin/mentors/${params.id}/schedule`}
             className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
               activeTab === 'schedule'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -251,7 +235,7 @@ export default function MentorDetailPage() {
             href={`/admin/mentors/${params.id}/performance`}
             className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
               activeTab === 'performance'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -278,7 +262,7 @@ export default function MentorDetailPage() {
                 {mentor.expertise.map((exp, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm"
+                    className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm"
                   >
                     {exp}
                   </span>
@@ -313,7 +297,7 @@ export default function MentorDetailPage() {
                   <h3 className="text-lg font-semibold">Upcoming Sessions</h3>
                   <Link
                     href={`/admin/mentors/${mentor.id}/schedule`}
-                    className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+                    className="text-sm text-orange-600 hover:text-orange-700 flex items-center"
                   >
                     View Full Schedule
                     <ChevronRight size={16} className="ml-1" />
@@ -379,7 +363,7 @@ export default function MentorDetailPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Users size={16} className="text-primary-500 mr-2" />
+                    <Users size={16} className="text-orange-500 mr-2" />
                     <span>Total Students</span>
                   </div>
                   <span className="font-semibold">{mentor.students}</span>
@@ -463,7 +447,7 @@ export default function MentorDetailPage() {
             <h3 className="text-lg font-semibold">Weekly Schedule</h3>
             <Link
               href={`/admin/mentors/${mentor.id}/schedule`}
-              className="text-primary-600 hover:text-primary-700 flex items-center"
+              className="text-orange-600 hover:text-orange-700 flex items-center"
             >
               View Full Calendar
               <ChevronRight size={16} className="ml-1" />

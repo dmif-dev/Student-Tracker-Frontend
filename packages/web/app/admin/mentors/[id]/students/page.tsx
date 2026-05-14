@@ -22,7 +22,7 @@ import {
   Code,
   Brain
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
+import { useAdminMentor } from '@/hooks/api/useAdmin';
 
 interface Student {
   id: string;
@@ -59,18 +59,16 @@ interface AssignedStudent {
 export default function MentorStudentsPage() {
   const params = useParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [mentor, setMentor] = useState<any>(null);
+  const { data: mentorData, isLoading: loading } = useAdminMentor(params.id as string);
+  const mentor = mentorData;
   const [students, setStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<string>('all');
 
   useEffect(() => {
-    const fetchMentorAndStudents = async () => {
+    if (mentorData) {
       try {
-        const mentorData = await ApiService.getMentorById(params.id as string);
-        if (mentorData) {
-          setMentor(mentorData);
+        // Filter out PCP students from assigned students
           
           // Filter out PCP students from assigned students
           const nonPCPStudents = (mentorData.assignedStudents || []).filter(
@@ -187,18 +185,11 @@ export default function MentorStudentsPage() {
           
           // If we have actual assigned students from API, use mapped ones, otherwise use mock
           setStudents(mappedStudents.length > 0 ? mappedStudents : mockStudents);
-        }
       } catch (error) {
         console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    if (params.id) {
-      fetchMentorAndStudents();
     }
-  }, [params.id]);
+  }, [mentorData]);
 
   const getProgramColor = (program: string) => {
     const colors = {
@@ -274,7 +265,7 @@ export default function MentorStudentsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -285,7 +276,7 @@ export default function MentorStudentsPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Mentor not found</h2>
         <Link
           href="/admin/mentors"
-          className="text-primary-600 hover:text-primary-700"
+          className="text-orange-600 hover:text-orange-700"
         >
           Back to Mentors
         </Link>
@@ -371,13 +362,13 @@ export default function MentorStudentsPage() {
               placeholder="Search students by name, email, or registration number..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
           <select
             value={selectedProgram}
             onChange={(e) => setSelectedProgram(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="all">All Programs</option>
             <option value="G-GMP">G-GMP</option>
@@ -410,7 +401,7 @@ export default function MentorStudentsPage() {
                   <tr key={student.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-semibold text-sm">
+                        <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-semibold text-sm">
                           {student.name.charAt(0)}
                         </div>
                         <div className="ml-3">
@@ -434,7 +425,7 @@ export default function MentorStudentsPage() {
                       <div className="flex items-center">
                         <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                           <div
-                            className="bg-primary-600 rounded-full h-2"
+                            className="bg-orange-600 rounded-full h-2"
                             style={{ width: `${student.progress}%` }}
                           ></div>
                         </div>
@@ -476,7 +467,7 @@ export default function MentorStudentsPage() {
                     <td className="px-6 py-4">
                       <Link
                         href={`/admin/students/${student.id}`}
-                        className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                        className="text-orange-600 hover:text-orange-700 text-sm font-medium"
                       >
                         View Profile
                       </Link>

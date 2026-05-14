@@ -24,7 +24,7 @@ import {
   GraduationCap,
   Info
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
+import { useAdminMentor } from '@/hooks/api/useAdmin';
 import { MentorSchedule, AssignedStudent } from '@/services/mockData';
 
 interface SessionFormData {
@@ -40,8 +40,8 @@ interface SessionFormData {
 export default function MentorSchedulePage() {
   const params = useParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [mentor, setMentor] = useState<any>(null);
+  const { data: mentorData, isLoading: loading } = useAdminMentor(params.id as string);
+  const mentor = mentorData;
   const [schedules, setSchedules] = useState<MentorSchedule[]>([]);
   const [students, setStudents] = useState<AssignedStudent[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -50,32 +50,18 @@ export default function MentorSchedulePage() {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
 
   useEffect(() => {
-    const fetchMentorData = async () => {
-      try {
-        const mentorData = await ApiService.getMentorById(params.id as string);
-        if (mentorData) {
-          setMentor(mentorData);
-          // Only include non-PCP students in assigned students
-          const nonPCPStudents = (mentorData.assignedStudents || []).filter(
-            (student: AssignedStudent) => student.program !== 'PCP'
-          );
-          setStudents(nonPCPStudents);
-          
-          // Generate mock schedule data based on mentor's availability and non-PCP students
-          const mockSchedules = generateMockSchedules(mentorData, nonPCPStudents);
-          setSchedules(mockSchedules);
-        }
-      } catch (error) {
-        console.error('Error fetching mentor:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (params.id) {
-      fetchMentorData();
+    if (mentorData) {
+      // Only include non-PCP students in assigned students
+      const nonPCPStudents = (mentorData.assignedStudents || []).filter(
+        (student: AssignedStudent) => student.program !== 'PCP'
+      );
+      setStudents(nonPCPStudents);
+      
+      // Generate mock schedule data based on mentor's availability and non-PCP students
+      const mockSchedules = generateMockSchedules(mentorData, nonPCPStudents);
+      setSchedules(mockSchedules);
     }
-  }, [params.id]);
+  }, [mentorData]);
 
   const generateMockSchedules = (mentorData: any, assignedStudents: AssignedStudent[]): MentorSchedule[] => {
     const schedules: MentorSchedule[] = [];
@@ -172,7 +158,7 @@ export default function MentorSchedulePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -183,7 +169,7 @@ export default function MentorSchedulePage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Mentor not found</h2>
         <Link
           href="/admin/mentors"
-          className="text-blue-600 hover:text-blue-700"
+          className="text-orange-600 hover:text-orange-700"
         >
           Back to Mentors
         </Link>
@@ -220,7 +206,7 @@ export default function MentorSchedulePage() {
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
           >
             <Plus size={18} className="mr-2" />
             Schedule Session
@@ -315,10 +301,10 @@ export default function MentorSchedulePage() {
                   key={day}
                   onClick={() => setSelectedDate(date)}
                   className={`bg-white p-2 h-32 overflow-y-auto cursor-pointer hover:bg-gray-50 transition-colors ${
-                    isSelected ? 'ring-2 ring-blue-500 ring-inset' : ''
+                    isSelected ? 'ring-2 ring-orange-500 ring-inset' : ''
                   }`}
                 >
-                  <span className={`text-sm font-medium ${isSelected ? 'text-blue-600' : 'text-gray-700'}`}>
+                  <span className={`text-sm font-medium ${isSelected ? 'text-orange-600' : 'text-gray-700'}`}>
                     {day}
                   </span>
                   <div className="mt-1 space-y-1">
@@ -386,7 +372,7 @@ export default function MentorSchedulePage() {
                               href={session.meetingLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center text-blue-600 hover:text-blue-700"
+                              className="flex items-center text-orange-600 hover:text-orange-700"
                             >
                               <Video size={14} className="mr-1" />
                               Join Meeting
@@ -525,7 +511,7 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
             <select
               value={formData.studentId}
               onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             >
               <option value="">Choose a student</option>
@@ -550,7 +536,7 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
             {formData.studentId && (
@@ -569,7 +555,7 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -581,7 +567,7 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               />
             </div>
@@ -595,7 +581,7 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
               type="text"
               value={formData.topic}
               onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="e.g., Weekly Progress Review"
             />
           </div>
@@ -608,7 +594,7 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
               type="url"
               value={formData.meetingLink}
               onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://meet.google.com/..."
             />
           </div>
@@ -621,7 +607,7 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Any additional notes..."
             />
           </div>
@@ -636,7 +622,7 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
               Schedule Session
             </button>

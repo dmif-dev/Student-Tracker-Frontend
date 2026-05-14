@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, Plus, X, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
+import { useCreateMentor } from '@/hooks/api/useAdmin';
 
 interface MentorFormData {
   name: string;
@@ -55,17 +56,28 @@ export default function AddMentorPage() {
     }
   };
 
+  const createMentorMutation = useCreateMentor();
+
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const onSubmit = async (data: MentorFormData) => {
     setIsSubmitting(true);
+    setSuccessMessage(null);
+    setErrorMessage(null);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Mentor data:', { ...data, expertise, programs: selectedPrograms });
-      alert('Mentor added successfully!');
-      router.push('/admin/mentors');
+      await createMentorMutation.mutateAsync({
+        ...data,
+        expertise,
+        programs: selectedPrograms,
+      });
+      setSuccessMessage('Mentor added successfully!');
+      setTimeout(() => {
+        router.push('/admin/mentors');
+      }, 1500);
     } catch (error) {
       console.error('Error adding mentor:', error);
-      alert('Failed to add mentor. Please try again.');
+      setErrorMessage('Failed to add mentor. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +97,19 @@ export default function AddMentorPage() {
           <h1 className="text-2xl font-bold text-gray-900">Add New Mentor</h1>
         </div>
       </div>
+
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center">
+          <CheckCircle size={20} className="mr-2" />
+          {successMessage}
+        </div>
+      )}
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center">
+          <AlertCircle size={20} className="mr-2" />
+          {errorMessage}
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

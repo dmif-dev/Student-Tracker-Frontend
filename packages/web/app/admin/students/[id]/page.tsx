@@ -24,7 +24,7 @@ import {
   Info,
   Briefcase // Add this import
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
+import { useAdminStudent, useSystemActivities, useAdminOutcomes } from '@/hooks/api/useAdmin';
 import { Outcome } from '@/services/mockData';
 
 interface StudentDetails {
@@ -71,73 +71,54 @@ export default function StudentDetailPage() {
   const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [student, setStudent] = useState<StudentDetails | null>(null);
-  const [loading, setLoading] = useState(true);
+  
+  const studentId = params.id as string;
+  const { data: baseStudent, isLoading: studentLoading } = useAdminStudent(studentId);
+  const { data: activities = [], isLoading: activitiesLoading } = useSystemActivities(20);
+  const { data: outcomes = [], isLoading: outcomesLoading } = useAdminOutcomes(studentId);
+  
+  const loading = studentLoading || activitiesLoading || outcomesLoading;
   
   // Get current tab from URL
   const currentTab = pathname.split('/').pop() || 'overview';
   const validTabs = ['overview', 'progress', 'outcomes', 'activity', 'settings'];
   const activeTab = validTabs.includes(currentTab) ? currentTab : 'overview';
   
-  useEffect(() => {
-    const fetchStudent = async () => {
-      try {
-        const data = await ApiService.getStudentById(params.id as string);
-        if (data) {
-          const [outcomes, activities] = await Promise.all([
-            ApiService.getOutcomes({ studentId: data.id }),
-            ApiService.getRecentActivities(5)
-          ]);
-          
-          // Different data structure based on program
-          const studentData: StudentDetails = {
-            ...data,
-            phone: data.phone || '',
-            address: data.address || '',
-            avatar: data.avatar,
-            recentActivity: activities
-              .filter(a => a.userId === data.id)
-              .map(a => ({
-                id: a.id,
-                type: a.type,
-                description: a.description,
-                date: a.date || new Date().toISOString().split('T')[0],
-              })),
-          };
+  const student: StudentDetails | null = baseStudent ? {
+    ...baseStudent,
+    phone: baseStudent.phone || '',
+    address: baseStudent.address || '',
+    avatar: baseStudent.avatar,
+    recentActivity: activities
+      .filter((a: any) => a.userId === baseStudent.id || a.user === baseStudent.name)
+      .map((a: any) => ({
+        id: a.id,
+        type: a.type,
+        description: a.description || a.title || 'Action performed',
+        date: a.createdAt ? new Date(a.createdAt).toISOString().split('T')[0] : a.time || new Date().toISOString().split('T')[0],
+      })),
+  } : null;
 
-          // Add program-specific data
-          if (data.program === 'G-GMP') {
-            studentData.outcomes = {
-              patents: outcomes.filter((o: Outcome) => o.type === 'patent').length,
-              papers: outcomes.filter((o: Outcome) => o.type === 'paper').length,
-              projects: 0,
-              startups: outcomes.filter((o: Outcome) => o.type === 'startup').length,
-            };
-          } else if (data.program === 'G-CMP') {
-            studentData.projects = {
-              completed: Math.floor(Math.random() * 5) + 1,
-              inProgress: Math.floor(Math.random() * 3) + 1,
-            };
-          } else if (data.program === 'PCP') {
-            studentData.certifications = {
-              completed: Math.floor(Math.random() * 3),
-              inProgress: Math.floor(Math.random() * 2) + 1,
-            };
-          }
-
-          setStudent(studentData);
-        }
-      } catch (error) {
-        console.error('Error fetching student:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (params.id) {
-      fetchStudent();
+  if (student) {
+    if (student.program === 'G-GMP') {
+      student.outcomes = {
+        patents: outcomes.filter((o: any) => o.type === 'patent').length,
+        papers: outcomes.filter((o: any) => o.type === 'paper').length,
+        projects: 0,
+        startups: outcomes.filter((o: any) => o.type === 'startup').length,
+      };
+    } else if (student.program === 'G-CMP') {
+      student.projects = {
+        completed: Math.floor(Math.random() * 5) + 1,
+        inProgress: Math.floor(Math.random() * 3) + 1,
+      };
+    } else if (student.program === 'PCP') {
+      student.certifications = {
+        completed: Math.floor(Math.random() * 3),
+        inProgress: Math.floor(Math.random() * 2) + 1,
+      };
     }
-  }, [params.id]);
+  }
 
   const getProgramColor = (program: string) => {
     const colors = {
@@ -167,7 +148,7 @@ export default function StudentDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -178,7 +159,7 @@ export default function StudentDetailPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Student not found</h2>
         <Link
           href="/admin/students"
-          className="text-primary-600 hover:text-primary-700"
+          className="text-orange-600 hover:text-orange-700"
         >
           Back to Students
         </Link>
@@ -208,13 +189,16 @@ export default function StudentDetailPage() {
           </div>
         </div>
         <div className="flex space-x-3">
-          <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <a 
+            href={`mailto:${student.email}`}
+            className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
             <Mail size={18} className="mr-2" />
             Send Email
-          </button>
+          </a>
           <Link
             href={`/admin/students/${student.id}/edit`}
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
           >
             <Edit size={18} className="mr-2" />
             Edit Student
@@ -277,7 +261,7 @@ export default function StudentDetailPage() {
             href={`/admin/students/${params.id}`}
             className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
               activeTab === 'overview'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -287,7 +271,7 @@ export default function StudentDetailPage() {
             href={`/admin/students/${params.id}/progress`}
             className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
               activeTab === 'progress'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -299,7 +283,7 @@ export default function StudentDetailPage() {
               href={`/admin/students/${params.id}/outcomes`}
               className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
                 activeTab === 'outcomes'
-                  ? 'border-primary-600 text-primary-600'
+                  ? 'border-orange-600 text-orange-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -310,7 +294,7 @@ export default function StudentDetailPage() {
             href={`/admin/students/${params.id}/activity`}
             className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
               activeTab === 'activity'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -320,7 +304,7 @@ export default function StudentDetailPage() {
             href={`/admin/students/${params.id}/settings`}
             className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
               activeTab === 'settings'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -364,7 +348,7 @@ export default function StudentDetailPage() {
                   <>
                     <p className="text-lg font-semibold text-gray-900">{student.mentor || 'Not assigned'}</p>
                     {student.mentor && (
-                      <p className="text-sm text-primary-600 mt-1 cursor-pointer">View Profile</p>
+                      <p className="text-sm text-orange-600 mt-1 cursor-pointer">View Profile</p>
                     )}
                   </>
                 )}
@@ -491,8 +475,8 @@ export default function StudentDetailPage() {
                 {student.recentActivity.slice(0, 3).map((activity) => (
                   <div key={activity.id} className="flex items-start">
                     {activity.type === 'progress' && (
-                      <div className="w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <TrendingUp size={12} className="text-primary-600" />
+                      <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <TrendingUp size={12} className="text-orange-600" />
                       </div>
                     )}
                     {activity.type === 'outcome' && student.program === 'G-GMP' && (
@@ -540,7 +524,7 @@ export default function StudentDetailPage() {
                 <p className="font-medium">Module Completion</p>
                 <p className="text-sm text-gray-500">{student.track}</p>
               </div>
-              <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm">In Progress</span>
+              <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">In Progress</span>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
@@ -595,8 +579,8 @@ export default function StudentDetailPage() {
               <div key={activity.id} className="flex items-start space-x-3 border-b border-gray-100 pb-4 last:border-0">
                 <div className="flex-shrink-0">
                   {activity.type === 'progress' && (
-                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                      <TrendingUp size={16} className="text-primary-600" />
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <TrendingUp size={16} className="text-orange-600" />
                     </div>
                   )}
                   {activity.type === 'outcome' && student.program === 'G-GMP' && (

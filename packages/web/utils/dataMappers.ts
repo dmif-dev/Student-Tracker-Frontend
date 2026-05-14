@@ -38,14 +38,18 @@ export const mapAssignedStudent = (backendStudent: any): AssignedStudent => {
 
 // Map Prisma Student to Frontend Student
 export const mapStudent = (backendStudent: any): Student => {
+  const programStr = backendStudent.programName || backendStudent.program?.name || (typeof backendStudent.program === 'string' ? backendStudent.program : null) || backendStudent.programId;
+  const trackStr = backendStudent.trackName || backendStudent.track?.name || (typeof backendStudent.track === 'string' ? backendStudent.track : null) || backendStudent.trackId || '';
+  const mentorStr = backendStudent.mentorName || backendStudent.mentor?.name || (typeof backendStudent.mentor === 'string' ? backendStudent.mentor : null) || backendStudent.mentorId;
+
   return {
     id: backendStudent.id,
     name: backendStudent.name,
-    email: backendStudent.user?.email || '',
+    email: backendStudent.user?.email || backendStudent.email || '',
     registrationNumber: backendStudent.registrationNumber || '',
-    program: mapProgramType(backendStudent.program?.name || backendStudent.programId),
-    track: backendStudent.track?.name || backendStudent.trackId || '',
-    mentor: backendStudent.mentor?.name || backendStudent.mentorId,
+    program: mapProgramType(programStr),
+    track: trackStr,
+    mentor: mentorStr,
     status: backendStudent.status?.toLowerCase() as 'active' | 'inactive' | 'pending' | 'completed',
     joinDate: backendStudent.joinDate ? new Date(backendStudent.joinDate).toISOString().split('T')[0] : '',
     lastActive: backendStudent.lastActive ? new Date(backendStudent.lastActive).toISOString().split('T')[0] : '',

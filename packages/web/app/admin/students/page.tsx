@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ApiService } from '@/services/api';
+import { useAdminStudents } from '@/hooks/api/useAdmin';
 import AdvancedFilters from '@/components/admin/AdvancedFilters';
 import { filterData } from '@/utils/filterUtils';
 import { useAdvancedFilters } from '@/hooks/useAdvancedFilters';
@@ -25,8 +25,7 @@ interface Student {
 }
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: students = [], isLoading: loading } = useAdminStudents();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -50,20 +49,7 @@ export default function StudentsPage() {
     }
   }, [filters, filtersLoaded]);
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const data = await ApiService.getStudents();
-        setStudents(data);
-      } catch (error) {
-        console.error('Error fetching students:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchStudents();
-  }, []);
 
   // Debug logging
   useEffect(() => {

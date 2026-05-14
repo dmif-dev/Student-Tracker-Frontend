@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ApiService } from '@/services/api';
+import { useAdminStudent, useUpdateStudent } from '@/hooks/api/useAdmin';
 
 // Form validation schema
 const studentSchema = z.object({
@@ -123,54 +123,61 @@ export default function EditStudentPage() {
     watchProgram && mentor.programs.includes(watchProgram)
   );
 
-  useEffect(() => {
-    const fetchStudent = async () => {
-      try {
-        const student = await ApiService.getStudentById(params.id as string);
-        if (student) {
-          // Set form values
-          setValue('name', student.name);
-          setValue('email', student.email);
-          setValue('registrationNumber', student.registrationNumber);
-          setValue('program', student.program);
-          setValue('track', student.track);
-          setValue('mentor', student.mentor || '');
-          setValue('status', student.status as any);
-          setValue('joinDate', student.joinDate);
-          setValue('phone', student.phone || '');
-          setValue('address', student.address || '');
-          
-          setSelectedProgram(student.program);
-        } else {
-          setError('Student not found');
-        }
-      } catch (error) {
-        console.error('Error fetching student:', error);
-        setError('Failed to load student data');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const studentId = params.id as string;
+  const { data: student, isLoading: studentLoading, error: studentError } = useAdminStudent(studentId);
+  const updateStudentMutation = useUpdateStudent();
 
-    if (params.id) {
-      fetchStudent();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (student) {
+      setValue('name', student.name);
+      setValue('email', student.email);
+      setValue('registrationNumber', student.registrationNumber);
+      setValue('program', student.program as any);
+      setValue('track', student.track);
+      setValue('mentor', student.mentor || '');
+      setValue('status', student.status as any);
+      setValue('joinDate', student.joinDate);
+      setValue('phone', student.phone || '');
+      setValue('address', student.address || '');
+      
+      setSelectedProgram(student.program);
+      setLoading(false);
     }
-  }, [params.id, setValue]);
+    if (studentError) {
+      setError('Failed to load student data');
+      setLoading(false);
+    }
+  }, [student, studentError, setValue]);
 
   const onSubmit = async (data: StudentFormData) => {
     setIsSubmitting(true);
+    setSuccessMessage(null);
+    setSubmitError(null);
     try {
-      // For PCP students, ensure mentor is undefined
-      if (data.program === 'PCP') {
-        data.mentor = undefined;
-      }
+      const payload: any = {
+        name: data.name,
+        registrationNumber: data.registrationNumber,
+        phone: data.phone,
+        address: data.address,
+        status: data.status,
+        program: data.program,
+        track: data.track,
+        mentor: data.mentor,
+        joinDate: data.joinDate ? new Date(data.joinDate).toISOString() : undefined,
+      };
       
-      await ApiService.updateStudent(params.id as string, data);
-      alert('Student updated successfully!');
-      router.push(`/admin/students/${params.id}`);
-    } catch (error) {
-      console.error('Error updating student:', error);
-      alert('Failed to update student. Please try again.');
+      await updateStudentMutation.mutateAsync({ id: studentId, data: payload });
+      setSuccessMessage('Student updated successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
+      
+    } catch (err) {
+      console.error('Error updating student:', err);
+      setSubmitError('Failed to update student. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -179,7 +186,7 @@ export default function EditStudentPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -190,7 +197,7 @@ export default function EditStudentPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">{error}</h2>
         <Link
           href="/admin/students"
-          className="text-primary-600 hover:text-primary-700"
+          className="text-orange-600 hover:text-orange-700"
         >
           Back to Students
         </Link>
@@ -213,6 +220,18 @@ export default function EditStudentPage() {
         </div>
       </div>
 
+      {/* Messages */}
+      {successMessage && (
+        <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 font-medium">
+          {successMessage}
+        </div>
+      )}
+      {submitError && (
+        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-medium">
+          {submitError}
+        </div>
+      )}
+
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Personal Information */}
@@ -226,7 +245,7 @@ export default function EditStudentPage() {
               <input
                 type="text"
                 {...register('name')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -240,7 +259,7 @@ export default function EditStudentPage() {
               <input
                 type="email"
                 {...register('email')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -254,7 +273,7 @@ export default function EditStudentPage() {
               <input
                 type="text"
                 {...register('registrationNumber')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
               {errors.registrationNumber && (
                 <p className="mt-1 text-sm text-red-600">{errors.registrationNumber.message}</p>
@@ -268,7 +287,7 @@ export default function EditStudentPage() {
               <input
                 type="tel"
                 {...register('phone')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
 
@@ -279,7 +298,7 @@ export default function EditStudentPage() {
               <textarea
                 {...register('address')}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -311,7 +330,7 @@ export default function EditStudentPage() {
                   setValue('track', '');
                   setValue('mentor', '');
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 {programs.map(program => (
                   <option key={program.id} value={program.id}>
@@ -330,7 +349,7 @@ export default function EditStudentPage() {
               </label>
               <select
                 {...register('track')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">Select Track</option>
                 {currentProgram?.tracks.map(track => (
@@ -352,7 +371,7 @@ export default function EditStudentPage() {
                     </label>
                     <select
                       {...register('mentor')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="">Select Mentor</option>
                       {availableMentors.map(mentor => (
@@ -388,7 +407,7 @@ export default function EditStudentPage() {
               </label>
               <select
                 {...register('status')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
@@ -404,7 +423,7 @@ export default function EditStudentPage() {
               <input
                 type="date"
                 {...register('joinDate')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -417,7 +436,7 @@ export default function EditStudentPage() {
             <textarea
               {...register('notes')}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Enter any additional notes or comments..."
             />
           </div>
@@ -434,7 +453,7 @@ export default function EditStudentPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>

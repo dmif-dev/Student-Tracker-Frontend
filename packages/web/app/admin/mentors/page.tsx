@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { ApiService } from '@/services/api';
+import { useAdminMentors } from '@/hooks/api/useAdmin';
 import {
   Search,
   Plus,
@@ -26,24 +26,8 @@ interface Mentor {
 }
 
 export default function MentorsPage() {
-  const [mentors, setMentors] = useState<Mentor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: mentors = [], isLoading: loading } = useAdminMentors();
   const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    const fetchMentors = async () => {
-      try {
-        const data = await ApiService.getMentors();
-        setMentors(data);
-      } catch (error) {
-        console.error('Error fetching mentors:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMentors();
-  }, []);
 
   const filteredMentors = mentors.filter(mentor =>
     mentor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -178,9 +162,13 @@ export default function MentorsPage() {
               >
                 <Calendar size={18} />
               </Link>
-              <button className="p-3 bg-gray-50 text-gray-600 rounded-xl hover:bg-orange-50 hover:text-orange-600 border border-gray-100 transition-all">
+              <a 
+                href={`mailto:${mentor.email}`}
+                title="Send Email"
+                className="p-3 bg-gray-50 text-gray-600 rounded-xl hover:bg-orange-50 hover:text-orange-600 border border-gray-100 transition-all inline-block"
+              >
                 <Mail size={18} />
-              </button>
+              </a>
             </div>
           </div>
         ))}

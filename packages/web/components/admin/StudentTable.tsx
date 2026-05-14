@@ -15,6 +15,7 @@ import {
   SortingState,
 } from '@tanstack/react-table';
 import { MoreVertical, Edit, Trash2, Eye, Mail, UserCheck, GraduationCap } from 'lucide-react';
+import { useDeleteStudent } from '@/hooks/api/useAdmin';
 
 interface Student {
   id: string;
@@ -39,6 +40,10 @@ export default function StudentTable({ students }: StudentTableProps) {
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState('');
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  
+  // Modal State
+  const [studentToDelete, setStudentToDelete] = useState<{id: string, name: string} | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getProgramColor = (program: string) => {
     const colors = {
@@ -58,6 +63,27 @@ export default function StudentTable({ students }: StudentTableProps) {
       completed: 'bg-orange-100 text-orange-700',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700';
+  };
+
+  const deleteStudentMutation = useDeleteStudent();
+
+  const handleDelete = (id: string, name: string) => {
+    setStudentToDelete({ id, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!studentToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteStudentMutation.mutateAsync(studentToDelete.id);
+      // Let the mutation handle UI invalidation, we just close the modal
+      setStudentToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete student:', error);
+      alert('Failed to delete student. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const columns: ColumnDef<Student>[] = [
@@ -218,25 +244,28 @@ export default function StudentTable({ students }: StudentTableProps) {
                   <Edit size={16} className="mr-2" />
                   Edit
                 </Link>
-                <button
-                  onClick={() => {/* Handle email */ }}
+                <a
+                  href={`mailto:${row.original.email}`}
                   className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
                 >
                   <Mail size={16} className="mr-2" />
                   Send Email
-                </button>
+                </a>
                 {!isPCP && (
-                  <button
-                    onClick={() => {/* Handle reassign mentor */ }}
+                  <Link
+                    href={`/admin/students/${row.original.id}/edit`}
                     className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
                   >
                     <UserCheck size={16} className="mr-2" />
                     Reassign Mentor
-                  </button>
+                  </Link>
                 )}
                 <hr className="my-2 border-gray-200" />
                 <button
-                  onClick={() => {/* Handle delete */ }}
+                  onClick={() => {
+                    setActiveMenu(null);
+                    handleDelete(row.original.id, row.original.name);
+                  }}
                   className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center text-red-600"
                 >
                   <Trash2 size={16} className="mr-2" />
@@ -334,6 +363,46 @@ export default function StudentTable({ students }: StudentTableProps) {
           </button>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {studentToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                <Trash2 className="text-red-600" size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-center text-gray-900 mb-2">
+                Delete Student
+              </h3>
+              <p className="text-center text-gray-500 mb-6">
+                Are you sure you want to delete <span className="font-semibold text-gray-900">{studentToDelete.name}</span>? This action cannot be undone.
+              </p>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setStudentToDelete(null)}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors flex items-center justify-center disabled:opacity-50"
+                >
+                  {isDeleting ? (
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  ) : (
+                    'Delete'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

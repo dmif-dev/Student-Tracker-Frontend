@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, Plus, X, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
-import { ApiService } from '@/services/api';
+import { useAdminMentor, useUpdateMentor } from '@/hooks/api/useAdmin';
 
 interface MentorFormData {
   name: string;
@@ -34,38 +34,30 @@ export default function EditMentorPage() {
     formState: { errors },
   } = useForm<MentorFormData>();
 
+  const mentorId = params.id as string;
   const programs = ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'];
+  const { data: mentor, isLoading: mentorLoading, error: mentorError } = useAdminMentor(mentorId);
+  const updateMentorMutation = useUpdateMentor();
 
   useEffect(() => {
-    const fetchMentor = async () => {
-      try {
-        const mentor = await ApiService.getMentorById(params.id as string);
-        if (mentor) {
-          setValue('name', mentor.name);
-          setValue('email', mentor.email);
-          setValue('phone', mentor.phone || '');
-          setValue('location', mentor.location || '');
-          setValue('bio', mentor.bio || '');
-          setValue('status', mentor.status);
-          setValue('joinDate', mentor.joinDate);
-          
-          setExpertise(mentor.expertise);
-          setSelectedPrograms(mentor.programs);
-        } else {
-          setError('Mentor not found');
-        }
-      } catch (error) {
-        console.error('Error fetching mentor:', error);
-        setError('Failed to load mentor data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (params.id) {
-      fetchMentor();
+    if (mentor) {
+      setValue('name', mentor.name);
+      setValue('email', mentor.email);
+      setValue('phone', mentor.phone || '');
+      setValue('location', mentor.location || '');
+      setValue('bio', mentor.bio || '');
+      setValue('status', mentor.status as any);
+      setValue('joinDate', mentor.joinDate);
+      
+      setExpertise(mentor.expertise);
+      setSelectedPrograms(mentor.programs);
+      setLoading(false);
     }
-  }, [params.id, setValue]);
+    if (mentorError) {
+      setError('Failed to load mentor data');
+      setLoading(false);
+    }
+  }, [mentor, mentorError, setValue]);
 
   const addExpertise = () => {
     if (newExpertise.trim() && !expertise.includes(newExpertise.trim())) {
@@ -86,17 +78,28 @@ export default function EditMentorPage() {
     }
   };
 
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   const onSubmit = async (data: MentorFormData) => {
     setIsSubmitting(true);
+    setSuccessMessage(null);
+    setError(null);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Updated mentor data:', { ...data, expertise, programs: selectedPrograms });
-      alert('Mentor updated successfully!');
-      router.push(`/admin/mentors/${params.id}`);
-    } catch (error) {
-      console.error('Error updating mentor:', error);
-      alert('Failed to update mentor. Please try again.');
+      await updateMentorMutation.mutateAsync({
+        id: mentorId,
+        data: {
+          ...data,
+          expertise,
+          programs: selectedPrograms,
+        }
+      });
+      setSuccessMessage('Mentor updated successfully!');
+      setTimeout(() => {
+        router.push(`/admin/mentors/${params.id}`);
+      }, 1500);
+    } catch (err) {
+      console.error('Error updating mentor:', err);
+      setError('Failed to update mentor. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -105,7 +108,7 @@ export default function EditMentorPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
@@ -116,7 +119,7 @@ export default function EditMentorPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">{error}</h2>
         <Link
           href="/admin/mentors"
-          className="text-primary-600 hover:text-primary-700"
+          className="text-orange-600 hover:text-orange-700"
         >
           Back to Mentors
         </Link>
@@ -152,7 +155,7 @@ export default function EditMentorPage() {
               <input
                 type="text"
                 {...register('name', { required: true })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -162,7 +165,7 @@ export default function EditMentorPage() {
               <input
                 type="email"
                 {...register('email', { required: true })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -172,7 +175,7 @@ export default function EditMentorPage() {
               <input
                 type="tel"
                 {...register('phone')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -182,7 +185,7 @@ export default function EditMentorPage() {
               <input
                 type="text"
                 {...register('location')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div className="md:col-span-2">
@@ -192,7 +195,7 @@ export default function EditMentorPage() {
               <textarea
                 {...register('bio')}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -208,13 +211,13 @@ export default function EditMentorPage() {
                 value={newExpertise}
                 onChange={(e) => setNewExpertise(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addExpertise())}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Add expertise area"
               />
               <button
                 type="button"
                 onClick={addExpertise}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
               >
                 <Plus size={20} />
               </button>
@@ -223,13 +226,13 @@ export default function EditMentorPage() {
               {expertise.map((item) => (
                 <span
                   key={item}
-                  className="inline-flex items-center px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm"
+                  className="inline-flex items-center px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm"
                 >
                   {item}
                   <button
                     type="button"
                     onClick={() => removeExpertise(item)}
-                    className="ml-2 text-primary-500 hover:text-primary-700"
+                    className="ml-2 text-orange-500 hover:text-orange-700"
                   >
                     <X size={14} />
                   </button>
@@ -248,7 +251,7 @@ export default function EditMentorPage() {
                 key={program}
                 className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
                   selectedPrograms.includes(program)
-                    ? 'bg-primary-50 border-primary-300'
+                    ? 'bg-orange-50 border-orange-300'
                     : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -274,7 +277,7 @@ export default function EditMentorPage() {
               </label>
               <select
                 {...register('status')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -287,7 +290,7 @@ export default function EditMentorPage() {
               <input
                 type="date"
                 {...register('joinDate')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -304,7 +307,7 @@ export default function EditMentorPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>

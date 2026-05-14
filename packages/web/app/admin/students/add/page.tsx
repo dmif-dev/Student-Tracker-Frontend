@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ApiService } from '@/services/api';
+import { useCreateStudent } from '@/hooks/api/useAdmin';
 
 // Form validation schema
 const studentSchema = z.object({
@@ -125,20 +125,31 @@ export default function AddStudentPage() {
     watchProgram && mentor.programs.includes(watchProgram)
   );
 
+  const createStudentMutation = useCreateStudent();
+
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const onSubmit = async (data: StudentFormData) => {
     setIsSubmitting(true);
+    setSuccessMessage(null);
+    setSubmitError(null);
     try {
-      // For PCP students, ensure mentor is undefined
       if (data.program === 'PCP') {
         data.mentor = undefined;
       }
       
-      await ApiService.createStudent(data);
-      alert('Student added successfully!');
-      router.push('/admin/students');
+      await createStudentMutation.mutateAsync(data);
+      setSuccessMessage('Student added successfully!');
+      
+      // Delay navigation to let user see the success message
+      setTimeout(() => {
+        router.push('/admin/students');
+      }, 1500);
+      
     } catch (error) {
       console.error('Error adding student:', error);
-      alert('Failed to add student. Please try again.');
+      setSubmitError('Failed to add student. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -158,6 +169,18 @@ export default function AddStudentPage() {
           <h1 className="text-2xl font-bold text-gray-900">Add New Student</h1>
         </div>
       </div>
+
+      {/* Messages */}
+      {successMessage && (
+        <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 font-medium">
+          {successMessage}
+        </div>
+      )}
+      {submitError && (
+        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-medium">
+          {submitError}
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
