@@ -2,9 +2,10 @@
 
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ApiService } from '@/services/api';
 import { Notification, Alert } from '@student-tracker/shared/models/Notification';
-import { NotificationService } from '@student-tracker/shared/services/NotificationService';
 import { useRouter } from 'next/navigation';
 
 interface AdminNotificationContextType {
@@ -12,7 +13,7 @@ interface AdminNotificationContextType {
   alerts: Alert[];
   unreadCount: number;
   loading: boolean;
-  addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>) => Promise<void>;
+  addNotification: (notification: any) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
@@ -30,97 +31,83 @@ export function AdminNotificationProvider({
   children: ReactNode; 
   userId?: string;
 }) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const loadNotifications = useCallback(async () => {
-    try {
-      const data = await NotificationService.getNotifications(userId);
-      setNotifications(data);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-    }
-  }, [userId]);
+  const { data: notifications = [], isLoading: loadingNotifications } = useQuery({
+    queryKey: ['adminNotifications'],
+    queryFn: () => ApiService.getAdminNotifications(),
+    refetchInterval: 5000,
+  });
 
-  const loadAlerts = useCallback(async () => {
-    try {
-      const systemAlerts = await NotificationService.generateSystemAlerts();
-      const existingAlerts = await NotificationService.getAlerts();
-      // Merge and deduplicate alerts
-      const allAlerts = [...systemAlerts, ...existingAlerts];
-      const uniqueAlerts = Array.from(
-        new Map(allAlerts.map(alert => [alert.id, alert])).values()
-      );
-      setAlerts(uniqueAlerts);
-    } catch (error) {
-      console.error('Error loading alerts:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: alerts = [], isLoading: loadingAlerts } = useQuery({
+    queryKey: ['adminAlerts'],
+    queryFn: () => ApiService.getAdminAlerts(),
+    refetchInterval: 5000,
+  });
 
-  // Initial load
-  useEffect(() => {
-    Promise.all([loadNotifications(), loadAlerts()]);
-  }, [loadNotifications, loadAlerts]);
+  const loading = loadingNotifications || loadingAlerts;
 
-  // Subscribe to service changes
-  useEffect(() => {
-    const unsubscribe = NotificationService.subscribe(() => {
-      loadNotifications();
-      loadAlerts();
-    });
+  const refreshNotifications = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['adminNotifications'] });
+    await queryClient.invalidateQueries({ queryKey: ['adminAlerts'] });
+  };
 
-    return () => {
-      unsubscribe();
-    };
-  }, [loadNotifications, loadAlerts]);
+  const createMutation = useMutation({
+    mutationFn: (data: any) => ApiService.createNotification(data),
+    onSuccess: refreshNotifications
+  });
 
-  // Refresh notifications manually
-  const refreshNotifications = useCallback(async () => {
-    await Promise.all([loadNotifications(), loadAlerts()]);
-  }, [loadNotifications, loadAlerts]);
+  const markReadMutation = useMutation({
+    mutationFn: (id: string) => ApiService.markNotificationAsRead(id),
+    onSuccess: refreshNotifications
+  });
 
-  const addNotification = async (notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>) => {
-    await NotificationService.addNotification({ ...notification, userId });
-    await refreshNotifications();
+  const markAllReadMutation = useMutation({
+    mutationFn: () => ApiService.markAllNotificationsAsRead(),
+    onSuccess: refreshNotifications
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => ApiService.deleteNotification(id),
+    onSuccess: refreshNotifications
+  });
+
+  const dismissAlertMutation = useMutation({
+    mutationFn: (id: string) => ApiService.dismissAlert(id),
+    onSuccess: refreshNotifications
+  });
+
+  const addNotification = async (notification: any) => {
+    await createMutation.mutateAsync(notification);
   };
 
   const markAsRead = async (id: string) => {
-    await NotificationService.markAsRead(id);
-    await refreshNotifications();
+    await markReadMutation.mutateAsync(id);
   };
 
   const markAllAsRead = async () => {
-    await NotificationService.markAllAsRead(userId);
-    await refreshNotifications();
+    await markAllReadMutation.mutateAsync();
   };
 
   const deleteNotification = async (id: string) => {
-    await NotificationService.deleteNotification(id);
-    await refreshNotifications();
+    await deleteMutation.mutateAsync(id);
   };
 
   const dismissAlert = async (id: string) => {
-    await NotificationService.dismissAlert(id);
-    await refreshNotifications();
+    await dismissAlertMutation.mutateAsync(id);
   };
 
   const handleNotificationClick = (notification: Notification) => {
-    // Mark as read if not already read
     if (!notification.isRead) {
       markAsRead(notification.id);
     }
-
-    // Redirect if action URL exists
     if (notification.actionUrl) {
       router.push(notification.actionUrl);
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n: any) => !n.isRead).length;
 
   const value = {
     notifications,
@@ -146,7 +133,7 @@ export function AdminNotificationProvider({
 export const useNotifications = () => {
   const context = useContext(AdminNotificationContext);
   if (!context) {
-    throw new Error('useNotifications must be used within NotificationProvider');
+    throw new Error('useNotifications must be used within AdminNotificationProvider');
   }
   return context;
 };

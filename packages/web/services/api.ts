@@ -738,4 +738,295 @@ export class ApiService {
 
     return response.json();
   }
+
+  // --- Admin Settings Integration ---
+  static async getAdminGeneralSettings(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/general`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch general settings');
+    return response.json();
+  }
+
+  static async updateAdminGeneralSettings(data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/general`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(data) });
+    if (!response.ok) throw new Error('Failed to update general settings');
+    return response.json();
+  }
+
+  static async getAdminNotificationSettings(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/notifications`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch notification settings');
+    return response.json();
+  }
+
+  static async updateAdminNotificationSettings(data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/notifications`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(data) });
+    if (!response.ok) throw new Error('Failed to update notification settings');
+    return response.json();
+  }
+
+  static async getAdminUsers(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch users');
+    return response.json();
+  }
+
+  static async updateAdminUserStatus(id: string, status: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/users/${id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ status }) });
+    if (!response.ok) throw new Error('Failed to update user status');
+    return response.json();
+  }
+
+  static async deleteAdminUser(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to delete user');
+    return response.json();
+  }
+
+  static async createAdminUser(data: { email: string, name: string, role: string }): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/users`, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to create user');
+    return response.json();
+  }
+
+  // Security Settings
+  static async getAdminSecuritySettings(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/security`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch security settings');
+    return response.json();
+  }
+
+  static async updateAdminSecuritySettings(data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/security`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(data) });
+    if (!response.ok) throw new Error('Failed to update security settings');
+    return response.json();
+  }
+
+  // Email Templates
+  static async getEmailTemplates(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/email-templates`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch email templates');
+    return response.json();
+  }
+
+  static async updateEmailTemplate(id: string, data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/email-templates/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(data) });
+    if (!response.ok) throw new Error('Failed to update email template');
+    return response.json();
+  }
+
+  // API Keys
+  static async getApiKeys(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/api-keys`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch api keys');
+    return response.json();
+  }
+
+  static async generateApiKey(name: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/api-keys`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ name }) });
+    if (!response.ok) throw new Error('Failed to create api key');
+    return response.json();
+  }
+
+  static async revokeApiKey(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/api-keys/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to revoke api key');
+    return response.json();
+  }
+
+  // Backups
+  static async getBackups(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/backups`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch backups');
+    return response.json();
+  }
+
+  static async createBackup(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/backups`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to create backup');
+    return response.json();
+  }
+
+  static async restoreBackup(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/backups/${id}/restore`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to restore backup');
+    return response.json();
+  }
+
+  static async deleteBackup(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/backups/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to delete backup');
+    return response.json();
+  }
+
+  // --- Admin Notifications ---
+  static async getAdminNotifications(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/notifications`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch notifications');
+    return response.json();
+  }
+
+  static async getAdminAlerts(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/alerts`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch alerts');
+    return response.json();
+  }
+
+  static async markNotificationAsRead(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/notifications/${id}/read`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to mark notification as read');
+    return response.json();
+  }
+
+  static async markAllNotificationsAsRead(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/notifications/read-all`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to mark all notifications as read');
+    return response.json();
+  }
+
+  static async deleteNotification(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/notifications/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to delete notification');
+    return response.json();
+  }
+
+  static async dismissAlert(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/alerts/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to dismiss alert');
+    return response.json();
+  }
+
+  static async createNotification(data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/notifications`, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to create notification');
+    return response.json();
+  }
+
+  // --- Admin Documents ---
+  static async getAdminDocuments(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/documents`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch documents');
+    return response.json();
+  }
+
+  static async uploadAdminDocument(data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/documents/upload`, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to upload document');
+    return response.json();
+  }
+
+  static async updateAdminDocument(id: string, data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/documents/${id}`, { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to update document');
+    return response.json();
+  }
+
+  static async deleteAdminDocument(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/documents/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to delete document');
+    return response.json();
+  }
+
+  static async updateAdminDocumentPermissions(id: string, permissions: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/documents/${id}/permissions`, { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ permissions })
+    });
+    if (!response.ok) throw new Error('Failed to update permissions');
+    return response.json();
+  }
+
+  static async trackAdminDocumentView(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/documents/${id}/track-view`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to track view');
+    return response.json();
+  }
+
+  static async trackAdminDocumentDownload(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/documents/${id}/track-download`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to track download');
+    return response.json();
+  }
 }

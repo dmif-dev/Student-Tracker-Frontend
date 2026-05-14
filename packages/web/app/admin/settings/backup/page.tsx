@@ -1,57 +1,93 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, Upload, Clock, Database, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { Download, Upload, Clock, Database, RefreshCw, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ApiService } from '@/services/api';
+import { toast } from 'sonner';
 
 interface Backup {
   id: string;
-  name: string;
-  size: string;
+  fileName: string;
+  fileSize: number;
+  status: string;
   createdAt: string;
-  status: 'completed' | 'failed' | 'in-progress';
-  type: 'auto' | 'manual';
 }
 
 export default function BackupSettingsPage() {
-  const [backups, setBackups] = useState<Backup[]>([
-    {
-      id: '1',
-      name: 'backup-2024-03-21-1200.sql',
-      size: '156 MB',
-      createdAt: '2024-03-21 12:00 PM',
-      status: 'completed',
-      type: 'auto'
-    },
-    {
-      id: '2',
-      name: 'backup-2024-03-20-1200.sql',
-      size: '152 MB',
-      createdAt: '2024-03-20 12:00 PM',
-      status: 'completed',
-      type: 'auto'
-    },
-    {
-      id: '3',
-      name: 'pre-upgrade-backup.sql',
-      size: '148 MB',
-      createdAt: '2024-03-19 03:30 PM',
-      status: 'completed',
-      type: 'manual'
-    }
-  ]);
+  const queryClient = useQueryClient();
 
-  const [isBackingUp, setIsBackingUp] = useState(false);
+  const { data: backups = [], isLoading } = useQuery<Backup[]>({
+    queryKey: ['adminBackups'],
+    queryFn: () => ApiService.getBackups(),
+  });
+
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
   const [backupFrequency, setBackupFrequency] = useState('daily');
 
+  const createMutation = useMutation({
+    mutationFn: () => ApiService.createBackup(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminBackups'] });
+      toast.success('Backup created successfully!');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('Failed to create backup.');
+    }
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: (id: string) => ApiService.restoreBackup(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminBackups'] });
+      toast.success('Database restored successfully!');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('Failed to restore backup.');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => ApiService.deleteBackup(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminBackups'] });
+      toast.success('Backup deleted successfully!');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('Failed to delete backup.');
+    }
+  });
+
   const handleManualBackup = () => {
-    setIsBackingUp(true);
-    // Simulate backup process
-    setTimeout(() => {
-      setIsBackingUp(false);
-      alert('Backup completed successfully!');
-    }, 3000);
+    createMutation.mutate();
   };
+
+  const handleRestore = (id: string) => {
+    if (confirm('Are you sure you want to restore this backup? This will overwrite current data.')) {
+      restoreMutation.mutate(id);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this backup record?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const formatSize = (bytes: number) => {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  if (isLoading) {
+    return <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">Loading backups...</div>;
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -119,10 +155,10 @@ export default function BackupSettingsPage() {
           <div>
             <button
               onClick={handleManualBackup}
-              disabled={isBackingUp}
+              disabled={createMutation.isPending}
               className="w-full flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
             >
-              {isBackingUp ? (
+              {createMutation.isPending ? (
                 <>
                   <RefreshCw size={18} className="mr-2 animate-spin" />
                   Creating backup...
@@ -161,31 +197,41 @@ export default function BackupSettingsPage() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className="font-medium text-sm">{backup.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">{backup.createdAt}</p>
+                    <p className="font-medium text-sm">{backup.fileName}</p>
+                    <p className="text-xs text-gray-500 mt-1">{new Date(backup.createdAt).toLocaleString()}</p>
                   </div>
-                  {backup.status === 'completed' && (
+                  {backup.status === 'COMPLETED' && (
                     <CheckCircle size={16} className="text-green-500" />
                   )}
-                  {backup.status === 'failed' && (
+                  {backup.status === 'FAILED' && (
                     <AlertCircle size={16} className="text-red-500" />
                   )}
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">{backup.size}</span>
-                  <span className={`px-2 py-1 rounded-full ${
-                    backup.type === 'auto' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
-                  }`}>
-                    {backup.type}
+                  <span className="text-gray-500">{formatSize(backup.fileSize)}</span>
+                  <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                    Database Dump
                   </span>
                 </div>
 
                 <div className="flex items-center justify-end space-x-2 mt-3">
-                  <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                  <button 
+                    onClick={() => handleDelete(backup.id)}
+                    disabled={deleteMutation.isPending}
+                    className="px-2 py-1 text-red-500 hover:bg-red-50 rounded"
+                    title="Delete backup"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50">
                     Download
                   </button>
-                  <button className="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700">
+                  <button 
+                    onClick={() => handleRestore(backup.id)}
+                    disabled={restoreMutation.isPending}
+                    className="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50"
+                  >
                     Restore
                   </button>
                 </div>
