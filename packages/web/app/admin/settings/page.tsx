@@ -312,8 +312,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ApiService } from '@/services/api';
+import { toast } from 'sonner';
 
 export default function GeneralSettingsPage() {
   const [settings, setSettings] = useState({
@@ -325,10 +328,38 @@ export default function GeneralSettingsPage() {
     maintenanceMode: false,
   });
 
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['adminGeneralSettings'],
+    queryFn: () => ApiService.getAdminGeneralSettings(),
+  });
+
+  useEffect(() => {
+    if (data) {
+      setSettings((prev) => ({ ...prev, ...data }));
+    }
+  }, [data]);
+
+  const updateMutation = useMutation({
+    mutationFn: (newSettings: typeof settings) => ApiService.updateAdminGeneralSettings(newSettings),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminGeneralSettings'] });
+      toast.success('Settings saved successfully!');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('Failed to save settings.');
+    }
+  });
+
   const handleSave = () => {
-    console.log('Saving settings:', settings);
-    alert('Settings saved successfully!');
+    updateMutation.mutate(settings);
   };
+
+  if (isLoading) {
+    return <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">Loading settings...</div>;
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -426,11 +457,12 @@ export default function GeneralSettingsPage() {
 
         <div className="pt-6 border-t border-gray-200">
           <button
+            disabled={updateMutation.isPending}
             onClick={handleSave}
-            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
           >
             <Save size={18} className="mr-2" />
-            Save Changes
+            {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>

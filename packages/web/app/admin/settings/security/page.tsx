@@ -1,20 +1,63 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, Key, Lock, Eye, EyeOff, Save } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ApiService } from '@/services/api';
+import { toast } from 'sonner';
 
 export default function SecuritySettingsPage() {
+  const queryClient = useQueryClient();
+
   const [showPassword, setShowPassword] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [sessionTimeout, setSessionTimeout] = useState('30');
-  const [passwordPolicy, setPasswordPolicy] = useState({
-    minLength: 8,
-    requireUppercase: true,
-    requireLowercase: true,
-    requireNumbers: true,
-    requireSpecialChars: true,
-    expiryDays: 90
+
+  const [settings, setSettings] = useState({
+    twoFactorEnabled: false,
+    sessionTimeout: '30',
+    passwordPolicy: {
+      minLength: 8,
+      requireUppercase: true,
+      requireLowercase: true,
+      requireNumbers: true,
+      requireSpecialChars: true,
+      expiryDays: 90
+    }
   });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['adminSecuritySettings'],
+    queryFn: () => ApiService.getAdminSecuritySettings(),
+  });
+
+  useEffect(() => {
+    if (data) {
+      setSettings(prev => ({
+        ...prev,
+        ...data,
+        passwordPolicy: { ...prev.passwordPolicy, ...(data.passwordPolicy || {}) }
+      }));
+    }
+  }, [data]);
+
+  const updateMutation = useMutation({
+    mutationFn: (newSettings: typeof settings) => ApiService.updateAdminSecuritySettings(newSettings),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminSecuritySettings'] });
+      toast.success('Security settings saved successfully!');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('Failed to save security settings.');
+    }
+  });
+
+  const handleSave = () => {
+    updateMutation.mutate(settings);
+  };
+
+  if (isLoading) {
+    return <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">Loading security settings...</div>;
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -81,20 +124,20 @@ export default function SecuritySettingsPage() {
                 Add an extra layer of security to your account
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {twoFactorEnabled ? '2FA is enabled' : '2FA is disabled'}
+                {settings.twoFactorEnabled ? '2FA is enabled' : '2FA is disabled'}
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={twoFactorEnabled}
-                onChange={(e) => setTwoFactorEnabled(e.target.checked)}
+                checked={settings.twoFactorEnabled}
+                onChange={(e) => setSettings({ ...settings, twoFactorEnabled: e.target.checked })}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
             </label>
           </div>
-          {twoFactorEnabled && (
+          {settings.twoFactorEnabled && (
             <div className="mt-4 p-4 bg-orange-50 rounded-lg max-w-md">
               <p className="text-sm text-orange-700">
                 Scan this QR code with your authenticator app
@@ -121,8 +164,8 @@ export default function SecuritySettingsPage() {
             </label>
             <input
               type="number"
-              value={sessionTimeout}
-              onChange={(e) => setSessionTimeout(e.target.value)}
+              value={settings.sessionTimeout}
+              onChange={(e) => setSettings({ ...settings, sessionTimeout: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               min="5"
               max="480"
@@ -143,8 +186,8 @@ export default function SecuritySettingsPage() {
               </label>
               <input
                 type="number"
-                value={passwordPolicy.minLength}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, minLength: parseInt(e.target.value) })}
+                value={settings.passwordPolicy.minLength}
+                onChange={(e) => setSettings({ ...settings, passwordPolicy: { ...settings.passwordPolicy, minLength: parseInt(e.target.value) }})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 min="6"
                 max="20"
@@ -156,8 +199,8 @@ export default function SecuritySettingsPage() {
               </label>
               <input
                 type="number"
-                value={passwordPolicy.expiryDays}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, expiryDays: parseInt(e.target.value) })}
+                value={settings.passwordPolicy.expiryDays}
+                onChange={(e) => setSettings({ ...settings, passwordPolicy: { ...settings.passwordPolicy, expiryDays: parseInt(e.target.value) }})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 min="0"
                 max="365"
@@ -168,8 +211,8 @@ export default function SecuritySettingsPage() {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={passwordPolicy.requireUppercase}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, requireUppercase: e.target.checked })}
+                checked={settings.passwordPolicy.requireUppercase}
+                onChange={(e) => setSettings({ ...settings, passwordPolicy: { ...settings.passwordPolicy, requireUppercase: e.target.checked }})}
                 className="rounded border-gray-300 mr-2"
               />
               <span className="text-sm">Require uppercase letters</span>
@@ -177,8 +220,8 @@ export default function SecuritySettingsPage() {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={passwordPolicy.requireLowercase}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, requireLowercase: e.target.checked })}
+                checked={settings.passwordPolicy.requireLowercase}
+                onChange={(e) => setSettings({ ...settings, passwordPolicy: { ...settings.passwordPolicy, requireLowercase: e.target.checked }})}
                 className="rounded border-gray-300 mr-2"
               />
               <span className="text-sm">Require lowercase letters</span>
@@ -186,8 +229,8 @@ export default function SecuritySettingsPage() {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={passwordPolicy.requireNumbers}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, requireNumbers: e.target.checked })}
+                checked={settings.passwordPolicy.requireNumbers}
+                onChange={(e) => setSettings({ ...settings, passwordPolicy: { ...settings.passwordPolicy, requireNumbers: e.target.checked }})}
                 className="rounded border-gray-300 mr-2"
               />
               <span className="text-sm">Require numbers</span>
@@ -195,8 +238,8 @@ export default function SecuritySettingsPage() {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={passwordPolicy.requireSpecialChars}
-                onChange={(e) => setPasswordPolicy({ ...passwordPolicy, requireSpecialChars: e.target.checked })}
+                checked={settings.passwordPolicy.requireSpecialChars}
+                onChange={(e) => setSettings({ ...settings, passwordPolicy: { ...settings.passwordPolicy, requireSpecialChars: e.target.checked }})}
                 className="rounded border-gray-300 mr-2"
               />
               <span className="text-sm">Require special characters (!@#$%)</span>
@@ -206,9 +249,13 @@ export default function SecuritySettingsPage() {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <button className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+          <button 
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+          >
             <Save size={18} className="mr-2" />
-            Save Security Settings
+            {updateMutation.isPending ? 'Saving...' : 'Save Security Settings'}
           </button>
         </div>
       </div>
