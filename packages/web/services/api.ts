@@ -63,8 +63,8 @@ const generateMonthlyCertificationData = (outcomes: Outcome[]) => {
 export class ApiService {
   // Students
   static async getStudents(): Promise<Student[]> {
-    await delay(800);
-    return mockStudents;
+    const { data, ok } = await this.get('/students');
+    return ok ? data : [];
   }
 
   static async getStudentById(id: string): Promise<Student | undefined> {
@@ -131,8 +131,8 @@ export class ApiService {
 
   // Mentors
   static async getMentors(): Promise<Mentor[]> {
-    await delay(800);
-    return mockMentors;
+    const { data, ok } = await this.get('/mentors');
+    return ok ? data : [];
   }
 
   static async getMentorById(id: string): Promise<Mentor | undefined> {
@@ -200,23 +200,13 @@ export class ApiService {
     program?: string;
     status?: string;
   }): Promise<Outcome[]> {
-    await delay(600);
-    let filtered = [...mockOutcomes];
-    
-    if (filters?.studentId) {
-      filtered = filtered.filter(o => o.studentId === filters.studentId);
+    let query = '';
+    if (filters) {
+      const params = new URLSearchParams(filters as Record<string, string>);
+      query = `?${params.toString()}`;
     }
-    if (filters?.type) {
-      filtered = filtered.filter(o => o.type === filters.type);
-    }
-    if (filters?.program) {
-      filtered = filtered.filter(o => o.program === filters.program);
-    }
-    if (filters?.status) {
-      filtered = filtered.filter(o => o.status === filters.status);
-    }
-    
-    return filtered;
+    const { data, ok } = await this.get(`/outcomes${query}`);
+    return ok ? (data.data || data) : [];
   }
 
   static async getOutcomeById(id: string): Promise<Outcome | undefined> {
@@ -545,83 +535,57 @@ export class ApiService {
 
   // Reports
   static async generateReport(config: any): Promise<any> {
-    await delay(1500);
-    
-    // Generate report based on configuration
-    const reportData: any = {
-      id: Date.now().toString(),
-      name: config.name,
-      generatedAt: new Date().toISOString(),
-      format: config.format,
-      programs: config.programs,
+    const payload = {
+      ...config,
+      studentIds: config.students,
+      mentorIds: config.mentors,
+      dateRange: config.dateRange, // handled by updated service
     };
-
-    // Add program-specific data
-    if (config.programs.includes('G-GMP') || config.programs.length === 0) {
-      reportData.gGMP = {
-        students: mockStudents.filter(s => s.program === 'G-GMP').length,
-        outcomes: mockOutcomes.filter(o => o.program === 'G-GMP').length,
-        patents: mockOutcomes.filter(o => o.program === 'G-GMP' && o.type === 'patent').length,
-        papers: mockOutcomes.filter(o => o.program === 'G-GMP' && o.type === 'paper').length,
-        startups: mockOutcomes.filter(o => o.program === 'G-GMP' && o.type === 'startup').length,
-      };
+    const { data, ok } = await this.post('/reports/generate/custom', payload);
+    if (!ok) {
+      throw new Error(data.error || 'Failed to generate report');
     }
+    // The backend now returns the SavedReport record, so the actual report content is in data.data
+    return data.data || data;
+  }
 
-    if (config.programs.includes('PCP') || config.programs.length === 0) {
-      reportData.pcp = {
-        students: mockStudents.filter(s => s.program === 'PCP').length,
-        certifications: mockOutcomes.filter(o => o.program === 'PCP').length,
-        associate: mockOutcomes.filter(o => o.program === 'PCP' && o.title?.includes('Associate')).length,
-        specialist: mockOutcomes.filter(o => o.program === 'PCP' && o.title?.includes('Specialist')).length,
-        professional: mockOutcomes.filter(o => o.program === 'PCP' && o.title?.includes('Professional')).length,
-      };
+  static async scheduleReport(scheduleData: any): Promise<any> {
+    const { data, ok } = await this.post('/reports/schedule', scheduleData);
+    if (!ok) {
+      throw new Error(data.error || 'Failed to schedule report');
     }
-
-    if (config.programs.includes('G-CMP') || config.programs.length === 0) {
-      reportData.gCMP = {
-        students: mockStudents.filter(s => s.program === 'G-CMP').length,
-        projects: Math.floor(Math.random() * 50) + 30,
-      };
-    }
-
-    if (config.programs.includes('E-TIP') || config.programs.length === 0) {
-      reportData.eTIP = {
-        students: mockStudents.filter(s => s.program === 'E-TIP').length,
-        sessions: Math.floor(Math.random() * 40) + 20,
-      };
-    }
-
-    return reportData;
+    return data;
   }
 
   static async getSavedReports(): Promise<any[]> {
-    await delay(600);
-    return [
-      {
-        id: '1',
-        name: 'Weekly Progress Report - Week 12',
-        type: 'weekly',
-        generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        format: 'pdf',
-        programs: ['G-GMP', 'G-CMP', 'E-TIP'],
-      },
-      {
-        id: '2',
-        name: 'G-GMP Outcomes Report - March 2024',
-        type: 'monthly',
-        generatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        format: 'pdf',
-        programs: ['G-GMP'],
-      },
-      {
-        id: '3',
-        name: 'PCP Certification Report - Q1 2024',
-        type: 'quarterly',
-        generatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        format: 'excel',
-        programs: ['PCP'],
-      },
-    ];
+    const [weeklyRes, savedRes] = await Promise.all([
+      this.get('/reports/weekly'),
+      this.get('/reports/saved')
+    ]);
+
+    const weeklyReports = (weeklyRes.ok && weeklyRes.data?.data ? weeklyRes.data.data : []).map((report: any) => ({
+      id: report.id,
+      name: `Weekly Progress Report - ${report.student?.name || 'Student'}`,
+      type: 'weekly',
+      generatedAt: report.createdAt || report.weekStart,
+      generatedBy: 'System',
+      format: 'pdf',
+      size: 'N/A',
+    }));
+
+    const savedReports = (savedRes.ok && savedRes.data?.data ? savedRes.data.data : []).map((report: any) => ({
+      id: report.id,
+      name: report.name || 'Custom Report',
+      type: report.type || 'custom',
+      generatedAt: report.createdAt,
+      generatedBy: 'Admin',
+      format: report.config?.format || 'pdf',
+      size: 'N/A',
+    }));
+
+    return [...weeklyReports, ...savedReports].sort((a, b) => 
+      new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime()
+    );
   }
 
   // Document methods

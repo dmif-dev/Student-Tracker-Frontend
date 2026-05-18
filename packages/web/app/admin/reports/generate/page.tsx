@@ -129,7 +129,7 @@ export default function GenerateReportPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const template = searchParams.get('template');
-  
+
   const [step, setStep] = useState(1);
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
@@ -140,7 +140,7 @@ export default function GenerateReportPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState<'students' | 'mentors'>('students');
   const [reportData, setReportData] = useState<ReportData | null>(null);
-  
+
   // Set initial config based on template - only weekly and monthly
   const [config, setConfig] = useState<ReportConfig>(() => {
     let name = '';
@@ -171,7 +171,7 @@ export default function GenerateReportPage() {
       type,
       format: 'pdf',
       dateRange: {
-        start: type === 'weekly' 
+        start: type === 'weekly'
           ? new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0]
           : new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
         end: new Date().toISOString().split('T')[0],
@@ -215,114 +215,28 @@ export default function GenerateReportPage() {
     fetchData();
   }, []);
 
-  // Generate mock report data based on config
-  const generateReportData = (): ReportData => {
-    const selectedStudentsList = students.filter(s => config.students.includes(s.id));
-    const selectedMentorsList = mentors.filter(m => config.mentors.includes(m.id));
-    
-    // Separate outcomes by program
-    const gGMPOutcomes = outcomes.filter(o => o.program === 'G-GMP');
-    const pcpCertifications = outcomes.filter(o => o.program === 'PCP');
-    
-    // Generate monthly outcome data
-    const generateMonthlyOutcomeData = () => {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-      return months.map(month => ({
-        month,
-        patents: Math.floor(Math.random() * 5) + 1,
-        papers: Math.floor(Math.random() * 6) + 2,
-        startups: Math.floor(Math.random() * 3) + 1,
-      }));
-    };
-
-    // Count certifications by level
-    const countByLevel = (certifications: Outcome[]) => {
-      return {
-        associate: certifications.filter(c => c.title?.toLowerCase().includes('associate')).length,
-        specialist: certifications.filter(c => c.title?.toLowerCase().includes('specialist')).length,
-        professional: certifications.filter(c => c.title?.toLowerCase().includes('professional')).length,
-      };
-    };
-    
-    return {
-      reportName: config.name,
-      generatedAt: new Date().toISOString(),
-      dateRange: config.dateRange,
-      programs: config.programs.length > 0 ? config.programs : ['All Programs'],
-      students: selectedStudentsList.map(s => ({
-        id: s.id,
-        name: s.name,
-        email: s.email,
-        program: s.program,
-        track: s.track,
-        mentor: s.program === 'PCP' ? 'Self-paced' : (s.mentor || 'Not assigned'),
-        progress: Math.floor(Math.random() * 30) + 60,
-        attendance: Math.floor(Math.random() * 20) + 75,
-        activities: Math.floor(Math.random() * 10) + 5,
-        assignments: Math.floor(Math.random() * 8) + 2,
-        // Program-specific metrics
-        ...(s.program === 'G-GMP' && {
-          patents: Math.floor(Math.random() * 3),
-          papers: Math.floor(Math.random() * 4),
-          startups: Math.floor(Math.random() * 2),
-        }),
-        ...(s.program === 'PCP' && {
-          certifications: Math.floor(Math.random() * 3),
-          modulesCompleted: Math.floor(Math.random() * 8) + 2,
-        }),
-        ...(s.program === 'G-CMP' && {
-          projectsCompleted: Math.floor(Math.random() * 5),
-        }),
-      })),
-      mentors: selectedMentorsList.map(m => ({
-        id: m.id,
-        name: m.name,
-        email: m.email,
-        programs: m.programs,
-        expertise: m.expertise,
-        students: m.students || Math.floor(Math.random() * 10) + 5,
-        sessions: Math.floor(Math.random() * 15) + 5,
-      })),
-      outcomes: {
-        gGMP: config.includeOutcomes ? {
-          patents: gGMPOutcomes.filter(o => o.type === 'patent').length,
-          papers: gGMPOutcomes.filter(o => o.type === 'paper').length,
-          startups: gGMPOutcomes.filter(o => o.type === 'startup').length,
-          byMonth: generateMonthlyOutcomeData(),
-        } : undefined,
-        pcp: config.includeOutcomes ? {
-          certifications: pcpCertifications.length,
-          byLevel: countByLevel(pcpCertifications),
-        } : undefined,
-      },
-      summary: {
-        totalStudents: selectedStudentsList.length,
-        totalMentors: selectedMentorsList.length,
-        gGMPStudents: selectedStudentsList.filter(s => s.program === 'G-GMP').length,
-        gCMPStudents: selectedStudentsList.filter(s => s.program === 'G-CMP').length,
-        eTIPStudents: selectedStudentsList.filter(s => s.program === 'E-TIP').length,
-        pcpStudents: selectedStudentsList.filter(s => s.program === 'PCP').length,
-        totalOutcomes: (config.includeOutcomes ? gGMPOutcomes.length + pcpCertifications.length : 0),
-        averageProgress: Math.floor(Math.random() * 15) + 70,
-        averageAttendance: Math.floor(Math.random() * 10) + 80,
-        totalActivities: Math.floor(Math.random() * 100) + 50,
-        completedAssignments: Math.floor(Math.random() * 80) + 20,
-      },
-    };
-  };
 
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      // Generate report data
-      const data = generateReportData();
+      // Call API to generate report data
+      const data = await ApiService.generateReport(config);
       setReportData(data);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      if (config.schedule.enabled) {
+        await ApiService.scheduleReport({
+          name: config.name,
+          frequency: config.schedule.frequency || 'weekly',
+          config: config,
+          recipients: config.schedule.recipients || [],
+          startDate: new Date().toISOString()
+        });
+      }
+
       setGenerated(true);
     } catch (error) {
       console.error('Error generating report:', error);
+      alert('An error occurred while generating or scheduling the report.');
     } finally {
       setGenerating(false);
     }
@@ -449,7 +363,7 @@ export default function GenerateReportPage() {
     // Outcomes Section
     if (config.includeOutcomes && data.outcomes) {
       html += `<h2>Outcomes & Certifications</h2>`;
-      
+
       if (data.outcomes.gGMP) {
         html += `
           <h3>G-GMP Innovation Outcomes</h3>
@@ -494,7 +408,7 @@ export default function GenerateReportPage() {
     // Students Section
     if (config.students.length > 0) {
       html += `<h2>Student Details</h2>`;
-      
+
       if (config.includeProgress) {
         html += `
           <h3>Progress Overview</h3>
@@ -574,7 +488,7 @@ export default function GenerateReportPage() {
     printWindow.document.write(html);
     printWindow.document.close();
     printWindow.focus();
-    
+
     setTimeout(() => {
       printWindow.print();
     }, 500);
@@ -623,7 +537,7 @@ export default function GenerateReportPage() {
         csv += ',Patents,Papers,Startups,Certifications';
       }
       csv += '\n';
-      
+
       data.students.forEach((student: StudentData) => {
         csv += `"${student.name}",${student.email},${student.program},${student.track},${student.mentor},${student.progress}%,${student.attendance}%,${student.activities},${student.assignments}`;
         if (config.includeOutcomes) {
@@ -692,24 +606,24 @@ export default function GenerateReportPage() {
   };
 
   const filteredStudents = students.filter(student => {
-    const matchesSearch = 
+    const matchesSearch =
       student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.program.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesProgram = config.programs.length === 0 || config.programs.includes(student.program);
-    
+
     return matchesSearch && matchesProgram;
   });
 
   const filteredMentors = mentors.filter(mentor => {
-    const matchesSearch = 
+    const matchesSearch =
       mentor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       mentor.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesProgram = config.programs.length === 0 || 
+
+    const matchesProgram = config.programs.length === 0 ||
       mentor.programs.some(p => config.programs.includes(p));
-    
+
     return matchesSearch && matchesProgram;
   });
 
@@ -775,7 +689,7 @@ export default function GenerateReportPage() {
                 <strong>Template:</strong> {config.name}
               </p>
               <p className="text-xs text-orange-600 mt-1">
-                {template === 'weekly-progress' 
+                {template === 'weekly-progress'
                   ? 'Weekly report including progress, attendance, and activities'
                   : 'Monthly comprehensive analytics with trends and outcomes'}
               </p>
@@ -789,14 +703,12 @@ export default function GenerateReportPage() {
         <div className="flex items-center justify-between">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex items-center flex-1">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                step >= i ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
-              }`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= i ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>
                 {step > i ? <CheckCircle size={16} /> : i}
               </div>
-              {i < 4 && <div className={`flex-1 h-1 mx-2 ${
-                step > i ? 'bg-orange-600' : 'bg-gray-200'
-              }`} />}
+              {i < 4 && <div className={`flex-1 h-1 mx-2 ${step > i ? 'bg-orange-600' : 'bg-gray-200'
+                }`} />}
             </div>
           ))}
         </div>
@@ -902,7 +814,7 @@ export default function GenerateReportPage() {
           {step === 2 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold mb-4">Select Candidates</h2>
-              
+
               {/* Program Filter */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -920,11 +832,10 @@ export default function GenerateReportPage() {
                             : [...prev.programs, program]
                         }))
                       }}
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        config.programs.includes(program)
-                          ? getProgramColor(program)
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${config.programs.includes(program)
+                        ? getProgramColor(program)
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                     >
                       {program}
                     </button>
@@ -937,21 +848,19 @@ export default function GenerateReportPage() {
                 <nav className="flex space-x-8">
                   <button
                     onClick={() => setSelectedTab('students')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      selectedTab === 'students'
-                        ? 'border-orange-600 text-orange-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'students'
+                      ? 'border-orange-600 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
                   >
                     Students ({filteredStudents.length})
                   </button>
                   <button
                     onClick={() => setSelectedTab('mentors')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      selectedTab === 'mentors'
-                        ? 'border-orange-600 text-orange-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${selectedTab === 'mentors'
+                      ? 'border-orange-600 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
                   >
                     Mentors ({filteredMentors.length})
                   </button>
@@ -984,13 +893,13 @@ export default function GenerateReportPage() {
                   onClick={selectedTab === 'students' ? selectAllStudents : selectAllMentors}
                   className="text-sm text-orange-600 hover:text-orange-700"
                 >
-                  {selectedTab === 'students' 
+                  {selectedTab === 'students'
                     ? (config.students.length === filteredStudents.length ? 'Deselect All' : 'Select All')
                     : (config.mentors.length === filteredMentors.length ? 'Deselect All' : 'Select All')
                   }
                 </button>
                 <span className="text-sm text-gray-500">
-                  {selectedTab === 'students' 
+                  {selectedTab === 'students'
                     ? `${config.students.length} selected`
                     : `${config.mentors.length} selected`
                   }
@@ -1003,11 +912,10 @@ export default function GenerateReportPage() {
                   {filteredStudents.map((student) => (
                     <label
                       key={student.id}
-                      className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                        config.students.includes(student.id)
-                          ? 'bg-orange-50 border border-orange-200'
-                          : 'hover:bg-gray-50 border border-transparent'
-                      }`}
+                      className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${config.students.includes(student.id)
+                        ? 'bg-orange-50 border border-orange-200'
+                        : 'hover:bg-gray-50 border border-transparent'
+                        }`}
                     >
                       <input
                         type="checkbox"
@@ -1047,11 +955,10 @@ export default function GenerateReportPage() {
                   {filteredMentors.map((mentor) => (
                     <label
                       key={mentor.id}
-                      className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                        config.mentors.includes(mentor.id)
-                          ? 'bg-orange-50 border border-orange-200'
-                          : 'hover:bg-gray-50 border border-transparent'
-                      }`}
+                      className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${config.mentors.includes(mentor.id)
+                        ? 'bg-orange-50 border border-orange-200'
+                        : 'hover:bg-gray-50 border border-transparent'
+                        }`}
                     >
                       <input
                         type="checkbox"
@@ -1108,7 +1015,7 @@ export default function GenerateReportPage() {
           {step === 3 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold mb-4">Include in Report</h2>
-              
+
               <div className="space-y-4">
                 {/* Common sections */}
                 <div>
@@ -1209,7 +1116,7 @@ export default function GenerateReportPage() {
           {step === 4 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold mb-4">Schedule & Generate</h2>
-              
+
               <div className="mb-6">
                 <label className="flex items-center mb-4">
                   <input
@@ -1251,6 +1158,11 @@ export default function GenerateReportPage() {
                       <input
                         type="text"
                         placeholder="Enter email addresses (comma separated)"
+                        value={config.schedule.recipients?.join(', ') || ''}
+                        onChange={(e) => setConfig({
+                          ...config,
+                          schedule: { ...config.schedule, recipients: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }
+                        })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                       <p className="text-xs text-gray-500 mt-1">

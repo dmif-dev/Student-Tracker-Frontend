@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect , useCallback} from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { ApiService } from '@/services/api';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -36,10 +36,10 @@ interface Report {
 interface ScheduledReport {
   id: string;
   name: string;
-  frequency: 'daily' |'weekly' | 'monthly';
-  schedule: string;  
+  frequency: 'daily' | 'weekly' | 'monthly';
+  schedule: string;
   recipients: string[];
-  isActive : boolean;
+  isActive: boolean;
   format: 'pdf' | 'excel' | 'csv';
   programs: string[];
   time: string;
@@ -50,6 +50,7 @@ interface ScheduledReport {
 
 export default function ReportsPage() {
   const [isMounted, setIsMounted] = useState(false);
+  const [allReports, setAllReports] = useState<Report[]>([]);
   const [scheduledReports, setScheduledReports] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,90 +67,26 @@ export default function ReportsPage() {
     setIsMounted(true);
   }, []);
 
-  // Mock data - replace with API call
-  const allReports: Report[] = [
-    {
-      id: '1',
-      name: 'Weekly Progress Report - Week 12',
-      type: 'weekly',
-      generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      generatedBy: 'System',
-      format: 'pdf',
-      size: '2.4 MB',
-    },
-    {
-      id: '2',
-      name: 'Monthly Analytics - February 2024',
-      type: 'monthly',
-      generatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-      generatedBy: 'Admin',
-      format: 'excel',
-      size: '1.8 MB',
-    },
-    {
-      id: '3',
-      name: 'Weekly Progress Report - Week 11',
-      type: 'weekly',
-      generatedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
-      generatedBy: 'System',
-      format: 'pdf',
-      size: '2.3 MB',
-    },
-    {
-      id: '4',
-      name: 'Monthly Analytics - January 2024',
-      type: 'monthly',
-      generatedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-      generatedBy: 'Admin',
-      format: 'excel',
-      size: '1.9 MB',
-    },
-  ];
+  const fetchGeneratedReports = useCallback(async () => {
+    try {
+      const reports = await ApiService.getSavedReports();
+      setAllReports(reports);
+    } catch (error) {
+      console.error('Failed to load reports:', error);
+    }
+  }, []);
 
-  /*
-  // Mock scheduled reports data
-  
-  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([
-    {
-      id: 'sched1',
-      name: 'Weekly Progress Report',
-      type: 'weekly',
-      schedule: 'Every Monday',
-      time: '09:00 AM',
-      recipients: ['admin@dmif.org', 'mentors@dmif.org'],
-      format: 'pdf',
-      programs: ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'],
-      status: 'active',
-      lastGenerated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      nextGeneration: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'sched2',
-      name: 'Monthly Analytics Report',
-      type: 'monthly',
-      schedule: '1st of every month',
-      time: '12:00 PM',
-      recipients: ['admin@dmif.org', 'leadership@dmif.org'],
-      format: 'excel',
-      programs: ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'],
-      status: 'active',
-      lastGenerated: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-      nextGeneration: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ]);
-*/
-  
 
-  
- /// My integration code changes start here - DIVYA
+
+  /// My integration code changes start here - DIVYA
 
   // 1. Updated code to Fetch Scheduled Reports from Backend 
   const fetchScheduledReports = useCallback(async () => {
     try {
       setIsLoading(true);
       const result = await ApiService.get('/reports/scheduled');
-    
-    setScheduledReports(result.data || []);
+
+      setScheduledReports(result.data || []);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Could not load scheduled reports');
@@ -161,7 +98,8 @@ export default function ReportsPage() {
   useEffect(() => {
     setIsMounted(true);
     fetchScheduledReports();
-  }, [fetchScheduledReports]);
+    fetchGeneratedReports();
+  }, [fetchScheduledReports, fetchGeneratedReports]);
 
   // 2. Handle Delete
   const handleDeleteSchedule = async (scheduleId: string) => {
@@ -169,8 +107,8 @@ export default function ReportsPage() {
 
     try {
       const data = await ApiService.delete(`/reports/scheduled/${scheduleId}`);
-        setScheduledReports(prev => prev.filter(s => s.id !== scheduleId));
-        toast.success('Report deleted successfully');
+      setScheduledReports(prev => prev.filter(s => s.id !== scheduleId));
+      toast.success('Report deleted successfully');
     } catch (error) {
       toast.error('Failed to delete report');
     }
@@ -182,10 +120,10 @@ export default function ReportsPage() {
     if (!report) return;
 
     try {
-      const updated = await ApiService.put(`/reports/scheduled/${scheduleId}`, { 
-      isActive: !report.isActive 
-    });
-        setScheduledReports(prev => prev.map(s => s.id === scheduleId ? updated : s));
+      const updated = await ApiService.put(`/reports/scheduled/${scheduleId}`, {
+        isActive: !report.isActive
+      });
+      setScheduledReports(prev => prev.map(s => s.id === scheduleId ? updated : s));
     } catch (error) {
       toast.error('Failed to update status');
     }
@@ -197,9 +135,9 @@ export default function ReportsPage() {
       const result = await ApiService.put(`/reports/scheduled/${updatedData.id}`, updatedData);
       const updatedReport = result.data;
 
-        setScheduledReports(prev => prev.map(s => s.id === updatedReport.id ? updatedReport : s));
-        setShowEditModal(false);
-        toast.success('Report updated');
+      setScheduledReports(prev => prev.map(s => s.id === updatedReport.id ? updatedReport : s));
+      setShowEditModal(false);
+      toast.success('Report updated');
     } catch (error) {
       toast.error('Failed to save changes');
     }
@@ -208,85 +146,85 @@ export default function ReportsPage() {
   // Adding a function for ADD Schedule button to work and integrate the "POST" endpoint
 
   const handleCreateSchedule = async (newScheduleData: any) => {
-  try {
+    try {
       const data = await ApiService.post('/reports/schedule', {
-      name: newScheduleData.name,
-      frequency: newScheduleData.frequency,
-      config: newScheduleData.config,
-      recipients: newScheduleData.recipients,
-      startDate: new Date().toISOString()
+        name: newScheduleData.name,
+        frequency: newScheduleData.frequency,
+        config: newScheduleData.config,
+        recipients: newScheduleData.recipients,
+        startDate: new Date().toISOString()
       });
-      
+
       // Update the list immediately so the user sees the new item
       setScheduledReports(prev => [...prev, data]);
       setShowAddModal(false); // Close modal on success
       toast.success('Report scheduled successfully!');
     } catch (error) {
-    console.error('Create error:', error);
-    toast.error('Network error. Could not connect to server.');
-  }
-};
-
-
-/* function CreateScheduleModal({ onClose, onSave }: { 
-  onClose: () => void; 
-  onSave: (data: any) => void;
-}) {
-  const [formData, setFormData] = useState({
-    name: '',
-    type: 'weekly',
-    frequency: 'weekly', // Match backend: 'daily', 'weekly', 'monthly'
-    time: '09:00',
-    format: 'pdf',
-    programs: [] as string[],
-    recipients: '',
-  }); */
-
-// My code changes - Divya Adding the form state and handleSubmit function for the CreateScheduleModal. 
-  function CreateScheduleModal({ onClose, onSave }: { onClose: () => void; onSave: (data: any) => void }) {
-  
-    const [formData, setFormData] = useState({
-    name: '',
-    type: 'weekly',
-    schedule: 'weekly',
-    time: '09:00',
-    format: 'pdf',
-    programs: [] as string[],
-    recipients: '',
-    status: 'active',
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Construct the object the backend expects
-    const payload = {
-      name: formData.name,
-      frequency: formData.schedule,
-      recipients: formData.recipients.split(',').map(r => r.trim()).filter(Boolean),
-      config: {
-        type: formData.type,
-        format: formData.format,
-        programs: formData.programs,
-        time: formData.time
-      }
-    };
-    
-    onSave(payload);
+      console.error('Create error:', error);
+      toast.error('Network error. Could not connect to server.');
+    }
   };
-  
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-       <div className="bg-white p-6 rounded-xl w-full max-w-md">
-         <h2>Schedule New Report</h2>
-         {/* Form fields here */}
-         <form onSubmit={handleSubmit} className="space-y-4">
+
+
+  /* function CreateScheduleModal({ onClose, onSave }: { 
+    onClose: () => void; 
+    onSave: (data: any) => void;
+  }) {
+    const [formData, setFormData] = useState({
+      name: '',
+      type: 'weekly',
+      frequency: 'weekly', // Match backend: 'daily', 'weekly', 'monthly'
+      time: '09:00',
+      format: 'pdf',
+      programs: [] as string[],
+      recipients: '',
+    }); */
+
+  // My code changes - Divya Adding the form state and handleSubmit function for the CreateScheduleModal. 
+  function CreateScheduleModal({ onClose, onSave }: { onClose: () => void; onSave: (data: any) => void }) {
+
+    const [formData, setFormData] = useState({
+      name: '',
+      type: 'weekly',
+      schedule: 'weekly',
+      time: '09:00',
+      format: 'pdf',
+      programs: [] as string[],
+      recipients: '',
+      status: 'active',
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+
+      // Construct the object the backend expects
+      const payload = {
+        name: formData.name,
+        frequency: formData.schedule,
+        recipients: formData.recipients.split(',').map(r => r.trim()).filter(Boolean),
+        config: {
+          type: formData.type,
+          format: formData.format,
+          programs: formData.programs,
+          time: formData.time
+        }
+      };
+
+      onSave(payload);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-xl w-full max-w-md">
+          <h2>Schedule New Report</h2>
+          {/* Form fields here */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Report Name</label>
-              <input 
+              <input
                 className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Weekly Progress"
                 required
               />
@@ -296,13 +234,13 @@ export default function ReportsPage() {
               <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
               <button type="submit" className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">Save Schedule</button>
             </div>
-         </form>
-       </div>
-    </div>
-  );
-}
+          </form>
+        </div>
+      </div>
+    );
+  }
 
-  
+
   // My code changes End here -- DIVYA
 
   // Only two report templates as requested
@@ -372,7 +310,7 @@ export default function ReportsPage() {
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         return report.name.toLowerCase().includes(searchLower) ||
-               report.generatedBy.toLowerCase().includes(searchLower);
+          report.generatedBy.toLowerCase().includes(searchLower);
       }
 
       return true;
@@ -397,35 +335,35 @@ export default function ReportsPage() {
     return count;
   };
 
-   /*
-  const handleEditSchedule = (schedule: ScheduledReport) => {
-    setEditingSchedule(schedule);
-    setShowEditModal(true);
-  };
+  /*
+ const handleEditSchedule = (schedule: ScheduledReport) => {
+   setEditingSchedule(schedule);
+   setShowEditModal(true);
+ };
 
  
-  const handleDeleteSchedule = (scheduleId: string) => {
-    if (confirm('Are you sure you want to delete this scheduled report?')) {
-      setScheduledReports(scheduledReports.filter(s => s.id !== scheduleId));
-    }
-  };
+ const handleDeleteSchedule = (scheduleId: string) => {
+   if (confirm('Are you sure you want to delete this scheduled report?')) {
+     setScheduledReports(scheduledReports.filter(s => s.id !== scheduleId));
+   }
+ };
 
-  const handleToggleStatus = (scheduleId: string) => {
-    setScheduledReports(scheduledReports.map(s => 
-      s.id === scheduleId 
-        ? { ...s, status: s.status === 'active' ? 'paused' : 'active' }
-        : s
-    ));
-  };  
+ const handleToggleStatus = (scheduleId: string) => {
+   setScheduledReports(scheduledReports.map(s => 
+     s.id === scheduleId 
+       ? { ...s, status: s.status === 'active' ? 'paused' : 'active' }
+       : s
+   ));
+ };  
 
-  const handleSaveSchedule = (updatedSchedule: ScheduledReport) => {
-    setScheduledReports(scheduledReports.map(s => 
-      s.id === updatedSchedule.id ? updatedSchedule : s
-    ));
-    setShowEditModal(false);
-    setEditingSchedule(null);
-  };
-  */
+ const handleSaveSchedule = (updatedSchedule: ScheduledReport) => {
+   setScheduledReports(scheduledReports.map(s => 
+     s.id === updatedSchedule.id ? updatedSchedule : s
+   ));
+   setShowEditModal(false);
+   setEditingSchedule(null);
+ };
+ */
 
   // Don't render dynamic content until mounted to prevent hydration mismatch
   if (!isMounted) {
@@ -515,15 +453,14 @@ export default function ReportsPage() {
               </button>
             )}
           </div>
-          
+
           {/* Filter Toggle Button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center px-4 py-2 border rounded-lg transition-colors relative ${
-              showFilters || getActiveFilterCount() > 0
+            className={`flex items-center px-4 py-2 border rounded-lg transition-colors relative ${showFilters || getActiveFilterCount() > 0
                 ? 'bg-orange-50 border-orange-300 text-orange-600'
                 : 'border-gray-300 hover:bg-gray-50'
-            }`}
+              }`}
           >
             <Filter size={18} className="mr-2" />
             Filters
@@ -679,8 +616,8 @@ export default function ReportsPage() {
             <FileText size={48} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No reports found</h3>
             <p className="text-gray-500">
-              {getActiveFilterCount() > 0 
-                ? 'No reports match your current filters. Try adjusting your criteria.' 
+              {getActiveFilterCount() > 0
+                ? 'No reports match your current filters. Try adjusting your criteria.'
                 : 'Generate your first report to get started.'}
             </p>
             {getActiveFilterCount() > 0 && (
@@ -700,7 +637,7 @@ export default function ReportsPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Scheduled Reports</h2>
           <button className="text-sm text-orange-600 hover:text-orange-700"
-          onClick={() => setShowAddModal(true)}>
+            onClick={() => setShowAddModal(true)}>
             + Add Schedule
           </button>
         </div>
@@ -718,11 +655,10 @@ export default function ReportsPage() {
                   <div>
                     <div className="flex items-center space-x-2">
                       <p className="font-medium">{schedule.name}</p>
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${
-                        schedule.isActive 
-                          ? 'bg-green-100 text-green-700' 
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${schedule.isActive
+                          ? 'bg-green-100 text-green-700'
                           : 'bg-gray-100 text-gray-700'
-                      }`}>
+                        }`}>
                         {schedule.isActive ? 'Active' : 'Paused'}
                       </span>
                     </div>
@@ -747,11 +683,10 @@ export default function ReportsPage() {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleToggleStatus(schedule.id)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      schedule.status === 'active' 
+                    className={`p-2 rounded-lg transition-colors ${schedule.status === 'active'
                         ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
                         : 'bg-green-50 text-green-600 hover:bg-green-100'
-                    }`}
+                      }`}
                     title={schedule.status === 'active' ? 'Pause' : 'Resume'}
                   >
                     {schedule.isActive ? <Clock size={16} /> : <Check size={16} />}
@@ -791,8 +726,8 @@ export default function ReportsPage() {
 
       {showAddModal && (
         <CreateScheduleModal
-         onClose={() => setShowAddModal(false)}
-         onSave={handleCreateSchedule}
+          onClose={() => setShowAddModal(false)}
+          onSave={handleCreateSchedule}
         />
       )}
 
@@ -801,9 +736,9 @@ export default function ReportsPage() {
 }
 
 // Edit Schedule Modal Component
-function EditScheduleModal({ schedule, onClose, onSave }: { 
-  schedule: ScheduledReport; 
-  onClose: () => void; 
+function EditScheduleModal({ schedule, onClose, onSave }: {
+  schedule: ScheduledReport;
+  onClose: () => void;
   onSave: (updated: ScheduledReport) => void;
 }) {
   const [formData, setFormData] = useState({
@@ -821,7 +756,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const updated: ScheduledReport = {
       ...schedule,
       name: formData.name,
@@ -833,7 +768,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
       recipients: formData.recipients.split(',').map(r => r.trim()),
       isActive: formData.status === 'active',
     };
-    
+
     onSave(updated);
   };
 
@@ -850,7 +785,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h3 className="text-lg font-semibold mb-4">Edit Scheduled Report</h3>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -872,7 +807,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
               </label>
               <select
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as 'weekly' | 'monthly' })}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as 'daily' | 'weekly' | 'monthly' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="weekly">Weekly</option>
@@ -888,7 +823,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
                 value={formData.format}
                 onChange={(e) => setFormData({ ...formData, format: e.target.value as 'pdf' | 'excel' | 'csv' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
+              >type
                 <option value="pdf">PDF</option>
                 <option value="excel">Excel</option>
                 <option value="csv">CSV</option>
@@ -940,14 +875,13 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
                   key={program}
                   type="button"
                   onClick={() => toggleProgram(program)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    formData.programs.includes(program)
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${formData.programs.includes(program)
                       ? program === 'G-GMP' ? 'bg-purple-100 text-purple-700' :
                         program === 'G-CMP' ? 'bg-green-100 text-green-700' :
-                        program === 'E-TIP' ? 'bg-orange-100 text-orange-700' :
-                        'bg-orange-100 text-orange-700'
+                          program === 'E-TIP' ? 'bg-orange-100 text-orange-700' :
+                            'bg-orange-100 text-orange-700'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   {program}
                 </button>
