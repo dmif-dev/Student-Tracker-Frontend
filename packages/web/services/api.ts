@@ -1057,10 +1057,22 @@ export class ApiService {
   static async uploadAdminDocument(data: any): Promise<any> {
     const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated');
+
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+      if (key === 'file' && data.file) {
+        formData.append('file', data.file);
+      } else if (typeof data[key] === 'object' && data[key] !== null) {
+        formData.append(key, JSON.stringify(data[key]));
+      } else if (data[key] !== undefined && data[key] !== null) {
+        formData.append(key, String(data[key]));
+      }
+    });
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/admin/documents/upload`, { 
       method: 'POST', 
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify(data)
+      headers: { 'Authorization': `Bearer ${token}` }, // Browser sets Content-Type to multipart/form-data with boundary
+      body: formData
     });
     if (!response.ok) throw new Error('Failed to upload document');
     return response.json();
