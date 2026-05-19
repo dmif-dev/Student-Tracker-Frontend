@@ -110,6 +110,7 @@ export default function DocumentsPage() {
   const [selectedMentor, setSelectedMentor] = useState<string>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState<string | null>(null);
+  const [editDocumentData, setEditDocumentData] = useState<any | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<ViewerDocument | null>(null);
   const [showViewer, setShowViewer] = useState(false);
 
@@ -119,6 +120,14 @@ export default function DocumentsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => ApiService.deleteAdminDocument(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['adminDocuments'] })
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => ApiService.updateAdminDocument(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminDocuments'] });
+      setEditDocumentData(null);
+    }
   });
 
   const handleDelete = async (id: string) => {
@@ -344,7 +353,11 @@ export default function DocumentsPage() {
                     <Lock size={16} className="text-gray-400" />
                   )}
                 </button>
-                <button className="p-1 hover:bg-gray-100 rounded">
+                <button
+                  onClick={() => setEditDocumentData(doc)}
+                  className="p-1 hover:bg-gray-100 rounded"
+                  title="Edit Document"
+                >
                   <Edit size={16} className="text-gray-600" />
                 </button>
                 <button onClick={() => handleDelete(doc.id)} className="p-1 hover:bg-gray-100 rounded text-red-500">
@@ -455,6 +468,19 @@ export default function DocumentsPage() {
         />
       )}
 
+      {/* Edit Modal */}
+      {editDocumentData && (
+        <EditDocumentModal
+          document={editDocumentData}
+          mentors={mentors}
+          onClose={() => setEditDocumentData(null)}
+          onSave={async (id: string, data: any) => {
+            await updateMutation.mutateAsync({ id, data });
+          }}
+          isSaving={updateMutation.isPending}
+        />
+      )}
+
       {/* Permission Modal */}
       {showPermissionModal && (
         <PermissionModal
@@ -482,6 +508,271 @@ export default function DocumentsPage() {
         />
       )}
 
+    </div>
+  );
+}
+
+// ==================== EditDocumentModal Component ====================
+
+function EditDocumentModal({ document, mentors, onClose, onSave, isSaving }: any) {
+  const programs: Record<string, string[]> = {
+    'G-CMP': [
+      'AI Product Development',
+      'Full Stack Development',
+      'Cloud Development & Deployment',
+      'Agentic AI Development',
+    ],
+    'E-TIP': [
+      'AI Product Development',
+      'Full Stack',
+      'Cloud Development',
+      'Agentic AI',
+      'Custom Track',
+    ],
+  };
+
+  // Map backend enum values back to frontend-friendly strings
+  const toProgram = (p: string) => (p === 'G_CMP' ? 'G-CMP' : p === 'E_TIP' ? 'E-TIP' : p);
+  const toType = (t: string) => t.toLowerCase() as DocumentType;
+  const toVisibility = (v: string) => v.toLowerCase() as 'student_only' | 'mentor_only' | 'both';
+
+  const [formData, setFormData] = useState({
+    title: document.title || '',
+    description: document.description || '',
+    type: toType(document.type),
+    program: toProgram(document.program) as 'G-CMP' | 'E-TIP',
+    track: document.track || '',
+    mentorId: document.uploadedById || '',
+    visibility: toVisibility(document.visibility),
+    dueDate: document.metadata?.dueDate || '',
+    points: document.metadata?.points ? String(document.metadata.points) : '',
+    readingTime: document.metadata?.readingTime ? String(document.metadata.readingTime) : '',
+    required: document.metadata?.required || false,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const metadata: any = {
+      ...document.metadata,
+      required: formData.required,
+    };
+    if (formData.type === 'assignment_material') {
+      if (formData.dueDate) metadata.dueDate = formData.dueDate;
+      if (formData.points) metadata.points = parseInt(formData.points);
+    } else if (formData.type === 'pre_reading_material') {
+      if (formData.readingTime) metadata.readingTime = parseInt(formData.readingTime);
+    }
+
+    const programEnum = formData.program === 'G-CMP' ? 'G_CMP' : 'E_TIP';
+    const typeEnum = formData.type === 'learning_material' ? 'LEARNING_MATERIAL'
+      : formData.type === 'assignment_material' ? 'ASSIGNMENT_MATERIAL'
+      : 'PRE_READING_MATERIAL';
+    const visibilityEnum = formData.visibility === 'student_only' ? 'STUDENT_ONLY'
+      : formData.visibility === 'mentor_only' ? 'MENTOR_ONLY' : 'BOTH';
+
+    await onSave(document.id, {
+      title: formData.title,
+      description: formData.description,
+      type: typeEnum,
+      program: programEnum,
+      track: formData.track,
+      uploadedById: formData.mentorId,
+      visibility: visibilityEnum,
+      metadata,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Edit Document</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          {/* Program and Track */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Program *</label>
+              <select
+                value={formData.program}
+                onChange={(e) => setFormData({ ...formData, program: e.target.value as 'G-CMP' | 'E-TIP', track: '' })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="G-CMP">G-CMP</option>
+                <option value="E-TIP">E-TIP</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Track</label>
+              <select
+                value={formData.track}
+                onChange={(e) => setFormData({ ...formData, track: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="">All Tracks</option>
+                {programs[formData.program].map((track) => (
+                  <option key={track} value={track}>{track}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Document Type and Visibility */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Document Type *</label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as DocumentType })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="learning_material">Learning Material</option>
+                <option value="assignment_material">Assignment</option>
+                <option value="pre_reading_material">Pre-Reading Material</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Visibility *</label>
+              <select
+                value={formData.visibility}
+                onChange={(e) => setFormData({ ...formData, visibility: e.target.value as 'student_only' | 'mentor_only' | 'both' })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="student_only">Students Only</option>
+                <option value="mentor_only">Mentors Only</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Assignment-specific fields */}
+          {formData.type === 'assignment_material' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                <input
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Points</label>
+                <input
+                  type="number"
+                  value={formData.points}
+                  onChange={(e) => setFormData({ ...formData, points: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="e.g., 100"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Pre-reading specific fields */}
+          {formData.type === 'pre_reading_material' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Reading Time (minutes)</label>
+              <input
+                type="number"
+                value={formData.readingTime}
+                onChange={(e) => setFormData({ ...formData, readingTime: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="e.g., 30"
+              />
+            </div>
+          )}
+
+          {/* Required checkbox */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="edit-required"
+              checked={formData.required}
+              onChange={(e) => setFormData({ ...formData, required: e.target.checked })}
+              className="rounded border-gray-300 mr-2"
+            />
+            <label htmlFor="edit-required" className="text-sm">Required material</label>
+          </div>
+
+          {/* Mentor selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Mentor *</label>
+            <select
+              value={formData.mentorId}
+              onChange={(e) => setFormData({ ...formData, mentorId: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              required
+            >
+              <option value="">Select Mentor</option>
+              {mentors.map((mentor: any) => (
+                <option key={mentor.id} value={mentor.id}>{mentor.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Current file info (read-only) */}
+          <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
+            <p className="font-medium mb-1">Current File</p>
+            <p>{document.fileName} ({document.fileSize ? (document.fileSize / 1024).toFixed(1) + ' KB' : 'unknown size'})</p>
+            <p className="text-xs text-gray-400 mt-1">File cannot be changed in edit mode. Delete and re-upload to replace the file.</p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end space-x-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {isSaving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <span>Save Changes</span>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
