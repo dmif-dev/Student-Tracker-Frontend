@@ -55,7 +55,7 @@ const mapActivityType = (type: string, program?: string): ActivityItem['type'] =
 
 export default function AdminDashboard() {
   const { data: statsData, isLoading: statsLoading } = useAdminDashboardStats();
-  const { data: activitiesData, isLoading: activitiesLoading } = useSystemActivities(4);
+  const { data: activitiesData, isLoading: activitiesLoading } = useSystemActivities(20);
 
   const loading = statsLoading || activitiesLoading;
 
@@ -240,46 +240,57 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2">
           <Card className="rounded-2xl shadow-xl border-none bg-white p-8">
             <h3 className="text-2xl font-black font-montserrat mb-6 tracking-tight">System Activity</h3>
-            <div className="space-y-6">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center",
-                      activity.type === 'student_registered' ? "bg-green-100 text-green-600" :
-                        activity.type === 'progress_submitted' ? "bg-orange-100 text-orange-600" :
-                          activity.type === 'outcome_achieved' ? "bg-purple-100 text-purple-600" :
-                            activity.type === 'certification_completed' ? "bg-amber-100 text-amber-600" :
-                              "bg-gray-100 text-gray-600"
-                    )}>
-                      {activity.type === 'student_registered' && <Users size={18} />}
-                      {activity.type === 'progress_submitted' && <TrendingUp size={18} />}
-                      {activity.type === 'outcome_achieved' && <Award size={18} />}
-                      {activity.type === 'certification_completed' && <GraduationCap size={18} />}
-                      {activity.type === 'report_generated' && <CheckCircle size={18} />}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <p className="text-sm font-bold text-gray-900 group-hover:text-orange-600 transition-colors">{activity.title}</p>
-                      <span className="text-[10px] font-bold text-gray-400">{activity.time}</span>
-                    </div>
-                    {activity.user && (
-                      <p className="text-xs font-medium text-gray-500">by {activity.user}</p>
-                    )}
-                    {activity.program && (
-                      <span className={cn(
-                        "inline-block mt-2 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border",
-                        activity.program === 'G-GMP' ? "bg-orange-50 text-orange-700 border-orange-100" :
-                          activity.program === 'G-CMP' ? "bg-amber-50 text-amber-700 border-amber-100" :
-                            "bg-gray-50 text-gray-700 border-gray-200"
+            <div
+              className="space-y-6 overflow-y-auto pr-2"
+              style={{
+                maxHeight: '30rem', /* ~7 items at ~68px each */
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#f97316 #f3f4f6',
+              }}
+            >
+              {recentActivity.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8">No recent activity yet.</p>
+              ) : (
+                recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center",
+                        activity.type === 'student_registered' ? "bg-green-100 text-green-600" :
+                          activity.type === 'progress_submitted' ? "bg-orange-100 text-orange-600" :
+                            activity.type === 'outcome_achieved' ? "bg-purple-100 text-purple-600" :
+                              activity.type === 'certification_completed' ? "bg-amber-100 text-amber-600" :
+                                "bg-gray-100 text-gray-600"
                       )}>
-                        {activity.program}
-                      </span>
-                    )}
+                        {activity.type === 'student_registered' && <Users size={18} />}
+                        {activity.type === 'progress_submitted' && <TrendingUp size={18} />}
+                        {activity.type === 'outcome_achieved' && <Award size={18} />}
+                        {activity.type === 'certification_completed' && <GraduationCap size={18} />}
+                        {activity.type === 'report_generated' && <CheckCircle size={18} />}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <p className="text-sm font-bold text-gray-900 group-hover:text-orange-600 transition-colors">{activity.title}</p>
+                        <span className="text-[10px] font-bold text-gray-400 ml-2 flex-shrink-0">{activity.time}</span>
+                      </div>
+                      {activity.user && (
+                        <p className="text-xs font-medium text-gray-500">by {activity.user}</p>
+                      )}
+                      {activity.program && (
+                        <span className={cn(
+                          "inline-block mt-2 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border",
+                          activity.program === 'G-GMP' ? "bg-orange-50 text-orange-700 border-orange-100" :
+                            activity.program === 'G-CMP' ? "bg-amber-50 text-amber-700 border-amber-100" :
+                              "bg-gray-50 text-gray-700 border-gray-200"
+                        )}>
+                          {activity.program}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </Card>
         </div>
