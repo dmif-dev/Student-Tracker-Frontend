@@ -2,8 +2,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FileText,
   Upload,
@@ -83,50 +84,50 @@ interface ViewerDocument {
 }
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [filteredDocs, setFilteredDocs] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: documents = [], isLoading: loadingDocs } = useQuery({
+    queryKey: ['adminDocuments'],
+    queryFn: () => ApiService.getAdminDocuments(),
+    refetchInterval: 5000,
+  });
+
+  const { data: mentors = [], isLoading: loadingMentors } = useQuery({
+    queryKey: ['mentors'],
+    queryFn: () => ApiService.getMentors(),
+  });
+
+  const { data: students = [], isLoading: loadingStudents } = useQuery({
+    queryKey: ['students'],
+    queryFn: () => ApiService.getStudents(),
+  });
+
+  const loading = loadingDocs || loadingMentors || loadingStudents;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<'all' | 'G-CMP' | 'E-TIP'>('all');
   const [selectedType, setSelectedType] = useState<'all' | DocumentType>('all');
   const [selectedMentor, setSelectedMentor] = useState<string>('all');
-  const [mentors, setMentors] = useState<Mentor[]>([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState<string | null>(null);
-  const [students, setStudents] = useState<Student[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<ViewerDocument | null>(null);
   const [showViewer, setShowViewer] = useState(false);
 
   // Mock admin ID - replace with actual auth
   const ADMIN_ID = 'admin';
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => ApiService.deleteAdminDocument(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['adminDocuments'] })
+  });
 
-  useEffect(() => {
-    filterDocuments();
-  }, [documents, searchTerm, selectedProgram, selectedType, selectedMentor]);
-
-  const fetchData = async () => {
-    try {
-      const [docs, mentorsData, studentsData] = await Promise.all([
-        DocumentService.getDocuments(),
-        ApiService.getMentors(),
-        ApiService.getStudents()
-      ]);
-      setDocuments(docs);
-      setMentors(mentorsData as Mentor[]);
-      setStudents(studentsData as Student[]);
-      setFilteredDocs(docs);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this document?')) {
+      await deleteMutation.mutateAsync(id);
     }
   };
 
-  const filterDocuments = () => {
+  const filteredDocs = useMemo(() => {
     let filtered = [...documents];
 
     // Search filter
@@ -153,8 +154,8 @@ export default function DocumentsPage() {
       filtered = filtered.filter(doc => doc.uploadedById === selectedMentor);
     }
 
-    setFilteredDocs(filtered);
-  };
+    return filtered;
+  }, [documents, searchTerm, selectedProgram, selectedType, selectedMentor]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B';
@@ -188,7 +189,7 @@ export default function DocumentsPage() {
     setShowViewer(true);
     
     // Track the view
-    await DocumentViewerService.trackView(doc.id, ADMIN_ID, 'admin');
+    await ApiService.trackAdminDocumentView(doc.id);
   };
 
   const handleDownload = async (doc: Document, e?: React.MouseEvent) => {
@@ -196,7 +197,7 @@ export default function DocumentsPage() {
     
     try {
       // Track the download
-      await DocumentViewerService.trackDownload(doc.id, ADMIN_ID, 'admin');
+      await ApiService.trackAdminDocumentDownload(doc.id);
       
       // Download the file
       await FileHandlerService.downloadFile({
@@ -346,7 +347,7 @@ export default function DocumentsPage() {
                 <button className="p-1 hover:bg-gray-100 rounded">
                   <Edit size={16} className="text-gray-600" />
                 </button>
-                <button className="p-1 hover:bg-gray-100 rounded text-red-500">
+                <button onClick={() => handleDelete(doc.id)} className="p-1 hover:bg-gray-100 rounded text-red-500">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -447,8 +448,8 @@ export default function DocumentsPage() {
           students={students}
           onClose={() => setShowUploadModal(false)}
           onUpload={async (docData: UploadDocumentData) => {
-            const newDoc = await DocumentService.uploadDocument(docData);
-            setDocuments([...documents, newDoc]);
+            await ApiService.uploadAdminDocument(docData);
+            queryClient.invalidateQueries({ queryKey: ['adminDocuments'] });
             setShowUploadModal(false);
           }}
         />
@@ -462,10 +463,8 @@ export default function DocumentsPage() {
           students={students}
           onClose={() => setShowPermissionModal(null)}
           onUpdate={async (docId: string, permissions: any) => {
-            const updated = await DocumentService.setPermissions(docId, permissions);
-            if (updated) {
-              setDocuments(documents.map(d => d.id === docId ? updated : d));
-            }
+            await ApiService.updateAdminDocumentPermissions(docId, permissions);
+            queryClient.invalidateQueries({ queryKey: ['adminDocuments'] });
             setShowPermissionModal(null);
           }}
         />

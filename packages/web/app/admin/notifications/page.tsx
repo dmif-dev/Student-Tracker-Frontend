@@ -22,7 +22,7 @@ import {
 
 type FilterType = 'all' | 'unread' | 'read';
 type DateFilterType = 'all' | 'today' | 'week' | 'month';
-type CategoryFilterType = 'all' | 'student' | 'mentor' | 'session' | 'report' | 'outcome' | 'progress' | 'achievement' | 'system';
+type CategoryFilterType = 'all' | 'student' | 'mentor' | 'session' | 'report' | 'outcome' | 'progress' | 'achievement' | 'system' | 'assignment';
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -118,6 +118,7 @@ export default function NotificationsPage() {
       progress: 'Progress',
       achievement: 'Achievements',
       system: 'System',
+      assignment: 'Assignments',
     };
     return labels[category] || category;
   };
@@ -132,6 +133,7 @@ export default function NotificationsPage() {
       progress: 'bg-orange-100 text-orange-700',
       achievement: 'bg-pink-100 text-pink-700',
       system: 'bg-gray-100 text-gray-700',
+      assignment: 'bg-blue-100 text-blue-700',
     };
     return colors[category] || 'bg-gray-100 text-gray-700';
   };
@@ -227,6 +229,7 @@ export default function NotificationsPage() {
                     <option value="progress">Progress</option>
                     <option value="achievement">Achievements</option>
                     <option value="system">System</option>
+                    <option value="assignment">Assignments</option>
                   </select>
                 </div>
 

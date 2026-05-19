@@ -1,50 +1,60 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Edit, Eye, Copy, CheckCircle } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ApiService } from '@/services/api';
+import { toast } from 'sonner';
 
 interface EmailTemplate {
   id: string;
   name: string;
   subject: string;
-  description: string;
-  lastUpdated: string;
+  body: string;
+  variables: string[];
 }
 
 export default function EmailSettingsPage() {
-  const [templates] = useState<EmailTemplate[]>([
-    {
-      id: 'welcome',
-      name: 'Welcome Email',
-      subject: 'Welcome to DMIF Student Tracker',
-      description: 'Sent to new students upon registration',
-      lastUpdated: '2024-03-15'
-    },
-    {
-      id: 'weekly-report',
-      name: 'Weekly Report',
-      subject: 'Your Weekly Progress Report',
-      description: 'Weekly progress summary for students',
-      lastUpdated: '2024-03-14'
-    },
-    {
-      id: 'mentor-assignment',
-      name: 'Mentor Assignment',
-      subject: 'You have been assigned a mentor',
-      description: 'Notification when mentor is assigned',
-      lastUpdated: '2024-03-10'
-    },
-    {
-      id: 'outcome-achieved',
-      name: 'Outcome Achieved',
-      subject: 'Congratulations on your achievement!',
-      description: 'Sent when student achieves an outcome',
-      lastUpdated: '2024-03-05'
-    }
-  ]);
+  const queryClient = useQueryClient();
 
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const { data: templates = [], isLoading } = useQuery<EmailTemplate[]>({
+    queryKey: ['adminEmailTemplates'],
+    queryFn: () => ApiService.getEmailTemplates(),
+  });
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
+  const [formData, setFormData] = useState<Partial<EmailTemplate>>({});
+
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+
+  useEffect(() => {
+    if (selectedTemplate) {
+      setFormData(selectedTemplate);
+    }
+  }, [selectedTemplate]);
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: Partial<EmailTemplate> }) => ApiService.updateEmailTemplate(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminEmailTemplates'] });
+      toast.success('Email template updated successfully!');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('Failed to update email template.');
+    }
+  });
+
+  const handleSave = () => {
+    if (selectedTemplateId) {
+      updateMutation.mutate({ id: selectedTemplateId, data: formData });
+    }
+  };
+
+  if (isLoading) {
+    return <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">Loading templates...</div>;
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -57,15 +67,14 @@ export default function EmailSettingsPage() {
             {templates.map((template) => (
               <button
                 key={template.id}
-                onClick={() => setSelectedTemplate(template.id)}
+                onClick={() => setSelectedTemplateId(template.id)}
                 className={`w-full text-left p-3 rounded-lg transition-colors ${
-                  selectedTemplate === template.id
+                  selectedTemplateId === template.id
                     ? 'bg-orange-50 border border-orange-200'
                     : 'hover:bg-gray-50 border border-transparent'
                 }`}
               >
                 <h3 className="font-medium text-gray-900">{template.name}</h3>
-                <p className="text-xs text-gray-500 mt-1">{template.description}</p>
               </button>
             ))}
           </div>
@@ -97,19 +106,12 @@ export default function EmailSettingsPage() {
                   <div className="bg-white p-6 rounded-lg shadow-sm">
                     <div className="mb-4">
                       <span className="text-sm text-gray-500">Subject:</span>
-                      <span className="ml-2 font-medium">Welcome to DMIF Student Tracker</span>
+                      <span className="ml-2 font-medium">{formData.subject}</span>
                     </div>
-                    <div className="prose max-w-none">
-                      <p>Dear [Student Name],</p>
-                      <p>Welcome to DMIF Student Tracker! We're excited to have you on board.</p>
-                      <p>Your journey with us starts now. Here's what you can do:</p>
-                      <ul>
-                        <li>Track your daily progress</li>
-                        <li>View weekly reports</li>
-                        <li>Connect with your mentor</li>
-                      </ul>
-                      <p>Best regards,<br />DMIF Team</p>
-                    </div>
+                    <div 
+                      className="prose max-w-none"
+                      dangerouslySetInnerHTML={{ __html: formData.body || '' }}
+                    />
                   </div>
                 </div>
               ) : (
@@ -120,8 +122,9 @@ export default function EmailSettingsPage() {
                     </label>
                     <input
                       type="text"
-                      value="Welcome Email"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      value={formData.name || ''}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -130,7 +133,8 @@ export default function EmailSettingsPage() {
                     </label>
                     <input
                       type="text"
-                      value="Welcome to DMIF Student Tracker"
+                      value={formData.subject || ''}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
@@ -140,14 +144,15 @@ export default function EmailSettingsPage() {
                     </label>
                     <textarea
                       rows={10}
-                      value="Dear [Student Name],\n\nWelcome to DMIF Student Tracker! We're excited to have you on board.\n\nYour journey with us starts now. Here's what you can do:\n- Track your daily progress\n- View weekly reports\n- Connect with your mentor\n\nBest regards,\nDMIF Team"
+                      value={formData.body || ''}
+                      onChange={(e) => setFormData({ ...formData, body: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono text-sm"
                     />
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Available Variables</h4>
                     <div className="flex flex-wrap gap-2">
-                      {['[Student Name]', '[Mentor Name]', '[Program]', '[Track]', '[Progress]'].map((var_) => (
+                      {formData.variables?.map((var_) => (
                         <span key={var_} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
                           {var_}
                         </span>
@@ -158,11 +163,18 @@ export default function EmailSettingsPage() {
               )}
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button 
+                  onClick={() => setFormData(selectedTemplate || {})}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
                   Cancel
                 </button>
-                <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
-                  Save Changes
+                <button 
+                  onClick={handleSave}
+                  disabled={updateMutation.isPending}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                >
+                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>

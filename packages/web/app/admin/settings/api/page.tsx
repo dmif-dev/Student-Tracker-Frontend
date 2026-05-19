@@ -2,38 +2,55 @@
 
 import { useState } from 'react';
 import { Key, Copy, Eye, EyeOff, Plus, Trash2, Calendar } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ApiService } from '@/services/api';
+import { toast } from 'sonner';
 
 interface ApiKey {
   id: string;
   name: string;
   key: string;
   createdAt: string;
-  lastUsed: string | null;
-  expiresAt: string;
 }
 
 export default function ApiSettingsPage() {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([
-    {
-      id: '1',
-      name: 'Production API Key',
-      key: 'sk_live_1234567890abcdef',
-      createdAt: '2024-01-15',
-      lastUsed: '2024-03-21',
-      expiresAt: '2025-01-15'
-    },
-    {
-      id: '2',
-      name: 'Development Key',
-      key: 'sk_test_abcdef1234567890',
-      createdAt: '2024-02-01',
-      lastUsed: '2024-03-20',
-      expiresAt: '2025-02-01'
-    }
-  ]);
+  const queryClient = useQueryClient();
+
+  const { data: apiKeys = [], isLoading } = useQuery<ApiKey[]>({
+    queryKey: ['adminApiKeys'],
+    queryFn: () => ApiService.getApiKeys(),
+  });
 
   const [showNewKeyForm, setShowNewKeyForm] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
   const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
+
+  const generateMutation = useMutation({
+    mutationFn: (name: string) => ApiService.generateApiKey(name),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['adminApiKeys'] });
+      setShowNewKeyForm(false);
+      setNewKeyName('');
+      toast.success('API Key generated!');
+      alert(`Your new API Key is: ${data.key}\nPlease store it safely, it may not be visible again.`);
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('Failed to generate API Key.');
+    }
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: (id: string) => ApiService.revokeApiKey(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminApiKeys'] });
+      toast.success('API Key revoked successfully.');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('Failed to revoke API Key.');
+    }
+  });
 
   const toggleKeyVisibility = (keyId: string) => {
     setVisibleKeys(prev =>
@@ -45,8 +62,26 @@ export default function ApiSettingsPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('API key copied to clipboard!');
+    toast.success('API key copied to clipboard!');
   };
+
+  const handleGenerate = () => {
+    if (!newKeyName.trim()) {
+      toast.error('Key name is required.');
+      return;
+    }
+    generateMutation.mutate(newKeyName);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to revoke this API Key?')) {
+      revokeMutation.mutate(id);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">Loading API Keys...</div>;
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -85,7 +120,11 @@ export default function ApiSettingsPage() {
                 >
                   <Copy size={16} />
                 </button>
-                <button className="p-1 hover:bg-gray-100 rounded text-red-500">
+                <button 
+                  onClick={() => handleDelete(apiKey.id)}
+                  disabled={revokeMutation.isPending}
+                  className="p-1 hover:bg-gray-100 rounded text-red-500"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -98,11 +137,8 @@ export default function ApiSettingsPage() {
             <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
               <div className="flex items-center">
                 <Calendar size={12} className="mr-1" />
-                Expires: {new Date(apiKey.expiresAt).toLocaleDateString()}
+                Created: {new Date(apiKey.createdAt).toLocaleDateString()}
               </div>
-              {apiKey.lastUsed && (
-                <div>Last used: {new Date(apiKey.lastUsed).toLocaleDateString()}</div>
-              )}
             </div>
           </div>
         ))}
@@ -122,52 +158,29 @@ export default function ApiSettingsPage() {
                 <input
                   type="text"
                   placeholder="e.g., Production Key"
+                  value={newKeyName}
+                  onChange={(e) => setNewKeyName(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Expiration
-                </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
-                  <option value="30">30 days</option>
-                  <option value="90">90 days</option>
-                  <option value="365">1 year</option>
-                  <option value="0">No expiration</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Permissions
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 mr-2" />
-                    <span className="text-sm">Read only</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 mr-2" />
-                    <span className="text-sm">Read & Write</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 mr-2" />
-                    <span className="text-sm">Admin access</span>
-                  </label>
-                </div>
               </div>
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
               <button
-                onClick={() => setShowNewKeyForm(false)}
+                onClick={() => {
+                  setShowNewKeyForm(false);
+                  setNewKeyName('');
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
-                Generate Key
+              <button 
+                onClick={handleGenerate}
+                disabled={generateMutation.isPending}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              >
+                {generateMutation.isPending ? 'Generating...' : 'Generate Key'}
               </button>
             </div>
           </div>
