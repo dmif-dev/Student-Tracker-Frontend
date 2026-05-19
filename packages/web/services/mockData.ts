@@ -17,6 +17,20 @@ export interface Student {
   phone?: string;
   address?: string;
   avatar?: string;
+  accountActive?: boolean;
+  projects?: {
+    completed: number;
+    inProgress: number;
+  };
+  certifications?: {
+    completed: number;
+    inProgress: number;
+  };
+  sessionStats?: {
+    completed: number;
+    total: number;
+    attendance: number;
+  };
 }
 
 export interface MentorSchedule {

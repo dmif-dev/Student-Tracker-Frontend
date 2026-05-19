@@ -100,7 +100,6 @@ const mentors = [
 export default function AddStudentPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState<string>('');
 
   const {
     register,
@@ -279,12 +278,12 @@ export default function AddStudentPage() {
                 Program *
               </label>
               <select
-                {...register('program')}
-                onChange={(e) => {
-                  setSelectedProgram(e.target.value);
-                  setValue('track', '');
-                  setValue('mentor', '');
-                }}
+                {...register('program', {
+                  onChange: () => {
+                    setValue('track', '');
+                    setValue('mentor', '');
+                  }
+                })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">Select Program</option>
@@ -305,7 +304,7 @@ export default function AddStudentPage() {
               </label>
               <select
                 {...register('track')}
-                disabled={!selectedProgram}
+                disabled={!watchProgram}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">Select Track</option>

@@ -16,9 +16,11 @@ import {
   MapPin,
   Briefcase,
   Video,
-  ChevronRight
+  ChevronRight,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
-import { useAdminMentor } from '@/hooks/api/useAdmin';
+import { useAdminMentor, useDeleteMentor } from '@/hooks/api/useAdmin';
 
 interface MentorDetails {
   id: string;
@@ -54,7 +56,22 @@ export default function MentorDetailPage() {
   const router = useRouter();
   const pathname = usePathname();
   const { data: mentor, isLoading: loading } = useAdminMentor(params.id as string);
+  const deleteMentorMutation = useDeleteMentor();
   const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteMentorMutation.mutateAsync(params.id as string);
+      router.push('/admin/mentors');
+    } catch (error) {
+      console.error('Error deleting mentor:', error);
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
 
   // Get current tab from URL
   const currentTab = pathname.split('/').pop() || 'overview';
@@ -178,6 +195,13 @@ export default function MentorDetailPage() {
             <Edit size={18} className="mr-2" />
             Edit Mentor
           </Link>
+          <button
+            onClick={() => setShowDeleteDialog(true)}
+            className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <Trash2 size={18} className="mr-2" />
+            Delete
+          </button>
         </div>
       </div>
 
@@ -496,6 +520,52 @@ export default function MentorDetailPage() {
             <div className="p-4 bg-purple-50 rounded-lg">
               <p className="text-sm text-purple-600 mb-1">Total Sessions</p>
               <p className="text-2xl font-bold text-purple-700">156</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={24} className="text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Delete Mentor</h3>
+                <p className="text-sm text-gray-500">This action cannot be undone</p>
+              </div>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete <strong>{mentor.name}</strong>? This will permanently remove their profile, sessions, and all associated data.
+            </p>
+            <div className="flex space-x-3 justify-end">
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} className="mr-2" />
+                    Delete Mentor
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

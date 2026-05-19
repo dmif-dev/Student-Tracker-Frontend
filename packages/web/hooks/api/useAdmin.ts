@@ -9,10 +9,15 @@ export const adminKeys = {
   systemActivities: () => [...adminKeys.all, 'systemActivities'] as const,
   students: () => [...adminKeys.all, 'students'] as const,
   student: (id: string) => [...adminKeys.students(), id] as const,
+  studentProgress: (id: string) => [...adminKeys.student(id), 'progress'] as const,
+  studentProgressStats: (id: string) => [...adminKeys.student(id), 'progressStats'] as const,
+  studentSessions: (id: string) => [...adminKeys.student(id), 'sessions'] as const,
   mentors: () => [...adminKeys.all, 'mentors'] as const,
   mentor: (id: string) => [...adminKeys.mentors(), id] as const,
+  mentorSessions: (id: string) => [...adminKeys.mentor(id), 'sessions'] as const,
   outcomes: () => [...adminKeys.all, 'outcomes'] as const,
 };
+
 
 // Dashboard
 export const useAdminDashboardStats = (dateRange?: string, program?: string) => {
@@ -107,6 +112,61 @@ export const useDeleteStudent = () => {
   });
 };
 
+export const useToggleStudentStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiClient.put<any>(`students/${id}/toggle-status`, {}),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.students() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.student(id) });
+    },
+  });
+};
+
+export const useResetStudentProgress = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiClient.put<any>(`students/${id}/reset-progress`, {}),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.students() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.student(id) });
+    },
+  });
+};
+
+export const useAdminStudentProgress = (studentId: string) => {
+  return useQuery({
+    queryKey: adminKeys.studentProgress(studentId),
+    queryFn: async () => {
+      const data = await apiClient.get<any>(`progress/student/${studentId}?limit=50`);
+      return data.data || data || [];
+    },
+    enabled: !!studentId,
+  });
+};
+
+export const useAdminStudentProgressStats = (studentId: string) => {
+  return useQuery({
+    queryKey: adminKeys.studentProgressStats(studentId),
+    queryFn: async () => {
+      const data = await apiClient.get<any>(`progress/stats/${studentId}`);
+      return data;
+    },
+    enabled: !!studentId,
+  });
+};
+
+export const useAdminStudentSessions = (studentId: string) => {
+  return useQuery({
+    queryKey: adminKeys.studentSessions(studentId),
+    queryFn: async () => {
+      const data = await apiClient.get<any[]>(`sessions/student/${studentId}`);
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!studentId,
+  });
+};
+
 // Mentors
 export const useAdminMentors = () => {
   return useQuery<Mentor[]>({
@@ -162,6 +222,55 @@ export const useDeleteMentor = () => {
   });
 };
 
+export const useAdminMentorSessions = (id: string) => {
+  return useQuery({
+    queryKey: adminKeys.mentorSessions(id),
+    queryFn: async () => {
+      const data = await apiClient.get<any[]>(`sessions/mentor/${id}`);
+      return data;
+    },
+    enabled: !!id,
+  });
+};
+
+export const useAdminCreateSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => apiClient.post<any>('sessions', data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.mentorSessions(variables.mentorId) });
+    },
+  });
+};
+
+export const useAdminUpdateSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      apiClient.put<any>(`sessions/${id}`, data),
+    onSuccess: (_, variables) => {
+      // We don't have the mentorId directly in variables to invalidate the specific mentor's sessions list efficiently, 
+      // but if the calling code provides it in the data or we can just invalidate all admin cache or just sessions if we want
+      // For now, invalidate all mentor sessions or the specific mentor's ones if available
+      if (variables.data.mentorId) {
+        queryClient.invalidateQueries({ queryKey: adminKeys.mentorSessions(variables.data.mentorId) });
+      }
+    },
+  });
+};
+
+export const useAdminDeleteSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, mentorId }: { sessionId: string; mentorId: string }) => 
+      apiClient.delete<any>(`sessions/${sessionId}/cancel`),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.mentorSessions(variables.mentorId) });
+    },
+  });
+};
+
+
 export const useAdminMentorPerformance = (id: string, period: string = 'year') => {
   return useQuery({
     queryKey: [...adminKeys.mentor(id), 'performance', period],
@@ -170,5 +279,39 @@ export const useAdminMentorPerformance = (id: string, period: string = 'year') =
       return data;
     },
     enabled: !!id,
+  });
+};
+
+// Student-specific data hooks
+export const useStudentProgressStats = (studentId: string) => {
+  return useQuery({
+    queryKey: adminKeys.studentProgressStats(studentId),
+    queryFn: async () => {
+      const data = await apiClient.get<any>(`progress/stats/${studentId}`);
+      return data;
+    },
+    enabled: !!studentId,
+  });
+};
+
+export const useStudentDailyProgress = (studentId: string) => {
+  return useQuery({
+    queryKey: adminKeys.studentProgress(studentId),
+    queryFn: async () => {
+      const response = await apiClient.get<any>(`progress/student/${studentId}?limit=30`);
+      return response?.data || response || [];
+    },
+    enabled: !!studentId,
+  });
+};
+
+export const useStudentSessions = (studentId: string) => {
+  return useQuery({
+    queryKey: adminKeys.studentSessions(studentId),
+    queryFn: async () => {
+      const data = await apiClient.get<any[]>(`sessions/student/${studentId}`);
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!studentId,
   });
 };

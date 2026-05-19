@@ -66,11 +66,13 @@ export default function AddMentorPage() {
     setSuccessMessage(null);
     setErrorMessage(null);
     try {
-      await createMentorMutation.mutateAsync({
+      const payload = {
         ...data,
+        status: data.status.toUpperCase(),
         expertise,
-        programs: selectedPrograms,
-      });
+        programs: selectedPrograms.map(p => p.replace('-', '_')),
+      };
+      await createMentorMutation.mutateAsync(payload as any);
       setSuccessMessage('Mentor added successfully!');
       setTimeout(() => {
         router.push('/admin/mentors');

@@ -57,6 +57,10 @@ export const mapStudent = (backendStudent: any): Student => {
     phone: backendStudent.phone,
     address: backendStudent.address,
     avatar: backendStudent.avatar,
+    accountActive: backendStudent.accountActive,
+    projects: backendStudent.projects,
+    certifications: backendStudent.certifications,
+    sessionStats: backendStudent.sessionStats,
   };
 };
 

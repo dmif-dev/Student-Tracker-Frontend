@@ -46,11 +46,11 @@ export default function EditMentorPage() {
       setValue('phone', mentor.phone || '');
       setValue('location', mentor.location || '');
       setValue('bio', mentor.bio || '');
-      setValue('status', mentor.status as any);
-      setValue('joinDate', mentor.joinDate);
+      setValue('status', mentor.status.toLowerCase() as any);
+      setValue('joinDate', new Date(mentor.joinDate).toISOString().split('T')[0]);
       
       setExpertise(mentor.expertise);
-      setSelectedPrograms(mentor.programs);
+      setSelectedPrograms(mentor.programs.map((p: string) => p.replace('_', '-')));
       setLoading(false);
     }
     if (mentorError) {
@@ -85,13 +85,15 @@ export default function EditMentorPage() {
     setSuccessMessage(null);
     setError(null);
     try {
+      const payload = {
+        ...data,
+        status: data.status.toUpperCase(),
+        expertise,
+        programs: selectedPrograms.map(p => p.replace('-', '_')),
+      };
       await updateMentorMutation.mutateAsync({
         id: mentorId,
-        data: {
-          ...data,
-          expertise,
-          programs: selectedPrograms,
-        }
+        data: payload as any
       });
       setSuccessMessage('Mentor updated successfully!');
       setTimeout(() => {

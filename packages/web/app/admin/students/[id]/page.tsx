@@ -2,8 +2,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter, usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -24,7 +24,17 @@ import {
   Info,
   Briefcase // Add this import
 } from 'lucide-react';
-import { useAdminStudent, useSystemActivities, useAdminOutcomes } from '@/hooks/api/useAdmin';
+import { 
+  useAdminStudent, 
+  useSystemActivities, 
+  useAdminOutcomes,
+  useAdminStudentProgress,
+  useAdminStudentProgressStats,
+  useAdminStudentSessions,
+  useUpdateStudent,
+  useToggleStudentStatus,
+  useResetStudentProgress
+} from '@/hooks/api/useAdmin';
 import { Outcome } from '@/services/mockData';
 
 interface StudentDetails {
@@ -59,6 +69,12 @@ interface StudentDetails {
     completed: number;
     inProgress: number;
   };
+  sessionStats?: {
+    completed: number;
+    total: number;
+    attendance: number;
+  };
+  accountActive?: boolean;
   recentActivity: Array<{
     id: string;
     type: string;
@@ -70,19 +86,31 @@ interface StudentDetails {
 export default function StudentDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const pathname = usePathname();
+  const [activeTab, setActiveTab] = useState<'overview' | 'progress' | 'outcomes' | 'activity' | 'settings'>('overview');
   
   const studentId = params.id as string;
   const { data: baseStudent, isLoading: studentLoading } = useAdminStudent(studentId);
   const { data: activities = [], isLoading: activitiesLoading } = useSystemActivities(20);
   const { data: outcomes = [], isLoading: outcomesLoading } = useAdminOutcomes(studentId);
+  const { data: progressData = [], isLoading: progressLoading } = useAdminStudentProgress(studentId);
+  const { data: progressStats, isLoading: progressStatsLoading } = useAdminStudentProgressStats(studentId);
+  const { data: sessionsData = [], isLoading: sessionsLoading } = useAdminStudentSessions(studentId);
+  const toggleStatusMutation = useToggleStudentStatus();
+  const resetProgressMutation = useResetStudentProgress();
   
-  const loading = studentLoading || activitiesLoading || outcomesLoading;
-  
-  // Get current tab from URL
-  const currentTab = pathname.split('/').pop() || 'overview';
-  const validTabs = ['overview', 'progress', 'outcomes', 'activity', 'settings'];
-  const activeTab = validTabs.includes(currentTab) ? currentTab : 'overview';
+  const loading = studentLoading || activitiesLoading || outcomesLoading || progressLoading || progressStatsLoading || sessionsLoading;
+
+  const handleStatusToggle = () => {
+    if (!student) return;
+    toggleStatusMutation.mutate(studentId);
+  };
+
+  const handleResetProgress = () => {
+    if (!student) return;
+    if (window.confirm('Are you sure you want to reset this student\'s progress to 0%?')) {
+      resetProgressMutation.mutate(studentId);
+    }
+  };
   
   const student: StudentDetails | null = baseStudent ? {
     ...baseStudent,
@@ -106,16 +134,6 @@ export default function StudentDetailPage() {
         papers: outcomes.filter((o: any) => o.type === 'paper').length,
         projects: 0,
         startups: outcomes.filter((o: any) => o.type === 'startup').length,
-      };
-    } else if (student.program === 'G-CMP') {
-      student.projects = {
-        completed: Math.floor(Math.random() * 5) + 1,
-        inProgress: Math.floor(Math.random() * 3) + 1,
-      };
-    } else if (student.program === 'PCP') {
-      student.certifications = {
-        completed: Math.floor(Math.random() * 3),
-        inProgress: Math.floor(Math.random() * 2) + 1,
       };
     }
   }
@@ -257,59 +275,19 @@ export default function StudentDetailPage() {
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8">
-          <Link
-            href={`/admin/students/${params.id}`}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-              activeTab === 'overview'
-                ? 'border-orange-600 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Overview
-          </Link>
-          <Link
-            href={`/admin/students/${params.id}/progress`}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-              activeTab === 'progress'
-                ? 'border-orange-600 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Progress
-          </Link>
-          {/* Only show Outcomes tab for G-GMP students */}
-          {student.program === 'G-GMP' && (
-            <Link
-              href={`/admin/students/${params.id}/outcomes`}
+          {(['overview', 'progress', ...(student.program === 'G-GMP' ? ['outcomes'] : []), 'activity', 'settings'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab as any)}
               className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-                activeTab === 'outcomes'
+                activeTab === tab
                   ? 'border-orange-600 text-orange-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Outcomes
-            </Link>
-          )}
-          <Link
-            href={`/admin/students/${params.id}/activity`}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-              activeTab === 'activity'
-                ? 'border-orange-600 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Activity
-          </Link>
-          <Link
-            href={`/admin/students/${params.id}/settings`}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-              activeTab === 'settings'
-                ? 'border-orange-600 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Settings
-          </Link>
+              {tab}
+            </button>
+          ))}
         </nav>
       </div>
 
@@ -514,27 +492,87 @@ export default function StudentDetailPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <p className="font-medium">Weekly Progress</p>
-                <p className="text-sm text-gray-500">Week 12 - Mar 15 to Mar 21</p>
+                <p className="font-medium">Total Progress</p>
+                <p className="text-sm text-gray-500">Based on system metrics</p>
               </div>
-              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">85%</span>
+              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">{student.progress}%</span>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium">Module Completion</p>
                 <p className="text-sm text-gray-500">{student.track}</p>
               </div>
-              <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">In Progress</span>
+              <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
+                {student.progress >= 100 ? 'Completed' : 'In Progress'}
+              </span>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium">Mentor Sessions</p>
-                <p className="text-sm text-gray-500">{student.program === 'PCP' ? 'Self-paced' : '8 sessions completed'}</p>
+                <p className="text-sm text-gray-500">{student.program === 'PCP' ? 'Self-paced' : `${student.sessionStats?.completed || 0} sessions completed`}</p>
               </div>
               {student.program !== 'PCP' && (
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">75%</span>
+                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">{student.sessionStats?.attendance || 0}%</span>
               )}
             </div>
+          </div>
+
+          {/* Daily Progress Logs Timeline */}
+          <div className="mt-8">
+            <h4 className="text-md font-semibold mb-4 flex items-center">
+              <Clock className="mr-2 text-orange-500" size={18} />
+              Daily Progress Logs ({progressData?.length || 0})
+            </h4>
+            {progressData && progressData.length > 0 ? (
+              <div className="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Topic</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {progressData.map((item: any) => (
+                      <tr key={item.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(item.date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {item.topic}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {item.hoursSpent} hrs
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            item.attendanceStatus === 'PRESENT' ? 'bg-green-100 text-green-800' :
+                            item.attendanceStatus === 'LATE' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {item.attendanceStatus}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {item.performanceRating ? `${item.performanceRating}/5 ⭐` : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={item.notes}>
+                          {item.notes || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-500">
+                No progress log entries recorded yet.
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -618,19 +656,37 @@ export default function StudentDetailPage() {
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium">Account Status</p>
-                <p className="text-sm text-gray-500">Manage student account status</p>
+                <p className="text-sm text-gray-500">
+                  Current status: <span className="font-semibold capitalize text-orange-600">{student.status}</span>
+                </p>
               </div>
-              <button className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100">
-                Deactivate Account
+              <button 
+                onClick={handleStatusToggle}
+                disabled={toggleStatusMutation.isPending}
+                className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                  student.accountActive
+                    ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                    : 'bg-green-50 text-green-600 hover:bg-green-100'
+                }`}
+              >
+                {toggleStatusMutation.isPending 
+                  ? 'Updating...' 
+                  : student.accountActive 
+                    ? 'Deactivate Account' 
+                    : 'Activate Account'}
               </button>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium">Reset Progress</p>
-                <p className="text-sm text-gray-500">Clear all progress data</p>
+                <p className="text-sm text-gray-500">Clear and reset progress percentage to 0%</p>
               </div>
-              <button className="px-4 py-2 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100">
-                Reset
+              <button 
+                onClick={handleResetProgress}
+                disabled={resetProgressMutation.isPending}
+                className="px-4 py-2 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 transition-colors font-medium disabled:opacity-50"
+              >
+                {resetProgressMutation.isPending ? 'Resetting...' : 'Reset'}
               </button>
             </div>
           </div>

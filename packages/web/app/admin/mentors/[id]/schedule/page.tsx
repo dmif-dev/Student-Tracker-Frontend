@@ -24,7 +24,7 @@ import {
   GraduationCap,
   Info
 } from 'lucide-react';
-import { useAdminMentor } from '@/hooks/api/useAdmin';
+import { useAdminMentor, useAdminMentorSessions, useAdminCreateSession } from '@/hooks/api/useAdmin';
 import { MentorSchedule, AssignedStudent } from '@/services/mockData';
 
 interface SessionFormData {
@@ -41,6 +41,8 @@ export default function MentorSchedulePage() {
   const params = useParams();
   const router = useRouter();
   const { data: mentorData, isLoading: loading } = useAdminMentor(params.id as string);
+  const { data: serverSessions } = useAdminMentorSessions(params.id as string);
+  const createSessionMutation = useAdminCreateSession();
   const mentor = mentorData;
   const [schedules, setSchedules] = useState<MentorSchedule[]>([]);
   const [students, setStudents] = useState<AssignedStudent[]>([]);
@@ -50,62 +52,35 @@ export default function MentorSchedulePage() {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
 
   useEffect(() => {
+    if (serverSessions) {
+      const mappedSchedules = serverSessions.map((s: any) => ({
+        id: s.id,
+        studentId: s.studentId,
+        studentName: s.student?.name || 'Unknown Student',
+        studentProgram: s.student?.program?.name || s.student?.programId || 'G-GMP',
+        date: s.date ? new Date(s.date).toISOString().split('T')[0] : '',
+        startTime: s.startTime,
+        endTime: s.endTime,
+        status: s.status?.toLowerCase() || 'scheduled',
+        topic: s.topic,
+        meetingLink: s.meetingLink,
+        notes: s.notes ? (Array.isArray(s.notes) ? s.notes[0]?.content : s.notes) : ''
+      }));
+      setSchedules(mappedSchedules);
+    }
+  }, [serverSessions]);
+
+  useEffect(() => {
     if (mentorData) {
       // Only include non-PCP students in assigned students
       const nonPCPStudents = (mentorData.assignedStudents || []).filter(
         (student: AssignedStudent) => student.program !== 'PCP'
       );
       setStudents(nonPCPStudents);
-      
-      // Generate mock schedule data based on mentor's availability and non-PCP students
-      const mockSchedules = generateMockSchedules(mentorData, nonPCPStudents);
-      setSchedules(mockSchedules);
     }
   }, [mentorData]);
 
-  const generateMockSchedules = (mentorData: any, assignedStudents: AssignedStudent[]): MentorSchedule[] => {
-    const schedules: MentorSchedule[] = [];
-    const now = new Date();
 
-    // Generate schedules for next 4 weeks based on program requirements
-    assignedStudents.forEach((student: AssignedStudent) => {
-      // Skip PCP students (already filtered, but double-check)
-      if (student.program === 'PCP') return;
-
-      // Determine day of week based on program
-      let dayOfWeek = 1; // Default Monday
-      if (student.program === 'G-GMP') dayOfWeek = 1; // Monday
-      if (student.program === 'G-CMP') dayOfWeek = 3; // Wednesday
-      if (student.program === 'E-TIP') dayOfWeek = 5; // Friday
-
-      // Generate 4 weekly sessions
-      for (let week = 0; week < 4; week++) {
-        const sessionDate = new Date(now);
-        // Calculate next occurrence of the required day
-        const daysUntilNext = (dayOfWeek - now.getDay() + 7) % 7;
-        sessionDate.setDate(now.getDate() + daysUntilNext + (week * 7));
-        
-        const startHour = 10 + week; // Different times for variety
-        const endHour = startHour + 1;
-
-        schedules.push({
-          id: `s${student.id}-w${week}`,
-          studentId: student.id,
-          studentName: student.name,
-          studentProgram: student.program,
-          date: sessionDate.toISOString().split('T')[0],
-          startTime: `${startHour.toString().padStart(2, '0')}:00`,
-          endTime: `${endHour.toString().padStart(2, '0')}:00`,
-          status: week === 0 ? 'scheduled' : 'scheduled',
-          topic: `${student.track} - Weekly Review`,
-          meetingLink: 'https://meet.google.com/abc-defg-hij',
-          notes: `Weekly mentoring session for ${student.name}`
-        });
-      }
-    });
-
-    return schedules.sort((a, b) => a.date.localeCompare(b.date));
-  };
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -444,26 +419,26 @@ export default function MentorSchedulePage() {
           mentor={mentor}
           students={students}
           onClose={() => setShowAddModal(false)}
-          onSchedule={(sessionData: SessionFormData) => {
-            // Add new session
+          onSchedule={async (sessionData: SessionFormData) => {
             const selectedStudent = students.find(s => s.id === sessionData.studentId);
             if (!selectedStudent) return;
             
-            const newSession: MentorSchedule = {
-              id: Date.now().toString(),
-              studentId: sessionData.studentId,
-              studentName: selectedStudent.name,
-              studentProgram: selectedStudent.program,
-              date: sessionData.date,
-              startTime: sessionData.startTime,
-              endTime: sessionData.endTime,
-              status: 'scheduled',
-              topic: sessionData.topic,
-              notes: sessionData.notes,
-              meetingLink: sessionData.meetingLink
-            };
-            setSchedules([...schedules, newSession].sort((a, b) => a.date.localeCompare(b.date)));
-            setShowAddModal(false);
+            try {
+              await createSessionMutation.mutateAsync({
+                mentorId: params.id as string,
+                studentId: sessionData.studentId,
+                date: sessionData.date,
+                startTime: sessionData.startTime,
+                endTime: sessionData.endTime,
+                topic: sessionData.topic,
+                notes: sessionData.notes,
+                meetingLink: sessionData.meetingLink || undefined,
+              });
+              setShowAddModal(false);
+            } catch (error) {
+              console.error('Failed to schedule session:', error);
+              alert('Failed to schedule session. Please try again.');
+            }
           }}
         />
       )}
