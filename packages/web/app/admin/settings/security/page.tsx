@@ -10,6 +10,11 @@ export default function SecuritySettingsPage() {
   const queryClient = useQueryClient();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordState, setPasswordState] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
 
   const [settings, setSettings] = useState({
     twoFactorEnabled: false,
@@ -51,6 +56,34 @@ export default function SecuritySettingsPage() {
     }
   });
 
+  const changePasswordMutation = useMutation({
+    mutationFn: (data: typeof passwordState) => ApiService.changePassword(data.currentPassword, data.newPassword),
+    onSuccess: () => {
+      setPasswordState({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+      toast.success('Password updated successfully!');
+    },
+    onError: (error: any) => {
+      console.error(error);
+      toast.error(error.message || 'Failed to update password.');
+    }
+  });
+
+  const handleUpdatePassword = () => {
+    if (!passwordState.currentPassword || !passwordState.newPassword || !passwordState.confirmNewPassword) {
+      toast.error('All password fields are required.');
+      return;
+    }
+    if (passwordState.newPassword !== passwordState.confirmNewPassword) {
+      toast.error('New passwords do not match.');
+      return;
+    }
+    if (passwordState.newPassword.length < settings.passwordPolicy.minLength) {
+      toast.error(`New password must be at least ${settings.passwordPolicy.minLength} characters.`);
+      return;
+    }
+    changePasswordMutation.mutate(passwordState);
+  };
+
   const handleSave = () => {
     updateMutation.mutate(settings);
   };
@@ -78,11 +111,13 @@ export default function SecuritySettingsPage() {
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  value={passwordState.currentPassword}
+                  onChange={(e) => setPasswordState({ ...passwordState, currentPassword: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
                 <button
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -94,6 +129,8 @@ export default function SecuritySettingsPage() {
               </label>
               <input
                 type="password"
+                value={passwordState.newPassword}
+                onChange={(e) => setPasswordState({ ...passwordState, newPassword: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
@@ -103,11 +140,17 @@ export default function SecuritySettingsPage() {
               </label>
               <input
                 type="password"
+                value={passwordState.confirmNewPassword}
+                onChange={(e) => setPasswordState({ ...passwordState, confirmNewPassword: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
-            <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
-              Update Password
+            <button
+              onClick={handleUpdatePassword}
+              disabled={changePasswordMutation.isPending}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+            >
+              {changePasswordMutation.isPending ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </div>

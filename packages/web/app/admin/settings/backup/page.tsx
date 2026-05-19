@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Download, Upload, Clock, Database, RefreshCw, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, Upload, Clock, Database, RefreshCw, CheckCircle, AlertCircle, Trash2, Save } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiService } from '@/services/api';
 import { toast } from 'sonner';
@@ -22,8 +22,38 @@ export default function BackupSettingsPage() {
     queryFn: () => ApiService.getBackups(),
   });
 
-  const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
-  const [backupFrequency, setBackupFrequency] = useState('daily');
+  const [settings, setSettings] = useState({
+    autoBackupEnabled: true,
+    backupFrequency: 'daily',
+    retentionPeriod: '30'
+  });
+
+  const { data: configData, isLoading: isConfigLoading } = useQuery({
+    queryKey: ['adminBackupConfig'],
+    queryFn: () => ApiService.getBackupSettings(),
+  });
+
+  useEffect(() => {
+    if (configData) {
+      setSettings(prev => ({ ...prev, ...configData }));
+    }
+  }, [configData]);
+
+  const updateConfigMutation = useMutation({
+    mutationFn: (newSettings: typeof settings) => ApiService.updateBackupSettings(newSettings),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminBackupConfig'] });
+      toast.success('Backup configuration saved successfully!');
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error('Failed to save backup configuration.');
+    }
+  });
+
+  const handleSaveConfig = () => {
+    updateConfigMutation.mutate(settings);
+  };
 
   const createMutation = useMutation({
     mutationFn: () => ApiService.createBackup(),
@@ -85,7 +115,7 @@ export default function BackupSettingsPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  if (isLoading) {
+  if (isLoading || isConfigLoading) {
     return <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">Loading backups...</div>;
   }
 
@@ -111,22 +141,22 @@ export default function BackupSettingsPage() {
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={autoBackupEnabled}
-                    onChange={(e) => setAutoBackupEnabled(e.target.checked)}
+                    checked={settings.autoBackupEnabled}
+                    onChange={(e) => setSettings({ ...settings, autoBackupEnabled: e.target.checked })}
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                 </label>
               </div>
 
-              {autoBackupEnabled && (
+              {settings.autoBackupEnabled && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Backup Frequency
                   </label>
                   <select
-                    value={backupFrequency}
-                    onChange={(e) => setBackupFrequency(e.target.value)}
+                    value={settings.backupFrequency}
+                    onChange={(e) => setSettings({ ...settings, backupFrequency: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="hourly">Hourly</option>
@@ -141,12 +171,27 @@ export default function BackupSettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Retention Period
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <select
+                  value={settings.retentionPeriod}
+                  onChange={(e) => setSettings({ ...settings, retentionPeriod: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
                   <option value="7">7 days</option>
                   <option value="30">30 days</option>
                   <option value="90">90 days</option>
                   <option value="365">1 year</option>
                 </select>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={handleSaveConfig}
+                  disabled={updateConfigMutation.isPending}
+                  className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 text-sm"
+                >
+                  <Save size={16} className="mr-2" />
+                  {updateConfigMutation.isPending ? 'Saving...' : 'Save Configuration'}
+                </button>
               </div>
             </div>
           </div>

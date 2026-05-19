@@ -206,6 +206,7 @@ export function Sidebar() {
       { label: "Reports", href: "/admin/reports", icon: <FileText className="h-5 w-5 flex-shrink-0" /> },
       { label: "Analytics", href: "/admin/analytics", icon: <BarChart3 className="h-5 w-5 flex-shrink-0" /> },
       { label: "Notifications", href: "/admin/notifications", icon: <Bell className="h-5 w-5 flex-shrink-0" /> },
+      { label: "My Profile", href: "/admin/profile", icon: <User className="h-5 w-5 flex-shrink-0" /> },
       { label: "Settings", href: "/admin/settings", icon: <Settings className="h-5 w-5 flex-shrink-0" /> },
     ];
   } else if (pathname.startsWith("/mentor")) {

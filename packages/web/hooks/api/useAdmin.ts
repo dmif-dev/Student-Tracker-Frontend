@@ -12,6 +12,7 @@ export const adminKeys = {
   mentors: () => [...adminKeys.all, 'mentors'] as const,
   mentor: (id: string) => [...adminKeys.mentors(), id] as const,
   outcomes: () => [...adminKeys.all, 'outcomes'] as const,
+  profile: () => [...adminKeys.all, 'profile'] as const,
 };
 
 // Dashboard
@@ -170,5 +171,28 @@ export const useAdminMentorPerformance = (id: string, period: string = 'year') =
       return data;
     },
     enabled: !!id,
+  });
+};
+
+// Admin Profile Hooks
+export const useAdminProfile = () => {
+  return useQuery({
+    queryKey: adminKeys.profile(),
+    queryFn: async () => {
+      const data = await apiClient.get<any>('auth/me');
+      return data;
+    },
+  });
+};
+
+export const useUpdateAdminProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name: string }) => {
+      return apiClient.put<any>('settings/profile', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.profile() });
+    },
   });
 };

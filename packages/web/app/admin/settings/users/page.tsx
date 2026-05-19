@@ -244,7 +244,7 @@ export default function UserSettingsPage() {
               <button
                 onClick={() => {
                   if (!newUser.name || !newUser.email) {
-                    toast({ title: 'Error', description: 'Name and Email are required.', variant: 'destructive' });
+                    toast.error('Name and Email are required.');
                     return;
                   }
                   createUserMutation.mutate(newUser);

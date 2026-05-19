@@ -63,8 +63,13 @@ const generateMonthlyCertificationData = (outcomes: Outcome[]) => {
 export class ApiService {
   // Students
   static async getStudents(): Promise<Student[]> {
-    await delay(800);
-    return mockStudents;
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/students`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch students');
+    return response.json();
   }
 
   static async getStudentById(id: string): Promise<Student | undefined> {
@@ -131,13 +136,32 @@ export class ApiService {
 
   // Mentors
   static async getMentors(): Promise<Mentor[]> {
-    await delay(800);
-    return mockMentors;
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/mentors`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch mentors');
+    const mentors = await response.json();
+    return mentors.map((m: any) => ({
+      ...m,
+      programs: m.programs ? m.programs.map((p: string) => p.replace('_', '-')) : []
+    }));
   }
 
   static async getMentorById(id: string): Promise<Mentor | undefined> {
-    await delay(500);
-    return mockMentors.find(m => m.id === id);
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/mentors/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch mentor');
+    const mentor = await response.json();
+    if (!mentor) return undefined;
+    return {
+      ...mentor,
+      programs: mentor.programs ? mentor.programs.map((p: string) => p.replace('_', '-')) : []
+    };
   }
 
   // Programs
@@ -739,6 +763,32 @@ export class ApiService {
     return response.json();
   }
 
+  // Auth Profile Integration
+  static async getCurrentUser(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/auth/me`, { 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    if (!response.ok) throw new Error('Failed to get user profile');
+    return response.json();
+  }
+
+  static async updateCurrentUserProfile(data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/settings/profile`, { 
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      }, 
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to update profile');
+    return response.json();
+  }
+
   // --- Admin Settings Integration ---
   static async getAdminGeneralSettings(): Promise<any> {
     const token = await getAuthToken();
@@ -825,6 +875,24 @@ export class ApiService {
     return response.json();
   }
 
+  static async changePassword(currentPassword: string, newPassword: string): Promise<any> {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const refreshToken = session?.refresh_token;
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/auth/change-password`, { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+      body: JSON.stringify({ currentPassword, newPassword, refreshToken }) 
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to update password');
+    }
+    return response.json();
+  }
+
   // Email Templates
   static async getEmailTemplates(): Promise<any[]> {
     const token = await getAuthToken();
@@ -897,6 +965,22 @@ export class ApiService {
     if (!token) throw new Error('Not authenticated');
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/backups/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
     if (!response.ok) throw new Error('Failed to delete backup');
+    return response.json();
+  }
+
+  static async getBackupSettings(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/backup-config`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch backup settings');
+    return response.json();
+  }
+
+  static async updateBackupSettings(data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/settings/backup-config`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(data) });
+    if (!response.ok) throw new Error('Failed to update backup settings');
     return response.json();
   }
 
