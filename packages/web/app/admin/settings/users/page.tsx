@@ -27,6 +27,7 @@ export default function UserSettingsPage() {
 
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'STUDENT' });
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const createUserMutation = useMutation({
     mutationFn: (userData: typeof newUser) => ApiService.createAdminUser(userData),
@@ -59,6 +60,7 @@ export default function UserSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
       toast.success('User deleted successfully.');
+      setUserToDelete(null);
     },
     onError: (error) => {
       console.error(error);
@@ -89,10 +91,8 @@ export default function UserSettingsPage() {
     toggleStatusMutation.mutate({ id: user.id, status: newStatus });
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this user?')) {
-      deleteUserMutation.mutate(id);
-    }
+  const handleDelete = (user: User) => {
+    setUserToDelete(user);
   };
 
   if (isLoading) {
@@ -173,7 +173,7 @@ export default function UserSettingsPage() {
                       {user.status === 'active' ? <XCircle size={16} /> : <CheckCircle size={16} />}
                     </button>
                     <button 
-                      onClick={() => handleDelete(user.id)}
+                      onClick={() => handleDelete(user)}
                       disabled={deleteUserMutation.isPending}
                       className="p-1 hover:bg-gray-100 rounded text-red-500"
                       title="Delete User"
@@ -266,6 +266,34 @@ export default function UserSettingsPage() {
                 className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
               >
                 {createUserMutation.isPending ? 'Adding...' : 'Add User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Modal */}
+      {userToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold mb-2">Delete User</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete <span className="font-semibold text-gray-900">{userToDelete.name}</span>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setUserToDelete(null)}
+                disabled={deleteUserMutation.isPending}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteUserMutation.mutate(userToDelete.id)}
+                disabled={deleteUserMutation.isPending}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center"
+              >
+                {deleteUserMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
