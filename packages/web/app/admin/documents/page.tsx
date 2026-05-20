@@ -52,7 +52,7 @@ interface UploadDocumentData {
   title: string;
   description: string;
   type: DocumentType;
-  program: 'G-CMP' | 'E-TIP';
+  program: string;
   track: string;
   mentorId: string;
   file: File;
@@ -105,7 +105,7 @@ export default function DocumentsPage() {
   const loading = loadingDocs || loadingMentors || loadingStudents;
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProgram, setSelectedProgram] = useState<'all' | 'G-CMP' | 'E-TIP'>('all');
+  const [selectedProgram, setSelectedProgram] = useState<'all' | 'G-CMP' | 'E-TIP' | 'G-GMP' | 'PCP'>('all');
   const [selectedType, setSelectedType] = useState<'all' | DocumentType>('all');
   const [selectedMentor, setSelectedMentor] = useState<string>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -174,10 +174,14 @@ export default function DocumentsPage() {
 
   const getProgramIcon = (program: string) => {
     switch (program) {
+      case 'G-GMP':
+        return <Users size={16} className="text-purple-500" />;
       case 'G-CMP':
         return <Code size={16} className="text-green-500" />;
       case 'E-TIP':
         return <Award size={16} className="text-orange-500" />;
+      case 'PCP':
+        return <GraduationCap size={16} className="text-blue-500" />;
       default:
         return <FileText size={16} className="text-gray-500" />;
     }
@@ -256,7 +260,7 @@ export default function DocumentsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Learning Documents</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage documents for G-CMP and E-TIP students
+            Manage documents for all program students (G-GMP, G-CMP, E-TIP, PCP)
           </p>
         </div>
         <button
@@ -274,7 +278,7 @@ export default function DocumentsPage() {
           <FileText size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm text-orange-700">
-              <strong>Document Management:</strong> Upload learning materials and assignments for G-CMP and E-TIP students. 
+              <strong>Document Management:</strong> Upload learning materials and assignments for all program students. 
               Set permissions to control which students can view and download each document.
             </p>
           </div>
@@ -301,8 +305,10 @@ export default function DocumentsPage() {
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="all">All Programs</option>
+            <option value="G-GMP">G-GMP</option>
             <option value="G-CMP">G-CMP</option>
             <option value="E-TIP">E-TIP</option>
+            <option value="PCP">PCP</option>
           </select>
 
           <select
@@ -784,7 +790,7 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
     title: '',
     description: '',
     type: 'learning_material' as DocumentType,
-    program: 'G-CMP' as 'G-CMP' | 'E-TIP',
+    program: 'G-GMP' as any,
     track: '',
     mentorId: '',
     file: null as File | null,
@@ -797,7 +803,12 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
     required: false,
   });
 
-  const programs = {
+  const programs: Record<string, string[]> = {
+    'G-GMP': [
+      'Patent Track',
+      'Entrepreneurship Track',
+      'Research Paper Track',
+    ],
     'G-CMP': [
       'AI Product Development',
       'Full Stack Development',
@@ -810,6 +821,10 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
       'Cloud Development',
       'Agentic AI',
       'Custom Track',
+    ],
+    'PCP': [
+      'AI Security',
+      'Agentic AI Systems',
     ],
   };
 
@@ -911,14 +926,16 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
                 value={formData.program}
                 onChange={(e) => setFormData({ 
                   ...formData, 
-                  program: e.target.value as 'G-CMP' | 'E-TIP',
+                  program: e.target.value as any,
                   track: '' 
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
               >
+                <option value="G-GMP">G-GMP</option>
                 <option value="G-CMP">G-CMP</option>
                 <option value="E-TIP">E-TIP</option>
+                <option value="PCP">PCP</option>
               </select>
             </div>
 
@@ -1047,11 +1064,9 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
               required
             >
               <option value="">Select Mentor</option>
-              {mentors
-                .filter((m: any) => m.programs.includes(formData.program))
-                .map((mentor: any) => (
-                  <option key={mentor.id} value={mentor.id}>{mentor.name}</option>
-                ))}
+              {mentors.map((mentor: any) => (
+                <option key={mentor.id} value={mentor.id}>{mentor.name}</option>
+              ))}
             </select>
           </div>
 

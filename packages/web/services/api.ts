@@ -12,12 +12,14 @@ import {
   type Student,
   type Mentor,
   type Program,
+  type Track,
   type Activity,
   type Outcome,
 } from './mockData';
 import { DocumentService } from './documentService';
 import { Document } from '@student-tracker/shared/models/Document';
 import { createClient } from '@/utils/supabase/client';
+import { apiClient } from '@/utils/apiClient';
 
 // Helper function to get the current Supabase session token
 const getAuthToken = async () => {
@@ -38,6 +40,83 @@ const getProgramName = (programId: string): string => {
     case 'pcp': return 'PCP';
     default: return '';
   }
+};
+
+const mapBackendTrack = (track: any): Track => ({
+  id: track.id,
+  name: track.name,
+  students: track._count?.students ?? track.students?.length ?? track.students ?? track.studentCount ?? 0,
+  mentors: track.mentors ?? track.mentorCount ?? 0,
+  progress: track.progress ?? track.averageProgress ?? 0,
+  outcomes: track.outcomes ?? 0,
+  requiresMentor: track.requiresMentor ?? true,
+});
+
+const sumRecordValues = (value: Record<string, number> | undefined) => {
+  if (!value) return undefined;
+  return Object.values(value).reduce((total, count) => total + Number(count || 0), 0);
+};
+
+const mapBackendProgram = (program: any): Program => {
+  const metrics = program.metrics || {};
+  const tracks = Array.isArray(program.tracks) ? program.tracks.map(mapBackendTrack) : [];
+  const totalStudents = metrics.totalStudents ?? program._count?.students ?? program.totalStudents ?? 0;
+  const activeStudents = metrics.activeStudents ?? program.activeStudents ?? 0;
+  const completionRate = metrics.completionRate ?? program.completionRate ?? 0;
+  const outcomeCount = sumRecordValues(metrics.outcomes) ?? program.outcomeCount;
+
+  return {
+    id: program.id,
+    name: program.name,
+    description: program.description || '',
+    icon: program.icon || 'BookOpen',
+    color: program.color || 'blue',
+    tracks,
+    totalStudents,
+    activeStudents,
+    completionRate,
+    hasMentors: program.hasMentors ?? false,
+    hasOutcomes: program.hasOutcomes ?? false,
+    outcomeCount: outcomeCount || undefined,
+  };
+};
+
+const mapBackendOutcome = (outcome: any): Outcome => ({
+  id: outcome.id,
+  type: (outcome.type || 'project').toLowerCase(),
+  title: outcome.title,
+  student: outcome.student?.name || outcome.student || '',
+  studentId: outcome.studentId || '',
+  status: (outcome.status || 'pending').toLowerCase(),
+  date: outcome.date ? new Date(outcome.date).toISOString().split('T')[0] : '',
+  mentor: outcome.mentor?.name || outcome.mentor || '',
+  program: getProgramName(outcome.programId || outcome.program || ''),
+});
+
+const normalizeActivityType = (action: string): Activity['type'] => {
+  const normalized = action.toLowerCase();
+  if (normalized.includes('register')) return 'student_registered';
+  if (normalized.includes('progress')) return 'progress_submitted';
+  if (normalized.includes('session')) return 'session';
+  if (normalized.includes('outcome')) return 'outcome_achieved';
+  if (normalized.includes('report')) return 'report_generated';
+  if (normalized.includes('completion')) return 'completion';
+  return 'progress';
+};
+
+const mapBackendActivity = (activity: any): Activity => {
+  const action = activity.action || activity.type || 'activity';
+  const metadata = activity.metadata || {};
+  return {
+    id: activity.id,
+    type: normalizeActivityType(action),
+    title: metadata.title || action.replace(/_/g, ' '),
+    description: metadata.details || metadata.description || action.replace(/_/g, ' '),
+    time: activity.createdAt || activity.time || new Date().toISOString(),
+    user: activity.user?.email || activity.user?.name || activity.user || 'System',
+    userId: activity.userId,
+    date: activity.createdAt ? new Date(activity.createdAt).toISOString().split('T')[0] : undefined,
+  };
 };
 
 // Helper function to generate monthly outcome data

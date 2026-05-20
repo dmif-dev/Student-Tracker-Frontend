@@ -6,7 +6,13 @@ export const getAuthToken = async () => {
   return session?.access_token;
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const API_ORIGIN = (() => {
+  const rawUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (!rawUrl) return 'http://localhost:4000';
+  return rawUrl.replace(/\/api\/?$/, '');
+})();
+
+const API_BASE_URL = `${API_ORIGIN}/api`;
 
 export const apiClient = {
   async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

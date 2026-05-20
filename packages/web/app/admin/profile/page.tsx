@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function AdminProfilePage() {
   const { data: userData, isLoading: profileLoading, refetch: refetchProfile } = useAdminProfile();
-  const { data: students = [], isLoading: studentsLoading, refetch: refetchStudents } = useAdminStudents();
+  const { data: students = [] as any[], isLoading: studentsLoading, refetch: refetchStudents } = useAdminStudents();
 
   const updateProfileMutation = useUpdateAdminProfile();
 
@@ -25,6 +25,8 @@ export default function AdminProfilePage() {
   const [editedName, setEditedName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [programFilter, setProgramFilter] = useState('ALL');
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 10;
 
   useEffect(() => {
     if (userData?.profile?.name) {
@@ -74,7 +76,7 @@ export default function AdminProfilePage() {
   };
 
   // Filter candidates (students) based on search and program filter
-  const filteredCandidates = students.filter(candidate => {
+  const filteredCandidates = students.filter((candidate: any) => {
     const matchesSearch = 
       candidate.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,10 +84,28 @@ export default function AdminProfilePage() {
 
     const matchesProgram = 
       programFilter === 'ALL' || 
-      candidate.program?.name?.toUpperCase() === programFilter.toUpperCase();
+      (typeof candidate.program === 'string'
+        ? candidate.program.toUpperCase() === programFilter.toUpperCase()
+        : candidate.program?.name?.toUpperCase() === programFilter.toUpperCase() || candidate.program?.toUpperCase() === programFilter.toUpperCase());
 
     return matchesSearch && matchesProgram;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredCandidates.length / pageSize));
+  const paginatedCandidates = filteredCandidates.slice(
+    pageIndex * pageSize,
+    (pageIndex + 1) * pageSize
+  );
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [searchTerm, programFilter]);
+
+  useEffect(() => {
+    if (pageIndex > totalPages - 1) {
+      setPageIndex(Math.max(0, totalPages - 1));
+    }
+  }, [pageIndex, totalPages]);
 
   const isLoading = profileLoading || studentsLoading;
 
@@ -273,6 +293,12 @@ export default function AdminProfilePage() {
                     <option value="PCP">PCP</option>
                   </select>
                 </div>
+
+                <div className="flex items-center space-x-2 w-full sm:w-auto">
+                  <span className="text-xs font-black uppercase tracking-wider text-gray-400 whitespace-nowrap">
+                    10 per page
+                  </span>
+                </div>
               </div>
 
               {/* Candidates Grid/Table */}
@@ -290,8 +316,8 @@ export default function AdminProfilePage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-150 font-medium text-gray-700">
                     <AnimatePresence mode="popLayout">
-                      {filteredCandidates.length > 0 ? (
-                        filteredCandidates.map((candidate) => (
+                      {paginatedCandidates.length > 0 ? (
+                        paginatedCandidates.map((candidate) => (
                           <motion.tr 
                             key={candidate.id}
                             layout
@@ -317,10 +343,10 @@ export default function AdminProfilePage() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="space-y-1">
-                                <Badge className={`border uppercase text-[9px] font-black tracking-widest ${getProgramBadgeColor(candidate.program?.name || '')}`}>
-                                  {candidate.program?.name || 'N/A'}
+                                <Badge className={`border uppercase text-[9px] font-black tracking-widest ${getProgramBadgeColor(typeof candidate.program === 'string' ? candidate.program : candidate.program?.name || '')}`}>
+                                  {(typeof candidate.program === 'string' ? candidate.program : candidate.program?.name) || 'N/A'}
                                 </Badge>
-                                <p className="text-xs text-gray-500 italic truncate max-w-[150px]">{candidate.track?.name || 'General Track'}</p>
+                                <p className="text-xs text-gray-500 italic truncate max-w-[150px]">{(typeof candidate.track === 'string' ? candidate.track : candidate.track?.name) || 'General Track'}</p>
                               </div>
                             </td>
                             <td className="px-6 py-4 text-xs text-gray-500">
@@ -356,6 +382,37 @@ export default function AdminProfilePage() {
                     </AnimatePresence>
                   </tbody>
                 </table>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Showing {filteredCandidates.length === 0 ? 0 : pageIndex * pageSize + 1} to{' '}
+                  {Math.min((pageIndex + 1) * pageSize, filteredCandidates.length)} of{' '}
+                  {filteredCandidates.length} records
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
+                    disabled={pageIndex === 0}
+                    className="border-orange-200 text-orange-600 hover:bg-orange-50 font-bold"
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-xs font-black uppercase tracking-wider text-gray-400 px-2">
+                    Page {pageIndex + 1} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPageIndex((current) => Math.min(totalPages - 1, current + 1))}
+                    disabled={pageIndex >= totalPages - 1}
+                    className="border-orange-200 text-orange-600 hover:bg-orange-50 font-bold"
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
