@@ -921,7 +921,10 @@ export class ApiService {
     const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated');
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/admin/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-    if (!response.ok) throw new Error('Failed to delete user');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to delete user');
+    }
     return response.json();
   }
 

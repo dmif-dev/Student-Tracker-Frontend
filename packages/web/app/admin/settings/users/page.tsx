@@ -62,9 +62,9 @@ export default function UserSettingsPage() {
       toast.success('User deleted successfully.');
       setUserToDelete(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(error);
-      toast.error('Failed to delete user.');
+      toast.error(error.message || 'Failed to delete user.');
     }
   });
 
