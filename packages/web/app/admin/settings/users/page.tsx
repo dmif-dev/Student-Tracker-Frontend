@@ -247,6 +247,19 @@ export default function UserSettingsPage() {
                     toast.error('Name and Email are required.');
                     return;
                   }
+                  
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  if (!emailRegex.test(newUser.email)) {
+                    toast.error('Please enter a valid email address.');
+                    return;
+                  }
+
+                  const emailExists = users.some(u => u.email.toLowerCase() === newUser.email.toLowerCase());
+                  if (emailExists) {
+                    toast.error('This email is already in use by another user.');
+                    return;
+                  }
+
                   createUserMutation.mutate(newUser);
                 }}
                 disabled={createUserMutation.isPending}
