@@ -42,6 +42,7 @@ export default function NotificationsPage() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilterType>('all');
   const [dateFilter, setDateFilter] = useState<DateFilterType>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState<'notifications' | 'alerts'>('notifications');
 
   // Apply filters to notifications
   const filteredNotifications = useMemo(() => {
@@ -96,9 +97,11 @@ export default function NotificationsPage() {
 
   const getActiveFilterCount = () => {
     let count = 0;
-    if (filter !== 'all') count++;
+    if (activeTab === 'notifications') {
+      if (filter !== 'all') count++;
+      if (dateFilter !== 'all') count++;
+    }
     if (categoryFilter !== 'all') count++;
-    if (dateFilter !== 'all') count++;
     return count;
   };
 
@@ -153,6 +156,42 @@ export default function NotificationsPage() {
         )}
       </div>
 
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('notifications')}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'notifications'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Notifications
+            {unreadCount > 0 && (
+              <span className="ml-2 bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('alerts')}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'alerts'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Alerts
+            {alerts.length > 0 && (
+              <span className="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs">
+                {alerts.length}
+              </span>
+            )}
+          </button>
+        </nav>
+      </div>
+
       {/* Filters Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-4">
@@ -186,7 +225,10 @@ export default function NotificationsPage() {
             </div>
 
             <div className="text-sm text-gray-500">
-              Showing {filteredNotifications.length} of {notifications.length} notifications
+              {activeTab === 'notifications' 
+                ? `Showing ${filteredNotifications.length} of ${notifications.length} notifications`
+                : `Showing ${filteredAlerts.length} of ${alerts.length} alerts`
+              }
             </div>
           </div>
 
@@ -195,6 +237,7 @@ export default function NotificationsPage() {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Status Filter */}
+                {activeTab === 'notifications' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Status
@@ -209,6 +252,7 @@ export default function NotificationsPage() {
                     <option value="read">Read</option>
                   </select>
                 </div>
+                )}
 
                 {/* Category Filter */}
                 <div>
@@ -234,6 +278,7 @@ export default function NotificationsPage() {
                 </div>
 
                 {/* Date Filter */}
+                {activeTab === 'notifications' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Date Range
@@ -249,6 +294,7 @@ export default function NotificationsPage() {
                     <option value="month">Last 30 Days</option>
                   </select>
                 </div>
+                )}
 
                 {/* Quick Filter Summary */}
                 <div className="flex items-end">
@@ -270,11 +316,19 @@ export default function NotificationsPage() {
       </div>
 
       {/* Alerts Section */}
-      {filteredAlerts.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-gray-900">Active Alerts</h2>
-          {filteredAlerts.map(alert => (
-            <div
+      {activeTab === 'alerts' && (
+        <div className="space-y-3 max-h-[calc(100vh-320px)] overflow-y-auto pr-2 custom-scrollbar">
+          {filteredAlerts.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+              <AlertTriangle size={48} className="mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No active alerts</h3>
+              <p className="text-gray-500">
+                You're all caught up! There are no system alerts at the moment.
+              </p>
+            </div>
+          ) : (
+            filteredAlerts.map(alert => (
+              <div
               key={alert.id}
               className={`p-4 rounded-lg border ${
                 alert.type === 'error' ? 'bg-red-50 border-red-200' :
@@ -323,26 +377,29 @@ export default function NotificationsPage() {
                 </button>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       )}
 
       {/* Notifications List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">All Notifications</h2>
-          {filteredNotifications.length > 0 && (
-            <button
-              onClick={markAllAsRead}
-              className="text-sm text-orange-600 hover:text-orange-700 flex items-center"
-            >
-              <Check size={16} className="mr-1" />
-              Mark all as read
-            </button>
-          )}
-        </div>
+      {activeTab === 'notifications' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col max-h-[calc(100vh-320px)]">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0">
+            <h2 className="font-semibold text-gray-900">All Notifications</h2>
+            {filteredNotifications.length > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-sm text-orange-600 hover:text-orange-700 flex items-center"
+              >
+                <Check size={16} className="mr-1" />
+                Mark all as read
+              </button>
+            )}
+          </div>
 
-        {filteredNotifications.length === 0 ? (
+          <div className="overflow-y-auto custom-scrollbar flex-1">
+            {filteredNotifications.length === 0 ? (
           <div className="text-center py-12">
             <Bell size={48} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
@@ -434,11 +491,13 @@ export default function NotificationsPage() {
             ))}
           </div>
         )}
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary Stats */}
-      {filteredNotifications.length > 0 && (
-        <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+      {activeTab === 'notifications' && filteredNotifications.length > 0 && (
+        <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 mt-4">
           <div className="flex items-center justify-between">
             <span>Showing {filteredNotifications.length} of {notifications.length} notifications</span>
             <span>
