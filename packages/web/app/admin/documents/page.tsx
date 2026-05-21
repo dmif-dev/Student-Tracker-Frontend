@@ -113,6 +113,7 @@ export default function DocumentsPage() {
   const [editDocumentData, setEditDocumentData] = useState<any | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<ViewerDocument | null>(null);
   const [showViewer, setShowViewer] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
 
   // Mock admin ID - replace with actual auth
   const ADMIN_ID = 'admin';
@@ -130,10 +131,15 @@ export default function DocumentsPage() {
     }
   });
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this document?')) {
-      await deleteMutation.mutateAsync(id);
-    }
+  const handleDeleteClick = (document: Document) => {
+    setDocumentToDelete(document);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!documentToDelete) return;
+
+    await deleteMutation.mutateAsync(documentToDelete.id);
+    setDocumentToDelete(null);
   };
 
   const filteredDocs = useMemo(() => {
@@ -366,7 +372,7 @@ export default function DocumentsPage() {
                 >
                   <Edit size={16} className="text-gray-600" />
                 </button>
-                <button onClick={() => handleDelete(doc.id)} className="p-1 hover:bg-gray-100 rounded text-red-500">
+                <button onClick={() => handleDeleteClick(doc)} className="p-1 hover:bg-gray-100 rounded text-red-500">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -512,6 +518,52 @@ export default function DocumentsPage() {
           }}
           document={selectedDocument}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {documentToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete document?</h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  This will permanently remove the document from the admin library.
+                </p>
+              </div>
+              <button
+                onClick={() => setDocumentToDelete(null)}
+                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Close delete confirmation"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-medium text-red-800">{documentToDelete.title}</p>
+              <p className="mt-1 text-sm text-red-700">
+                Are you sure you want to delete this file? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setDocumentToDelete(null)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deleteMutation.isPending}
+                className="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete document'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

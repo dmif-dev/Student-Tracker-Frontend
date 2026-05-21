@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, Edit, Trash2, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiService } from '@/services/api';
@@ -18,6 +18,8 @@ interface User {
 
 export default function UserSettingsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery<User[]>({
@@ -73,6 +75,21 @@ export default function UserSettingsPage() {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredUsers, currentPage]);
+
   const getRoleBadge = (role: string) => {
     const colors: Record<string, string> = {
       ADMIN: 'bg-purple-100 text-purple-700',
@@ -127,9 +144,9 @@ export default function UserSettingsPage() {
       </div>
 
       {/* Users Table */}
-      <div className="overflow-x-auto">
+      <div className="max-h-[calc(100vh-360px)] overflow-auto custom-scrollbar rounded-lg border border-gray-200">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="sticky top-0 z-10 bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
@@ -139,7 +156,7 @@ export default function UserSettingsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
+            {paginatedUsers.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <div>
@@ -186,6 +203,34 @@ export default function UserSettingsPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
+        <p>
+          Showing {filteredUsers.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}
+          {' '}to {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} users
+        </p>
+        {filteredUsers.length > itemsPerPage && (
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="px-2">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Add User Modal */}

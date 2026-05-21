@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotifications } from '@/contexts/AdminNotificationContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -43,6 +43,8 @@ export default function NotificationsPage() {
   const [dateFilter, setDateFilter] = useState<DateFilterType>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<'notifications' | 'alerts'>('notifications');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Apply filters to notifications
   const filteredNotifications = useMemo(() => {
@@ -110,6 +112,21 @@ export default function NotificationsPage() {
     setCategoryFilter('all');
     setDateFilter('all');
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, categoryFilter, dateFilter, activeTab]);
+
+  const totalNotificationPages = Math.max(1, Math.ceil(filteredNotifications.length / itemsPerPage));
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalNotificationPages));
+  }, [totalNotificationPages]);
+
+  const paginatedNotifications = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredNotifications.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredNotifications, currentPage]);
 
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
@@ -400,97 +417,123 @@ export default function NotificationsPage() {
 
           <div className="overflow-y-auto custom-scrollbar flex-1">
             {filteredNotifications.length === 0 ? (
-          <div className="text-center py-12">
-            <Bell size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
-            <p className="text-gray-500">
-              {getActiveFilterCount() > 0 
-                ? 'No notifications match your current filters. Try adjusting your criteria.' 
-                : 'Notifications will appear here'}
-            </p>
-            {getActiveFilterCount() > 0 && (
-              <button
-                onClick={clearFilters}
-                className="mt-4 px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
-              >
-                Clear all filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-200">
-            {filteredNotifications.map(notification => (
-              <div
-                key={notification.id}
-                onClick={() => handleNotificationClick(notification)}
-                className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                  !notification.isRead ? 'bg-orange-50/50' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
-                    {notification.type === 'success' && <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />}
-                    {notification.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />}
-                    {notification.type === 'error' && <AlertTriangle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />}
-                    {notification.type === 'info' && <Info size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />}
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-gray-900">{notification.title}</h4>
-                        {!notification.isRead && (
-                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
-                            New
-                          </span>
-                        )}
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${getCategoryColor(notification.category)}`}>
-                          {getCategoryLabel(notification.category)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <p className="text-xs text-gray-400 flex items-center">
-                          <Calendar size={12} className="mr-1" />
-                          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                        </p>
-                        {notification.actionUrl && (
-                          <span className="text-xs text-orange-600 hover:text-orange-700 flex items-center">
-                            Click to view
-                            <ExternalLink size={12} className="ml-1" />
-                          </span>
-                        )}
+              <div className="text-center py-12">
+                <Bell size={48} className="mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
+                <p className="text-gray-500">
+                  {getActiveFilterCount() > 0 
+                    ? 'No notifications match your current filters. Try adjusting your criteria.' 
+                    : 'Notifications will appear here'}
+                </p>
+                {getActiveFilterCount() > 0 && (
+                  <button
+                    onClick={clearFilters}
+                    className="mt-4 px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="divide-y divide-gray-200">
+                  {paginatedNotifications.map(notification => (
+                    <div
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                        !notification.isRead ? 'bg-orange-50/50' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-3 flex-1">
+                          {notification.type === 'success' && <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />}
+                          {notification.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />}
+                          {notification.type === 'error' && <AlertTriangle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />}
+                          {notification.type === 'info' && <Info size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />}
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-medium text-gray-900">{notification.title}</h4>
+                              {!notification.isRead && (
+                                <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
+                                  New
+                                </span>
+                              )}
+                              <span className={`px-2 py-0.5 rounded-full text-xs ${getCategoryColor(notification.category)}`}>
+                                {getCategoryLabel(notification.category)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                            <div className="flex items-center space-x-4 mt-2">
+                              <p className="text-xs text-gray-400 flex items-center">
+                                <Calendar size={12} className="mr-1" />
+                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                              </p>
+                              {notification.actionUrl && (
+                                <span className="text-xs text-orange-600 hover:text-orange-700 flex items-center">
+                                  Click to view
+                                  <ExternalLink size={12} className="ml-1" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 ml-4">
+                          {!notification.isRead && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.id);
+                              }}
+                              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                              title="Mark as read"
+                            >
+                              <Check size={16} className="text-gray-500" />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification.id);
+                            }}
+                            className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-red-500"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 ml-4">
-                    {!notification.isRead && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          markAsRead(notification.id);
-                        }}
-                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                        title="Mark as read"
-                      >
-                        <Check size={16} className="text-gray-500" />
-                      </button>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                      className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-red-500"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+
+                {filteredNotifications.length > itemsPerPage && (
+                  <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0">
+                    <p className="text-sm text-gray-500">
+                      Page {currentPage} of {totalNotificationPages}
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage((page) => Math.min(totalNotificationPages, page + 1))}
+                        disabled={currentPage === totalNotificationPages}
+                        className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
