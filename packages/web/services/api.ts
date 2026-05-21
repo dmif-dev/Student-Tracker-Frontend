@@ -32,13 +32,13 @@ const getAuthToken = async () => {
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Helper function to get program name from ID
-const getProgramName = (programId: string): string => {
-  switch (programId) {
+const getProgramName = (programId: string): 'G-GMP' | 'G-CMP' | 'E-TIP' | 'PCP' => {
+  switch (programId?.toLowerCase()) {
     case 'g-gmp': return 'G-GMP';
     case 'g-cmp': return 'G-CMP';
     case 'e-tip': return 'E-TIP';
     case 'pcp': return 'PCP';
-    default: return '';
+    default: return 'G-GMP';
   }
 };
 

@@ -39,6 +39,9 @@ export default function MentorNotificationsPage() {
     handleNotificationClick,
   } = useMentorNotifications();
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'notifications' | 'alerts'>('notifications');
+
   // Filter states
   const [filter, setFilter] = useState<FilterType>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilterType>('all');
@@ -150,7 +153,45 @@ export default function MentorNotificationsPage() {
         )}
       </div>
 
-      {/* Filters Section */}
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('notifications')}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'notifications'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Notifications
+            {unreadCount > 0 && (
+              <span className="ml-2 bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('alerts')}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'alerts'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Alerts
+            {filteredAlerts.length > 0 && (
+              <span className="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs">
+                {filteredAlerts.length}
+              </span>
+            )}
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === 'notifications' && (
+        <>
+          {/* Filters Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-4">
           <div className="flex items-center justify-between">
@@ -247,58 +288,6 @@ export default function MentorNotificationsPage() {
         </div>
       </div>
 
-      {/* Alerts Section */}
-      {filteredAlerts.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-gray-900">Active Alerts</h2>
-          {filteredAlerts.map(alert => (
-            <div
-              key={alert.id}
-              className={`p-4 rounded-lg border ${
-                alert.type === 'error' ? 'bg-red-50 border-red-200' :
-                alert.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
-                alert.type === 'success' ? 'bg-green-50 border-green-200' :
-                'bg-blue-50 border-blue-200'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3">
-                  {alert.type === 'error' && <AlertTriangle size={20} className="text-red-500" />}
-                  {alert.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500" />}
-                  {alert.type === 'success' && <CheckCircle size={20} className="text-green-500" />}
-                  {alert.type === 'info' && <Info size={20} className="text-blue-500" />}
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-medium text-gray-900">{alert.title}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${getCategoryColor(alert.category)}`}>
-                        {getCategoryLabel(alert.category)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
-                    {alert.action && (
-                      <button
-                        onClick={() => router.push(alert.action!.url)}
-                        className="mt-2 text-sm text-orange-600 hover:text-orange-700 flex items-center"
-                      >
-                        {alert.action.text}
-                        <ExternalLink size={14} className="ml-1" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => dismissAlert(alert.id)}
-                  className="text-gray-400 hover:text-gray-600"
-                  title="Dismiss"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Notifications List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
@@ -314,100 +303,167 @@ export default function MentorNotificationsPage() {
           )}
         </div>
 
-        {filteredNotifications.length === 0 ? (
-          <div className="text-center py-12">
-            <Bell size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
-            <p className="text-gray-500">
-              {getActiveFilterCount() > 0 
-                ? 'No notifications match your current filters.' 
-                : 'You\'re all caught up!'}
-            </p>
-            {getActiveFilterCount() > 0 && (
-              <button
-                onClick={clearFilters}
-                className="mt-4 px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
-              >
-                Clear all filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-200">
-            {filteredNotifications.map(notification => (
-              <div
-                key={notification.id}
-                onClick={() => handleNotificationClick(notification)}
-                className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                  !notification.isRead ? 'bg-orange-50/50' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
-                    {notification.type === 'success' && <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />}
-                    {notification.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />}
-                    {notification.type === 'error' && <AlertTriangle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />}
-                    {notification.type === 'info' && <Info size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />}
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        {getCategoryIcon(notification.category)}
-                        <h4 className="font-medium text-gray-900">{notification.title}</h4>
-                        {!notification.isRead && (
-                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
-                            New
+        <div className="max-h-[calc(100vh-320px)] overflow-y-auto">
+          {filteredNotifications.length === 0 ? (
+            <div className="text-center py-12">
+              <Bell size={48} className="mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
+              <p className="text-gray-500">
+                {getActiveFilterCount() > 0 
+                  ? 'No notifications match your current filters.' 
+                  : 'You\'re all caught up!'}
+              </p>
+              {getActiveFilterCount() > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {filteredNotifications.map(notification => (
+                <div
+                  key={notification.id}
+                  onClick={() => handleNotificationClick(notification)}
+                  className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                    !notification.isRead ? 'bg-orange-50/50' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3 flex-1">
+                      {notification.type === 'success' && <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />}
+                      {notification.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />}
+                      {notification.type === 'error' && <AlertTriangle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />}
+                      {notification.type === 'info' && <Info size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />}
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          {getCategoryIcon(notification.category)}
+                          <h4 className="font-medium text-gray-900">{notification.title}</h4>
+                          {!notification.isRead && (
+                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
+                              New
+                            </span>
+                          )}
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${getCategoryColor(notification.category)}`}>
+                            {getCategoryLabel(notification.category)}
                           </span>
-                        )}
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${getCategoryColor(notification.category)}`}>
-                          {getCategoryLabel(notification.category)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <p className="text-xs text-gray-400 flex items-center">
-                          <Calendar size={12} className="mr-1" />
-                          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                        </p>
-                        {notification.actionUrl && (
-                          <span className="text-xs text-orange-600 hover:text-orange-700 flex items-center">
-                            Click to view
-                            <ExternalLink size={12} className="ml-1" />
-                          </span>
-                        )}
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                        <div className="flex items-center space-x-4 mt-2">
+                          <p className="text-xs text-gray-400 flex items-center">
+                            <Calendar size={12} className="mr-1" />
+                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                          </p>
+                          {notification.actionUrl && (
+                            <span className="text-xs text-orange-600 hover:text-orange-700 flex items-center">
+                              Click to view
+                              <ExternalLink size={12} className="ml-1" />
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 ml-4">
-                    {!notification.isRead && (
+                    
+                    <div className="flex items-center space-x-2 ml-4">
+                      {!notification.isRead && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notification.id);
+                          }}
+                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                          title="Mark as read"
+                        >
+                          <Check size={16} className="text-gray-500" />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          markAsRead(notification.id);
+                          deleteNotification(notification.id);
                         }}
-                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                        title="Mark as read"
+                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-red-500"
+                        title="Delete"
                       >
-                        <Check size={16} className="text-gray-500" />
+                        <Trash2 size={16} />
                       </button>
-                    )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+        </>
+      )}
+
+      {activeTab === 'alerts' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">Active Alerts</h2>
+          </div>
+          <div className="max-h-[calc(100vh-320px)] overflow-y-auto p-6 space-y-3">
+            {filteredAlerts.length > 0 ? (
+              filteredAlerts.map(alert => (
+                <div
+                  key={alert.id}
+                  className={`p-4 rounded-lg border ${
+                    alert.type === 'error' ? 'bg-red-50 border-red-200' :
+                    alert.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
+                    alert.type === 'success' ? 'bg-green-50 border-green-200' :
+                    'bg-blue-50 border-blue-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      {alert.type === 'error' && <AlertTriangle size={20} className="text-red-500" />}
+                      {alert.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500" />}
+                      {alert.type === 'success' && <CheckCircle size={20} className="text-green-500" />}
+                      {alert.type === 'info' && <Info size={20} className="text-blue-500" />}
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="font-medium text-gray-900">{alert.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${getCategoryColor(alert.category)}`}>
+                            {getCategoryLabel(alert.category)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                        {alert.action && (
+                          <button
+                            onClick={() => router.push(alert.action!.url)}
+                            className="mt-2 text-sm text-orange-600 hover:text-orange-700 flex items-center"
+                          >
+                            {alert.action.text}
+                            <ExternalLink size={14} className="ml-1" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                      className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-red-500"
-                      title="Delete"
+                      onClick={() => dismissAlert(alert.id)}
+                      className="text-gray-400 hover:text-gray-600"
+                      title="Dismiss"
                     >
-                      <Trash2 size={16} />
+                      <X size={18} />
                     </button>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <CheckCircle size={48} className="mx-auto text-green-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">All clear!</h3>
+                <p className="text-gray-500">You have no active alerts.</p>
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

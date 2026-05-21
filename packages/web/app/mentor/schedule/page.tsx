@@ -141,25 +141,10 @@ export default function MentorSchedulePage() {
     try {
       // Find the selected student
       const selectedStudent = students.find(s => s.id === sessionData.studentId);
-      if (!selectedStudent) return;
-
-      // Create new session
-      const newSession: Session = {
-        id: Date.now().toString(),
-        studentId: sessionData.studentId,
-        studentName: selectedStudent.name,
-        studentProgram: selectedStudent.program,
-        studentTrack: selectedStudent.track,
-        date: sessionData.date,
-        startTime: sessionData.startTime,
-        endTime: sessionData.endTime,
-        status: 'scheduled',
-        topic: sessionData.topic,
-        notes: [],
-        meetingLink: sessionData.meetingLink || 'https://meet.google.com/abc-defg-hij',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      if (!selectedStudent) {
+        alert('Please select a valid student.');
+        return;
+      }
 
       // Real API call
       await apiClient.post('mentor/sessions', {
