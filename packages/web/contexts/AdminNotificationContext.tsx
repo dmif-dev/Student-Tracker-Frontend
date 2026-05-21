@@ -103,7 +103,25 @@ export function AdminNotificationProvider({
       markAsRead(notification.id);
     }
     if (notification.actionUrl) {
-      router.push(notification.actionUrl);
+      let finalUrl = notification.actionUrl;
+      
+      // Map generic entity URLs to the correct admin dashboard pages
+      if (finalUrl.startsWith('/sessions')) {
+        finalUrl = '/admin/mentors';
+      } else if (finalUrl.startsWith('/documents')) {
+        finalUrl = '/admin/documents';
+      } else if (finalUrl.startsWith('/outcomes')) {
+        finalUrl = '/admin/outcomes';
+      } else if (finalUrl.startsWith('/assignments') || finalUrl.startsWith('/progress')) {
+        finalUrl = '/admin/students';
+      } else if (finalUrl.startsWith('/mentor/')) {
+        finalUrl = finalUrl.replace('/mentor/', '/admin/');
+      } else if (!finalUrl.startsWith('/admin/')) {
+        // Fallback: prepend /admin/ to any other relative paths like /students/[id]
+        finalUrl = `/admin${finalUrl.startsWith('/') ? '' : '/'}${finalUrl}`;
+      }
+
+      router.push(finalUrl);
     }
   };
 

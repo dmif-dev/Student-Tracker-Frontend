@@ -107,9 +107,25 @@ export function MentorNotificationProvider({
 
     // Redirect to mentor-specific paths
     if (notification.actionUrl) {
-      // Convert admin URLs to mentor URLs if needed
-      const mentorUrl = notification.actionUrl.replace('/admin/', '/mentor/');
-      router.push(mentorUrl);
+      let finalUrl = notification.actionUrl;
+      
+      // Map generic entity URLs to the correct mentor dashboard pages
+      if (finalUrl.startsWith('/sessions')) {
+        finalUrl = '/mentor/schedule';
+      } else if (finalUrl.startsWith('/documents')) {
+        finalUrl = '/mentor/documents';
+      } else if (finalUrl.startsWith('/outcomes')) {
+        finalUrl = '/mentor/outcomes';
+      } else if (finalUrl.startsWith('/assignments') || finalUrl.startsWith('/progress')) {
+        finalUrl = '/mentor/students';
+      } else if (finalUrl.startsWith('/admin/')) {
+        finalUrl = finalUrl.replace('/admin/', '/mentor/');
+      } else if (!finalUrl.startsWith('/mentor/')) {
+        // Fallback: prepend /mentor/ to any other relative paths like /students/[id]
+        finalUrl = `/mentor${finalUrl.startsWith('/') ? '' : '/'}${finalUrl}`;
+      }
+
+      router.push(finalUrl);
     }
   };
 
