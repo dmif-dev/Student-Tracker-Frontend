@@ -90,7 +90,7 @@ const mapBackendOutcome = (outcome: any): Outcome => ({
   status: (outcome.status || 'pending').toLowerCase(),
   date: outcome.date ? new Date(outcome.date).toISOString().split('T')[0] : '',
   mentor: outcome.mentor?.name || outcome.mentor || '',
-  program: getProgramName(outcome.programId || outcome.program || ''),
+  program: getProgramName(outcome.programId || outcome.program || '') as any,
 });
 
 const normalizeActivityType = (action: string): Activity['type'] => {
@@ -1156,7 +1156,16 @@ export class ApiService {
       headers: { 'Authorization': `Bearer ${token}` }, // Browser sets Content-Type to multipart/form-data with boundary
       body: formData
     });
-    if (!response.ok) throw new Error('Failed to upload document');
+    if (!response.ok) {
+      let errorMessage = 'Failed to upload document';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.error || errorData?.message || errorMessage;
+      } catch {
+        // Ignore parse failure and use fallback message
+      }
+      throw new Error(errorMessage);
+    }
     return response.json();
   }
 
