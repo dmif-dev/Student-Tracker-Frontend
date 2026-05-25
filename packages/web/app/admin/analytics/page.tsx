@@ -225,10 +225,8 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const mockData = generateMockData(dateRange, selectedProgram, selectedTrack);
-      setData(mockData);
+      const dbData = await ApiService.getAnalytics(dateRange, selectedProgram, selectedTrack);
+      setData(dbData);
     } catch (error) {
       console.error('Error fetching analytics:', error);
     } finally {

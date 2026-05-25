@@ -245,49 +245,58 @@ export class ApiService {
 
   // Programs
   static async getPrograms(): Promise<Program[]> {
-    await delay(800);
-    return mockPrograms;
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/programs`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    if (!response.ok) throw new Error('Failed to fetch programs');
+    const data = await response.json();
+    return data.map(mapBackendProgram);
   }
 
   static async getProgramById(id: string): Promise<Program | undefined> {
-    await delay(500);
-    return mockPrograms.find(p => p.id === id);
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/programs/${id}`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    if (!response.ok) return undefined;
+    const data = await response.json();
+    return mapBackendProgram(data);
+  }
+
+  // Update a track via backend
+  static async updateTrack(trackId: string, updates: Record<string, any>): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/programs/tracks/${trackId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      }
+    );
+    if (!response.ok) throw new Error('Failed to update track');
+    return response.json();
   }
 
   // Get program metrics by ID
   static async getProgramMetrics(programId: string): Promise<any> {
-    await delay(500);
-    
-    const program = mockPrograms.find(p => p.id === programId);
-    const programName = getProgramName(programId);
-    const students = mockStudents.filter(s => s.program === programName);
-    const outcomes = mockOutcomes.filter(o => o.program === programName);
-    
-    // Get mentors for this program (excluding PCP)
-    let mentors: any[] = [];
-    if (programName !== 'PCP') {
-      mentors = mockMentors.filter(m => m.programs.includes(programName));
-    }
-    
-    return {
-      program,
-      studentCount: students.length,
-      activeCount: students.filter(s => s.status === 'active').length,
-      completionRate: program?.completionRate || 0,
-      outcomes: program?.hasOutcomes ? outcomes.length : undefined,
-      outcomeDetails: program?.hasOutcomes ? {
-        patents: outcomes.filter(o => o.type === 'patent').length,
-        papers: outcomes.filter(o => o.type === 'paper').length,
-        startups: outcomes.filter(o => o.type === 'startup').length,
-        certifications: outcomes.filter(o => o.type === 'certification').length,
-      } : undefined,
-      mentorCount: mentors.length,
-      mentors: mentors.map(m => ({
-        id: m.id,
-        name: m.name,
-        students: m.students,
-      })),
-    };
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/programs/${programId}/metrics`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    if (!response.ok) throw new Error('Failed to fetch program metrics');
+    return response.json();
   }
 
   // Activities
@@ -424,55 +433,25 @@ export class ApiService {
     return mockDashboardStats;
   }
 
-  static async getAnalytics(dateRange: string = '6m', program?: string): Promise<typeof mockAnalytics> {
-    await delay(1000);
-    
-    // Filter data based on dateRange and program
-    let filteredData = { ...mockAnalytics };
-    
-    // Filter by program if specified
-    if (program && program !== 'all') {
-      // Adjust program distribution based on selected program
-      filteredData.programDistribution = mockAnalytics.programDistribution.filter(
-        (p: any) => p.name.toLowerCase().replace('-', '') === program
-      );
-      
-      // Filter track performance by program
-      if (program === 'g-gmp') {
-        filteredData.trackPerformance = mockAnalytics.trackPerformance.filter(
-          (t: any) => t.track.includes('Patent') || t.track.includes('Research') || t.track.includes('Entrepreneurship')
-        );
-      } else if (program === 'g-cmp') {
-        filteredData.trackPerformance = mockAnalytics.trackPerformance.filter(
-          (t: any) => t.track.includes('AI') || t.track.includes('Full') || t.track.includes('Cloud')
-        );
-      } else if (program === 'e-tip') {
-        filteredData.trackPerformance = mockAnalytics.trackPerformance.filter(
-          (t: any) => t.track.includes('Executive')
-        );
-      } else if (program === 'pcp') {
-        filteredData.trackPerformance = mockAnalytics.trackPerformance.filter(
-          (t: any) => t.program === 'PCP'
-        );
-      }
+  static async getAnalytics(dateRange: string = '6m', program?: string, track?: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const queryParams = new URLSearchParams({
+      dateRange,
+      ...(program && { program }),
+      ...(track && { track })
+    });
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/outcomes/analytics/admin?${queryParams.toString()}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch admin analytics');
     }
-    
-    // Filter by date range
-    if (dateRange !== 'all') {
-      const months = {
-        '1m': 1,
-        '3m': 3,
-        '6m': 6,
-        '1y': 12
-      };
-      
-      const limit = months[dateRange as keyof typeof months] || 6;
-      filteredData.enrollmentTrend = mockAnalytics.enrollmentTrend.slice(-limit);
-      filteredData.outcomesByMonth = mockAnalytics.outcomesByMonth.slice(-limit);
-      filteredData.engagementMetrics = mockAnalytics.engagementMetrics.slice(-limit);
-    }
-    
-    return filteredData;
+
+    return response.json();
   }
 
   // Get program comparison data
