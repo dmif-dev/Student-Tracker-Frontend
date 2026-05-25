@@ -677,33 +677,170 @@ export class ApiService {
   }
 
   static async getSavedReports(): Promise<any[]> {
-    await delay(600);
-    return [
-      {
-        id: '1',
-        name: 'Weekly Progress Report - Week 12',
-        type: 'weekly',
-        generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        format: 'pdf',
-        programs: ['G-GMP', 'G-CMP', 'E-TIP'],
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/admin/generated`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch generated reports');
+    const result = await response.json();
+    return result.data || [];
+  }
+
+  static async generateWeeklyReport(studentId: string, weekStart?: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const url = new URL(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/weekly/generate/${studentId}`);
+    if (weekStart) {
+      url.searchParams.append('weekStart', weekStart);
+    }
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to generate report for student ${studentId}`);
+    }
+
+    return response.json();
+  }
+
+  static async getScheduledReports(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/scheduled`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch scheduled reports');
+    const result = await response.json();
+
+    // Map scheduled reports from backend format to frontend format
+    return (result || []).map((s: any) => {
+      const config = typeof s.config === 'string' ? JSON.parse(s.config) : s.config || {};
+      return {
+        id: s.id,
+        name: s.name,
+        type: (s.frequency || 'weekly') as 'weekly' | 'monthly',
+        schedule: config.schedule || (s.frequency === 'weekly' ? 'Every Monday' : '1st of every month'),
+        time: config.time || '09:00 AM',
+        recipients: s.recipients || [],
+        format: config.format || 'pdf',
+        programs: config.programs || ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'],
+        status: s.isActive ? 'active' as const : 'paused' as const,
+        lastGenerated: s.lastRunAt,
+        nextGeneration: s.nextRunAt,
+      };
+    });
+  }
+
+  static async createScheduledReport(data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/schedule`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
-      {
-        id: '2',
-        name: 'G-GMP Outcomes Report - March 2024',
-        type: 'monthly',
-        generatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        format: 'pdf',
-        programs: ['G-GMP'],
+      body: JSON.stringify({
+        name: data.name,
+        frequency: data.type || 'weekly',
+        config: {
+          format: data.format || 'pdf',
+          programs: data.programs || [],
+          schedule: data.schedule || 'Every Monday',
+          time: data.time || '09:00',
+        },
+        recipients: data.recipients || [],
+        startDate: new Date().toISOString(),
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to create scheduled report');
+    }
+    return response.json();
+  }
+
+  static async updateScheduledReport(id: string, data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    // Build the payload dynamically so we support partial updates (like toggling isActive)
+    const payload: any = {};
+    if (data.name !== undefined) payload.name = data.name;
+    if (data.type !== undefined) payload.frequency = data.type;
+    if (data.recipients !== undefined) payload.recipients = data.recipients;
+    if (data.isActive !== undefined) payload.isActive = data.isActive;
+    
+    // If we're updating details, we should supply a full config
+    if (data.format !== undefined || data.programs !== undefined || data.schedule !== undefined || data.time !== undefined) {
+      payload.config = {
+        format: data.format,
+        programs: data.programs,
+        schedule: data.schedule,
+        time: data.time
+      };
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/scheduled/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
-      {
-        id: '3',
-        name: 'PCP Certification Report - Q1 2024',
-        type: 'quarterly',
-        generatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        format: 'excel',
-        programs: ['PCP'],
-      },
-    ];
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to update scheduled report');
+    }
+    return response.json();
+  }
+
+  static async deleteScheduledReport(id: string): Promise<void> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/scheduled/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to delete scheduled report');
+    }
+  }
+
+  static async downloadGeneratedReport(reportId: string, format: string, fileName: string): Promise<void> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/export/${reportId}?format=${format}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) throw new Error('Failed to download report');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   }
 
   // Document methods

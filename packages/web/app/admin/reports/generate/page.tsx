@@ -2,6 +2,8 @@
 
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -314,15 +316,39 @@ export default function GenerateReportPage() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
+      if (config.students.length === 0) {
+        throw new Error('Please select at least one student.');
+      }
+
+      const errors: string[] = [];
+      let generatedCount = 0;
+
+      for (const studentId of config.students) {
+        try {
+          await ApiService.generateWeeklyReport(studentId, config.dateRange.start);
+          generatedCount++;
+        } catch (err: any) {
+          const studentName = students.find(s => s.id === studentId)?.name || studentId;
+          errors.push(`${studentName}: ${err.message}`);
+        }
+      }
+
+      if (generatedCount === 0) {
+        throw new Error(errors.join('\n'));
+      }
+
       // Generate report data
       const data = generateReportData();
       setReportData(data);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (errors.length > 0) {
+        alert(`Some reports could not be saved to the database:\n${errors.join('\n')}`);
+      }
+      
       setGenerated(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating report:', error);
+      alert(`Failed to save report to database:\n${error.message}`);
     } finally {
       setGenerating(false);
     }

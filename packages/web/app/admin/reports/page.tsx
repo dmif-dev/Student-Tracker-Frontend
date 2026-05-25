@@ -20,6 +20,7 @@ import {
   Check,
   AlertCircle
 } from 'lucide-react';
+import { ApiService } from '@/services/api';
 
 interface Report {
   id: string;
@@ -47,6 +48,7 @@ interface ScheduledReport {
 
 export default function ReportsPage() {
   const [isMounted, setIsMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('30');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -56,79 +58,29 @@ export default function ReportsPage() {
   const [editingSchedule, setEditingSchedule] = useState<ScheduledReport | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  const [allReports, setAllReports] = useState<Report[]>([]);
+  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
+
   useEffect(() => {
     setIsMounted(true);
+
+    const loadData = async () => {
+      try {
+        const [reports, schedules] = await Promise.all([
+          ApiService.getSavedReports(),
+          ApiService.getScheduledReports()
+        ]);
+        setAllReports(reports);
+        setScheduledReports(schedules);
+      } catch (error) {
+        console.error('Failed to load reports and schedules:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
-
-  // Mock data - replace with API call
-  const allReports: Report[] = [
-    {
-      id: '1',
-      name: 'Weekly Progress Report - Week 12',
-      type: 'weekly',
-      generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      generatedBy: 'System',
-      format: 'pdf',
-      size: '2.4 MB',
-    },
-    {
-      id: '2',
-      name: 'Monthly Analytics - February 2024',
-      type: 'monthly',
-      generatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-      generatedBy: 'Admin',
-      format: 'excel',
-      size: '1.8 MB',
-    },
-    {
-      id: '3',
-      name: 'Weekly Progress Report - Week 11',
-      type: 'weekly',
-      generatedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
-      generatedBy: 'System',
-      format: 'pdf',
-      size: '2.3 MB',
-    },
-    {
-      id: '4',
-      name: 'Monthly Analytics - January 2024',
-      type: 'monthly',
-      generatedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-      generatedBy: 'Admin',
-      format: 'excel',
-      size: '1.9 MB',
-    },
-  ];
-
-  // Mock scheduled reports data
-  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([
-    {
-      id: 'sched1',
-      name: 'Weekly Progress Report',
-      type: 'weekly',
-      schedule: 'Every Monday',
-      time: '09:00 AM',
-      recipients: ['admin@dmif.org', 'mentors@dmif.org'],
-      format: 'pdf',
-      programs: ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'],
-      status: 'active',
-      lastGenerated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      nextGeneration: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'sched2',
-      name: 'Monthly Analytics Report',
-      type: 'monthly',
-      schedule: '1st of every month',
-      time: '12:00 PM',
-      recipients: ['admin@dmif.org', 'leadership@dmif.org'],
-      format: 'excel',
-      programs: ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'],
-      status: 'active',
-      lastGenerated: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-      nextGeneration: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ]);
 
   // Only two report templates as requested
   const reportTemplates = [
@@ -154,7 +106,7 @@ export default function ReportsPage() {
   const uniqueGenerators = useMemo(() => {
     const generators = allReports.map(report => report.generatedBy);
     return ['all', ...Array.from(new Set(generators))];
-  }, []);
+  }, [allReports]);
 
   const getFormatIcon = (format: string) => {
     switch (format) {
@@ -227,30 +179,96 @@ export default function ReportsPage() {
     setShowEditModal(true);
   };
 
-  const handleDeleteSchedule = (scheduleId: string) => {
+  const handleDeleteSchedule = async (scheduleId: string) => {
     if (confirm('Are you sure you want to delete this scheduled report?')) {
-      setScheduledReports(scheduledReports.filter(s => s.id !== scheduleId));
+      const originalSchedules = [...scheduledReports];
+      // Optimistic update
+      setScheduledReports(prev => prev.filter(s => s.id !== scheduleId));
+
+      try {
+        await ApiService.deleteScheduledReport(scheduleId);
+      } catch (error) {
+        console.error('Failed to delete scheduled report:', error);
+        setScheduledReports(originalSchedules);
+        alert('Failed to delete scheduled report. Please try again.');
+      }
     }
   };
 
-  const handleToggleStatus = (scheduleId: string) => {
-    setScheduledReports(scheduledReports.map(s => 
-      s.id === scheduleId 
-        ? { ...s, status: s.status === 'active' ? 'paused' : 'active' }
-        : s
+  const handleToggleStatus = async (scheduleId: string) => {
+    const schedule = scheduledReports.find(s => s.id === scheduleId);
+    if (!schedule) return;
+
+    const newStatus = schedule.status === 'active' ? 'paused' : 'active';
+    // Optimistic update
+    setScheduledReports(prev => prev.map(s => 
+      s.id === scheduleId ? { ...s, status: newStatus } : s
     ));
+
+    try {
+      await ApiService.updateScheduledReport(scheduleId, {
+        isActive: newStatus === 'active'
+      });
+    } catch (error) {
+      console.error('Failed to toggle scheduled report status:', error);
+      // Revert on error
+      setScheduledReports(prev => prev.map(s => 
+        s.id === scheduleId ? { ...s, status: schedule.status } : s
+      ));
+      alert('Failed to update scheduled report status. Please try again.');
+    }
   };
 
-  const handleSaveSchedule = (updatedSchedule: ScheduledReport) => {
-    setScheduledReports(scheduledReports.map(s => 
-      s.id === updatedSchedule.id ? updatedSchedule : s
-    ));
-    setShowEditModal(false);
-    setEditingSchedule(null);
+  const handleSaveSchedule = async (updatedSchedule: ScheduledReport) => {
+    setLoading(true);
+    try {
+      if (updatedSchedule.id) {
+        // Edit mode
+        await ApiService.updateScheduledReport(updatedSchedule.id, updatedSchedule);
+        setScheduledReports(prev => prev.map(s => 
+          s.id === updatedSchedule.id ? updatedSchedule : s
+        ));
+      } else {
+        // Create mode
+        const newSched = await ApiService.createScheduledReport(updatedSchedule);
+        const config = typeof newSched.config === 'string' ? JSON.parse(newSched.config) : newSched.config || {};
+        const mappedSched: ScheduledReport = {
+          id: newSched.id,
+          name: newSched.name,
+          type: (newSched.frequency || 'weekly') as 'weekly' | 'monthly',
+          schedule: config.schedule || 'Every Monday',
+          time: config.time || '09:00 AM',
+          recipients: newSched.recipients || [],
+          format: config.format || 'pdf',
+          programs: config.programs || [],
+          status: newSched.isActive ? 'active' as const : 'paused' as const,
+          lastGenerated: newSched.lastRunAt,
+          nextGeneration: newSched.nextRunAt,
+        };
+        setScheduledReports(prev => [...prev, mappedSched]);
+      }
+      setShowEditModal(false);
+      setEditingSchedule(null);
+    } catch (error) {
+      console.error('Failed to save scheduled report:', error);
+      alert('Failed to save scheduled report. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Don't render dynamic content until mounted to prevent hydration mismatch
-  if (!isMounted) {
+  const handleDownloadReport = async (reportId: string, format: string, name: string) => {
+    try {
+      const fileName = `${name.toLowerCase().replace(/\s+/g, '-')}.${format}`;
+      await ApiService.downloadGeneratedReport(reportId, format, fileName);
+    } catch (error) {
+      console.error('Failed to download report:', error);
+      alert('Failed to download report. Please try again.');
+    }
+  };
+
+  // Don't render dynamic content until mounted and loaded to prevent hydration mismatch
+  if (!isMounted || loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -485,7 +503,11 @@ export default function ReportsPage() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <button
+                      onClick={() => handleDownloadReport(report.id, report.format, report.name)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Download Report"
+                    >
                       <Download size={18} className="text-gray-700" />
                     </button>
                     <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -521,7 +543,23 @@ export default function ReportsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Scheduled Reports</h2>
-          <button className="text-sm text-orange-600 hover:text-orange-700">
+          <button
+            onClick={() => {
+              setEditingSchedule({
+                id: '',
+                name: 'New Scheduled Report',
+                type: 'weekly',
+                schedule: 'Every Monday',
+                time: '09:00',
+                recipients: ['admin@dmif.org'],
+                format: 'pdf',
+                programs: ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'],
+                status: 'active'
+              });
+              setShowEditModal(true);
+            }}
+            className="text-sm text-orange-600 hover:text-orange-700"
+          >
             + Add Schedule
           </button>
         </div>
