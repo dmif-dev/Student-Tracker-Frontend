@@ -20,7 +20,7 @@ import {
   X
 } from 'lucide-react';
 import { DocumentService } from '@/services/documentService';
-import { useMentorDocuments } from '@/hooks/api/useMentor';
+import { useMentorDocuments, useCurrentMentor } from '@/hooks/api/useMentor';
 import { apiClient } from '@/utils/apiClient';
 import { Document, DocumentType } from '@student-tracker/shared/models/Document';
 import DocumentViewer from '@/components/common/DocumentViewer';
@@ -40,6 +40,7 @@ interface ViewerDocument {
 }
 
 export default function MentorDocumentsPage() {
+  const { data: mentor } = useCurrentMentor();
   const { data: fetchedDocuments, isLoading: documentsLoading, refetch } = useMentorDocuments();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocs, setFilteredDocs] = useState<Document[]>([]);
@@ -53,9 +54,6 @@ export default function MentorDocumentsPage() {
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [editForm, setEditForm] = useState({ title: '', description: '' });
   const [isUpdating, setIsUpdating] = useState(false);
-
-  // Mock mentor ID - replace with actual auth
-  const MENTOR_ID = '1';
 
   // Add these handler functions
   // Update the handleView function to include description
@@ -72,7 +70,9 @@ export default function MentorDocumentsPage() {
     setShowViewer(true);
     
     // Track the view
-    await DocumentViewerService.trackView(doc.id, MENTOR_ID, 'mentor');
+    if (mentor?.id) {
+      await DocumentViewerService.trackView(doc.id, mentor.id, 'mentor');
+    }
   };
 
   const handleDownload = async (doc: Document, e?: React.MouseEvent) => {
@@ -80,7 +80,9 @@ export default function MentorDocumentsPage() {
     
     try {
       // Track the download
-      await DocumentViewerService.trackDownload(doc.id, MENTOR_ID, 'mentor');
+      if (mentor?.id) {
+        await DocumentViewerService.trackDownload(doc.id, mentor.id, 'mentor');
+      }
       
       // Download the file
       await FileHandlerService.downloadFile({

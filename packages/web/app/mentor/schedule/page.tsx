@@ -23,13 +23,12 @@ import {
   ChevronLeftCircle,
   ChevronRightCircle
 } from 'lucide-react';
-import { ApiService } from '@/services/api';
-import { SessionService } from '@/services/sessionService';
+
 import { useCurrentMentor, useMentorSchedule } from '@/hooks/api/useMentor';
 import { apiClient } from '@/utils/apiClient';
 import SessionNotesModal from '@/components/mentor/SessionNotesModal';
 import { Session, SessionNote } from '@student-tracker/shared/models/Session';
-import { AssignedStudent as MockAssignedStudent } from '@/types/models';
+
 import { Button } from "@/components/ui/button";
 
 

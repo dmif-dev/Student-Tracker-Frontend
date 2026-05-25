@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
+import { useQueryClient } from '@tanstack/react-query';
 import { DocumentType } from '@student-tracker/shared/models/Document';
 
 interface Student {
@@ -30,6 +31,7 @@ interface Student {
 export default function MentorUploadDocumentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const preSelectedStudent = searchParams.get('student');
 
   const [formData, setFormData] = useState({
@@ -244,6 +246,9 @@ export default function MentorUploadDocumentPage() {
 
       // Upload document
       await apiClient.post('documents/upload', uploadData);
+
+      // Invalidate the documents cache so it updates instantly when navigating back
+      queryClient.invalidateQueries({ queryKey: ['mentorDocuments'] });
 
       setUploadProgress(100);
       setSuccess(true);

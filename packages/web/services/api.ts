@@ -515,123 +515,49 @@ export class ApiService {
     return results;
   }
 
-  // Also ensure getMentorSchedule returns the updated sessions
-  static async getMentorSchedule(mentorId: string): Promise<any[]> {
-    await delay(500);
-    
-    // This would normally fetch from database
-    // For now, return mock data plus any sessions added via scheduleSession
-    const mentor = mockMentors.find(m => m.id === mentorId);
-    if (!mentor || !mentor.assignedStudents) return [];
-    
-    const schedules: any[] = [];
-    const now = new Date();
-    
-    // Only include non-PCP students
-    const nonPCPStudents = mentor.assignedStudents.filter(s => s.program !== 'PCP');
-    
-    // Get stored sessions from localStorage or use mock data
-    const storedSessions = JSON.parse(localStorage.getItem('mentor_sessions') || '[]');
-    
-    nonPCPStudents.forEach((student: any) => {
-      // Check if there's a stored session for this student
-      const existingSession = storedSessions.find((s: any) => s.studentId === student.id);
-      
-      if (existingSession) {
-        schedules.push(existingSession);
-      } else {
-        // Generate mock sessions for students without stored sessions
-        let dayOfWeek = 1;
-        if (student.program === 'G-GMP') dayOfWeek = 1;
-        if (student.program === 'G-CMP') dayOfWeek = 3;
-        if (student.program === 'E-TIP') dayOfWeek = 5;
-        
-        for (let week = 0; week < 4; week++) {
-          const sessionDate = new Date(now);
-          const daysUntilNext = (dayOfWeek - now.getDay() + 7) % 7;
-          sessionDate.setDate(now.getDate() + daysUntilNext + (week * 7));
-          
-          schedules.push({
-            id: `s${student.id}-w${week}`,
-            studentId: student.id,
-            studentName: student.name,
-            studentProgram: student.program,
-            date: sessionDate.toISOString().split('T')[0],
-            startTime: '10:00',
-            endTime: '11:00',
-            status: 'scheduled',
-            topic: `${student.track} - Weekly Review`,
-            meetingLink: 'https://meet.google.com/abc-defg-hij'
-          });
-        }
-      }
-    });
-    
-    // Merge with any additional scheduled sessions
-    const allSessions = [...schedules, ...storedSessions.filter((s: any) => 
-      !schedules.some((existing: any) => existing.id === s.id)
-    )];
-    
-    return allSessions;
+  static async getMentorSchedule(mentorId?: string): Promise<any[]> {
+    const url = mentorId ? `mentor/sessions?mentorId=${mentorId}` : 'mentor/sessions';
+    return await apiClient.get<any[]>(url);
   }
 
-  static async getMentorAvailability(mentorId: string): Promise<any[]> {
-    await delay(300);
-    const mentor = mockMentors.find(m => m.id === mentorId);
-    return mentor?.availability || [];
+  static async getMentorAvailability(mentorId?: string): Promise<any[]> {
+    const url = mentorId ? `mentor/availability?mentorId=${mentorId}` : 'mentor/availability';
+    return await apiClient.get<any[]>(url);
   }
 
   static async scheduleSession(sessionData: any): Promise<any> {
-    await delay(800);
-    
-    // In a real app, this would save to database
-    // For now, return the session with an ID
-    return {
-      id: Date.now().toString(),
-      ...sessionData,
-      status: 'scheduled',
-      createdAt: new Date().toISOString(),
-    };
+    return await apiClient.post<any>('mentor/sessions', sessionData);
   }
 
   static async getTodaySessions(): Promise<any[]> {
-    await delay(400);
-    return [
-      {
-        id: 't1',
-        studentName: 'John Doe',
-        mentorName: 'Dr. Smith',
-        program: 'G-GMP',
-        track: 'Patent Track',
-        time: '10:00 AM'
-      },
-      {
-        id: 't2',
-        studentName: 'Jane Smith',
-        mentorName: 'Prof. Johnson',
-        program: 'G-CMP',
-        track: 'AI Product Development',
-        time: '2:00 PM'
-      },
-      {
-        id: 't3',
-        studentName: 'Alex Chen',
-        mentorName: 'Dr. Smith',
-        program: 'G-GMP',
-        track: 'Research Paper Track',
-        time: '3:30 PM'
-      }
-    ];
+    // Assuming backend returns only upcoming/today's sessions for this endpoint
+    // Fallback to filtering all sessions if a specific endpoint doesn't exist
+    try {
+      return await apiClient.get<any[]>('mentor/sessions/upcoming');
+    } catch {
+      const allSessions = await this.getMentorSchedule();
+      const today = new Date().toISOString().split('T')[0];
+      return allSessions.filter(s => s.date.startsWith(today));
+    }
   }
 
   static async getWeeklySessionCounts(): Promise<any> {
-    await delay(300);
-    return {
-      'G-GMP': 12,
-      'G-CMP': 8,
-      'E-TIP': 5,
-      'PCP': 0 // PCP has no sessions
-    };
+    try {
+      const stats = await apiClient.get<any>('mentor/stats');
+      return stats.weeklyCounts || {
+        'G-GMP': 0,
+        'G-CMP': 0,
+        'E-TIP': 0,
+        'PCP': 0
+      };
+    } catch {
+      return {
+        'G-GMP': 0,
+        'G-CMP': 0,
+        'E-TIP': 0,
+        'PCP': 0
+      };
+    }
   }
 
   // Reports
