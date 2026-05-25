@@ -6,6 +6,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 
 import { Toaster } from 'sonner';
 
+import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
+
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -20,6 +22,12 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         {children}
+        <ProgressBar
+          height="3px"
+          color="#ea580c"
+          options={{ showSpinner: false }}
+          shallowRouting
+        />
         <Toaster richColors position="top-right" />
       </AuthProvider>
     </QueryClientProvider>

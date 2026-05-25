@@ -35,6 +35,8 @@ import DocumentViewer from '@/components/common/DocumentViewer';
 import { DocumentViewerService } from '@/services/documentViewerService';
 import { FileHandlerService } from '@/services/fileHandlerService';
 import { mapStudent } from '@/utils/dataMappers';
+import { useCurrentMentor } from '@/hooks/api/useMentor';
+import MessageModal from '@/components/mentor/MessageModal';
 
 interface Student {
   id: string;
@@ -55,6 +57,8 @@ interface Student {
     pending: number;
     total: number;
   };
+  rawActivities?: any[];
+  rawAssignments?: any[];
 }
 
 interface Session {
@@ -68,7 +72,7 @@ interface Session {
   endTime: string;
   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
   topic: string;
-  notes?: string;
+  notes?: any; // Can be string or array of note objects
   meetingLink?: string;
 }
 
@@ -106,9 +110,9 @@ export default function MentorStudentDetailPage() {
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [showViewer, setShowViewer] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-
-  // Mock mentor ID - replace with actual auth
-  const MENTOR_ID = '1';
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  
+  const { data: mentor } = useCurrentMentor();
 
   useEffect(() => {
     fetchStudentData();
@@ -137,38 +141,48 @@ export default function MentorStudentDetailPage() {
           notes: s.notes,
         }));
       
-      // Fetch documents accessible to this student
-      const studentDocs = await DocumentService.getStudentDocuments(params.id as string);
+      // Map documents accessible to this student from real backend data
+      const studentDocs = (studentData.documentPermissions || []).map((p: any) => p.document).filter(Boolean);
       
-      // Filter documents uploaded by this mentor
-      const myDocuments = studentDocs
-        .filter((d: any) => d.uploadedById === '1') // Will replace '1' with actual mentor ID in a future refactor or leave as is if backend handles it
-        .map((d: any) => ({
-          id: d.id,
-          title: d.title,
-          type: d.type,
-          fileName: d.fileName,
-          fileSize: d.fileSize,
-          fileUrl: d.fileUrl,
-          fileType: d.fileType,
-          uploadedAt: d.createdAt,
-          viewed: Math.random() > 0.5,
-          downloaded: Math.random() > 0.5,
-        }));
+      const myDocuments = studentDocs.map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        type: d.type,
+        fileName: d.fileName,
+        fileSize: d.fileSize,
+        fileUrl: d.fileUrl,
+        fileType: d.fileType,
+        uploadedAt: d.createdAt,
+        viewed: true, // Backend logic for tracking individual user view status will be needed
+        downloaded: false,
+      }));
       
       const mappedStudent = mapStudent(studentData);
       
+      // Compute actual assignments stats from backend data
+      const studentSubmissions = studentData.submissions || [];
+      const completedAssignments = studentSubmissions.filter((s: any) => s.status === 'GRADED' || s.status === 'SUBMITTED').length;
+      
+      // Build activities list by merging outcomes and daily progress
+      const mergedActivities = [
+        ...(studentData.dailyProgress || []).map((p: any) => ({ ...p, activityType: 'progress', date: p.date })),
+        ...(studentData.outcomes || []).map((o: any) => ({ ...o, activityType: 'outcome', date: o.date })),
+        ...(studentData.submissions || []).map((s: any) => ({ ...s, activityType: 'submission', date: s.submittedAt }))
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
       setStudent({
         ...mappedStudent,
         documents: {
-          viewed: Math.floor(Math.random() * 10),
-          downloaded: Math.floor(Math.random() * 8),
+          viewed: studentData._count?.documentPermissions || 0,
+          downloaded: 0,
         },
         assignments: {
-          completed: Math.floor(Math.random() * 3),
-          pending: Math.floor(Math.random() * 2) + 1,
-          total: 5,
+          completed: completedAssignments,
+          pending: studentData._count?.submissions ? studentData._count.submissions - completedAssignments : 0,
+          total: studentData._count?.submissions || 0,
         },
+        rawActivities: mergedActivities,
+        rawAssignments: studentSubmissions,
       } as any);
       
       setSessions(studentSessions);
@@ -224,7 +238,9 @@ export default function MentorStudentDetailPage() {
     setShowViewer(true);
     
     // Track the view
-    await DocumentViewerService.trackView(doc.id, MENTOR_ID, 'mentor');
+    if (mentor?.id) {
+      await DocumentViewerService.trackView(doc.id, mentor.id, 'mentor');
+    }
   };
 
   const handleDownloadDocument = async (doc: Document, e?: React.MouseEvent) => {
@@ -232,7 +248,9 @@ export default function MentorStudentDetailPage() {
     
     try {
       // Track the download
-      await DocumentViewerService.trackDownload(doc.id, MENTOR_ID, 'mentor');
+      if (mentor?.id) {
+        await DocumentViewerService.trackDownload(doc.id, mentor.id, 'mentor');
+      }
       
       // Download the file
       await FileHandlerService.downloadFile({
@@ -330,11 +348,17 @@ export default function MentorStudentDetailPage() {
           </div>
         </div>
         <div className="flex space-x-2">
-          <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button
+            onClick={() => { window.location.href = `mailto:${student.email}`; }}
+            className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
             <Mail size={18} className="mr-2" />
             Send Email
           </button>
-          <button className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+          <button
+            onClick={() => setShowMessageModal(true)}
+            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+          >
             <MessageCircle size={18} className="mr-2" />
             Message
           </button>
@@ -462,33 +486,39 @@ export default function MentorStudentDetailPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
               <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <FileText size={16} className="text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Downloaded "G-CMP Module 1"</p>
-                    <p className="text-xs text-gray-500">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <CheckCircle size={16} className="text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Completed Assignment 1</p>
-                    <p className="text-xs text-gray-500">Yesterday</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <Clock size={16} className="text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Attended mentoring session</p>
-                    <p className="text-xs text-gray-500">3 days ago</p>
-                  </div>
-                </div>
+                {student.rawActivities && student.rawActivities.length > 0 ? (
+                  student.rawActivities.slice(0, 5).map((activity: any, index: number) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      {activity.activityType === 'progress' && (
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <TrendingUp size={16} className="text-blue-600" />
+                        </div>
+                      )}
+                      {activity.activityType === 'outcome' && (
+                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                          <CheckCircle size={16} className="text-green-600" />
+                        </div>
+                      )}
+                      {activity.activityType === 'submission' && (
+                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                          <FileText size={16} className="text-purple-600" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-medium">
+                          {activity.activityType === 'progress' && `Progress: ${activity.status || activity.category}`}
+                          {activity.activityType === 'outcome' && `Outcome Achieved: ${activity.title}`}
+                          {activity.activityType === 'submission' && `Submitted Assignment`}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(activity.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
+                )}
               </div>
             </div>
           </div>
@@ -507,7 +537,17 @@ export default function MentorStudentDetailPage() {
                     {sessions[0].startTime} - {sessions[0].endTime}
                   </p>
                   <p className="text-sm mt-3">{sessions[0].topic}</p>
-                  <button className="mt-4 w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                  <button
+                    onClick={() => {
+                      const link = sessions[0].meetingLink;
+                      if (link) {
+                        window.open(link, '_blank', 'noopener,noreferrer');
+                      } else {
+                        alert('No meeting link available for this session.');
+                      }
+                    }}
+                    className="mt-4 w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                  >
                     Join Session
                   </button>
                 </div>
@@ -591,7 +631,19 @@ export default function MentorStudentDetailPage() {
                         </span>
                       </div>
                       {session.notes && (
-                        <p className="text-xs text-gray-500 mt-2">{session.notes}</p>
+                        <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                          {Array.isArray(session.notes) ? (
+                            session.notes.length > 0 ? (
+                              <>
+                                <span className="font-medium">Last session notes:</span>{' '}
+                                {session.notes[session.notes.length - 1].content?.substring(0, 100) || ''}
+                                {session.notes[session.notes.length - 1].content?.length > 100 ? '...' : ''}
+                              </>
+                            ) : null
+                          ) : (
+                            <>{session.notes}</>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -704,29 +756,35 @@ export default function MentorStudentDetailPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium">Assignment 1: Build a Simple AI Model</h4>
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Pending</span>
-              </div>
-              <p className="text-sm text-gray-600 mb-3">Due: March 15, 2024</p>
-              <div className="flex items-center space-x-2">
-                <button className="text-sm text-orange-600 hover:text-orange-700">View Details</button>
-                <button className="text-sm text-orange-600 hover:text-orange-700">Add Feedback</button>
-              </div>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium">Assignment 2: Cloud Architecture Design</h4>
-                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Completed</span>
-              </div>
-              <p className="text-sm text-gray-600 mb-3">Submitted: March 10, 2024</p>
-              <div className="flex items-center space-x-2">
-                <button className="text-sm text-orange-600 hover:text-orange-700">View Submission</button>
-                <button className="text-sm text-orange-600 hover:text-orange-700">View Feedback</button>
-              </div>
-            </div>
+            {student.rawAssignments && student.rawAssignments.length > 0 ? (
+              student.rawAssignments.map((submission: any, index: number) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">{submission.assignment?.title || 'Assignment Submission'}</h4>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      submission.status === 'GRADED' || submission.status === 'SUBMITTED' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {submission.status || 'PENDING'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Submitted: {new Date(submission.submittedAt).toLocaleDateString()}
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <button className="text-sm text-orange-600 hover:text-orange-700">View Submission</button>
+                    {submission.status === 'GRADED' ? (
+                      <button className="text-sm text-orange-600 hover:text-orange-700">View Feedback</button>
+                    ) : (
+                      <button className="text-sm text-orange-600 hover:text-orange-700">Add Feedback</button>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">No assignments submitted yet.</p>
+            )}
           </div>
         </div>
       )}
@@ -756,6 +814,16 @@ export default function MentorStudentDetailPage() {
             fileUrl: selectedDocument.fileUrl || '',
             fileSize: selectedDocument.fileSize,
           }}
+        />
+      )}
+
+      {/* Message Modal */}
+      {student && (
+        <MessageModal
+          isOpen={showMessageModal}
+          onClose={() => setShowMessageModal(false)}
+          studentId={student.id}
+          studentName={student.name}
         />
       )}
     </div>

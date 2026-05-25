@@ -35,7 +35,8 @@ import {
   useToggleStudentStatus,
   useResetStudentProgress
 } from '@/hooks/api/useAdmin';
-import { Outcome } from '@/services/mockData';
+import { type Outcome } from '@/types/models';
+
 
 interface StudentDetails {
   id: string;

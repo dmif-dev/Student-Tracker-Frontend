@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../utils/apiClient';
 import { mapMentor, mapStudent } from '../../utils/dataMappers';
-import { Student, Mentor } from '../../services/mockData';
+import { type Student, type Mentor } from '@/types/models';
+
 
 export const adminKeys = {
   all: ['admin'] as const,

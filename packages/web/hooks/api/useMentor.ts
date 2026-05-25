@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../utils/apiClient';
 import { mapMentor, mapStudent, mapDocument } from '../../utils/dataMappers';
-import { Mentor, Student, MentorSchedule } from '../../services/mockData';
+import { type Mentor, type Student, type MentorSchedule } from '@/types/models';
+
 
 export const useCurrentMentor = () => {
   return useQuery<Mentor>({

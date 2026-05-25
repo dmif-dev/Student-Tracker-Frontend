@@ -30,7 +30,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
-import { Activity as ActivityType } from '@/services/mockData';
+import { Activity as ActivityType } from '@/types/models';
+
 
 interface ProgramDetails {
   id: string;

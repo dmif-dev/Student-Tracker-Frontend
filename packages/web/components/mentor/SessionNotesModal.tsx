@@ -11,7 +11,7 @@ interface SessionNotesModalProps {
   session: Session;
   existingNotes?: SessionNote[];
   onClose: () => void;
-  onSave: (sessionId: string, noteData: any) => void;
+  onSave: (sessionId: string, noteData: any, noteId?: string) => void;
 }
 
 export default function SessionNotesModal({ 
@@ -29,6 +29,7 @@ export default function SessionNotesModal({
   const [resources, setResources] = useState<string[]>([]);
   const [newResource, setNewResource] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'add' | 'view'>(
     session.status === 'completed' ? 'view' : 'add'
   );
@@ -43,8 +44,19 @@ export default function SessionNotesModal({
       setFeedback(latestNote.feedback || '');
       setNextSteps(latestNote.nextSteps || '');
       setResources(latestNote.resources || []);
+      if (isEditing && editingNoteId) {
+        const noteToEdit = existingNotes.find(n => n.id === editingNoteId);
+        if (noteToEdit) {
+          setNoteContent(noteToEdit.content || '');
+          setTopics(noteToEdit.topics || []);
+          setDuration(noteToEdit.duration || 60);
+          setFeedback(noteToEdit.feedback || '');
+          setNextSteps(noteToEdit.nextSteps || '');
+          setResources(noteToEdit.resources || []);
+        }
+      }
     }
-  }, [existingNotes, viewMode]);
+  }, [existingNotes, viewMode, isEditing, editingNoteId]);
 
   const handleAddTopic = () => {
     if (newTopic.trim() && !topics.includes(newTopic.trim())) {
@@ -80,7 +92,7 @@ export default function SessionNotesModal({
       resources,
     };
 
-    onSave(session.id, noteData);
+    onSave(session.id, noteData, editingNoteId || undefined);
   };
 
   const formatTime = (time: string) => {
@@ -135,7 +147,7 @@ export default function SessionNotesModal({
 
         {/* Notes Form/View */}
         <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
-          {viewMode === 'add' ? (
+          {viewMode === 'add' || isEditing ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Session Notes */}
               <div>
@@ -290,7 +302,10 @@ export default function SessionNotesModal({
                         Added on {new Date(note.createdAt).toLocaleString()}
                       </span>
                       <button
-                        onClick={() => setIsEditing(true)}
+                        onClick={() => {
+                          setEditingNoteId(note.id || null);
+                          setIsEditing(true);
+                        }}
                         className="text-orange-600 hover:text-orange-700 text-sm"
                       >
                         Edit
@@ -385,7 +400,10 @@ export default function SessionNotesModal({
               {isEditing ? (
                 <>
                   <button
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditingNoteId(null);
+                    }}
                     className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                   >
                     Cancel

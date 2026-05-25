@@ -27,7 +27,8 @@ import {
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
 import { ExportService } from '@/services/exportService';
-import { Student, Mentor, Outcome } from '@/services/mockData';
+import { type Student, type Mentor, type Outcome } from '@/types/models';
+
 
 interface ReportConfig {
   name: string;

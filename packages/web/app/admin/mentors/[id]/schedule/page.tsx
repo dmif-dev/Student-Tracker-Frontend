@@ -25,7 +25,8 @@ import {
   Info
 } from 'lucide-react';
 import { useAdminMentor, useAdminMentorSessions, useAdminCreateSession } from '@/hooks/api/useAdmin';
-import { MentorSchedule, AssignedStudent } from '@/services/mockData';
+import { type MentorSchedule, type AssignedStudent } from '@/types/models';
+
 
 interface SessionFormData {
   studentId: string;

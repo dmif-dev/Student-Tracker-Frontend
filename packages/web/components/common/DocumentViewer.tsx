@@ -113,28 +113,15 @@ export default function DocumentViewer({ isOpen, onClose, document: doc }: Docum
           Please download it to view the content.
         </p>
         
-        {/* Option 1: Using Google Docs Viewer (if file is publicly accessible) */}
-        {previewUrl && previewUrl.startsWith('blob:') && (
-          <div className="w-full mb-4">
-            <p className="text-xs text-gray-400 mb-2 text-center">
-              Attempting to preview as HTML...
-            </p>
-            <iframe
-              src={previewUrl}
-              className="w-full h-[400px] border border-gray-200 rounded-lg"
-              title={doc.title}
-            />
-          </div>
-        )}
-        
         <div className="flex space-x-4">
           <button
             onClick={handleDownload}
-            className="flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            className="flex items-center px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shadow-sm"
           >
             <Download size={18} className="mr-2" />
             Download to View
           </button>
+
           
           {/* Option 2: Open with external viewer (if available) */}
           {previewUrl && (
@@ -142,7 +129,7 @@ export default function DocumentViewer({ isOpen, onClose, document: doc }: Docum
               href={previewUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center px-6 py-3 border border-orange-200 text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors shadow-sm"
             >
               <ExternalLink size={18} className="mr-2" />
               Open in New Tab
@@ -174,7 +161,7 @@ export default function DocumentViewer({ isOpen, onClose, document: doc }: Docum
           <p className="text-sm text-gray-500">{error}</p>
           <button
             onClick={loadPreview}
-            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
           >
             Retry
           </button>
@@ -189,7 +176,7 @@ export default function DocumentViewer({ isOpen, onClose, document: doc }: Docum
           <p className="mt-4 text-gray-600">Preview not available</p>
           <button
             onClick={handleDownload}
-            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
           >
             Download to View
           </button>
@@ -238,7 +225,7 @@ export default function DocumentViewer({ isOpen, onClose, document: doc }: Docum
             <p className="mt-4 text-gray-600">Preview not available for this file type</p>
             <button
               onClick={handleDownload}
-              className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
             >
               Download to View
             </button>

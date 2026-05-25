@@ -29,7 +29,9 @@ import { useCurrentMentor, useMentorSchedule } from '@/hooks/api/useMentor';
 import { apiClient } from '@/utils/apiClient';
 import SessionNotesModal from '@/components/mentor/SessionNotesModal';
 import { Session, SessionNote } from '@student-tracker/shared/models/Session';
-import { AssignedStudent as MockAssignedStudent } from '@/services/mockData';
+import { AssignedStudent as MockAssignedStudent } from '@/types/models';
+import { Button } from "@/components/ui/button";
+
 
 interface AssignedStudent {
   id: string;
@@ -198,12 +200,19 @@ export default function MentorSchedulePage() {
     }
   };
 
-  const handleAddNotes = async (sessionId: string, noteData: any) => {
+  const handleAddNotes = async (sessionId: string, noteData: any, noteId?: string) => {
     try {
-      await apiClient.post(`mentor/sessions/${sessionId}/notes`, {
-        ...noteData,
-        mentorId: mentor?.id
-      });
+      if (noteId) {
+        await apiClient.put(`mentor/sessions/${sessionId}/notes/${noteId}`, {
+          ...noteData,
+          mentorId: mentor?.id
+        });
+      } else {
+        await apiClient.post(`mentor/sessions/${sessionId}/notes`, {
+          ...noteData,
+          mentorId: mentor?.id
+        });
+      }
       
       refetchSessions();
       setShowNotesModal(false);
@@ -277,13 +286,18 @@ export default function MentorSchedulePage() {
           >
             {view === 'calendar' ? 'List View' : 'Calendar View'}
           </button>
-          <button
+          {/* <button
             onClick={() => setShowScheduleModal(true)}
             className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
           >
             <Plus size={18} className="mr-2" />
             Schedule Session
-          </button>
+          </button> */}
+          <Button 
+            onClick={() => setShowScheduleModal(true)}
+            className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
+            <Plus size={18} className="mr-2 h-4 w-4" /> Schedule Session
+          </Button>
         </div>
       </div>
 

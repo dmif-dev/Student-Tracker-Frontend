@@ -26,6 +26,7 @@ import { Document, DocumentType } from '@student-tracker/shared/models/Document'
 import DocumentViewer from '@/components/common/DocumentViewer';
 import { DocumentViewerService } from '@/services/documentViewerService';
 import { FileHandlerService } from '@/services/fileHandlerService';
+import { Button } from "@/components/ui/button";
 
 // Define a local interface for the viewer document
 interface ViewerDocument {
@@ -202,13 +203,11 @@ export default function MentorDocumentsPage() {
             Manage your learning materials and assignments
           </p>
         </div>
-        <Link
-          href="/mentor/documents/upload"
-          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-        >
-          <Upload size={18} className="mr-2" />
-          Upload New Document
-        </Link>
+          <Link href="/mentor/documents/upload">
+            <Button className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white">
+              <Upload size={18} className="mr-2 h-4 w-4" /> Upload New Document
+            </Button>
+          </Link>
       </div>
 
       {/* Stats */}

@@ -21,6 +21,8 @@ import {
   Eye
 } from 'lucide-react';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
+import MessageModal from '@/components/mentor/MessageModal';
+import { Button } from '@/components/ui/button';
 
 interface Student {
   id: string;
@@ -43,15 +45,22 @@ export default function MentorStudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [messageModalState, setMessageModalState] = useState<{isOpen: boolean, studentId: string, studentName: string}>({
+    isOpen: false,
+    studentId: '',
+    studentName: ''
+  });
 
   useEffect(() => {
     if (mentor?.assignedStudents) {
-      // Enhance student data with additional info (or rely on what backend gives)
+      // Enhance student data with real info from backend
       const enhancedStudents = mentor.assignedStudents.map((s: any) => ({
         ...s,
-        email: s.email || `${s.name.toLowerCase().replace(' ', '.')}@example.com`,
-        documents: s.documents || Math.floor(Math.random() * 10) + 5,
-        assignments: s.assignments || Math.floor(Math.random() * 5) + 1,
+        email: s.user?.email || s.email || `${s.name.toLowerCase().replace(' ', '.')}@example.com`,
+        documents: s._count?.documentPermissions || 0,
+        assignments: s._count?.submissions || 0,
+        program: s.program?.name || s.program,
+        track: s.track?.name || s.track,
       }));
       setStudents(enhancedStudents as any);
       setFilteredStudents(enhancedStudents as any);
@@ -152,7 +161,7 @@ export default function MentorStudentsPage() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
-          <button
+          {/* <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
               showFilters ? 'bg-orange-50 border-orange-300 text-orange-600' : 'border-gray-300 hover:bg-gray-50'
@@ -160,7 +169,16 @@ export default function MentorStudentsPage() {
           >
             <Filter size={18} className="mr-2" />
             Filters
-          </button>
+          </button> */}
+
+          <Button 
+            onClick={() => setShowFilters(!showFilters)}
+            variant="outline" 
+            className={`font-montserrat font-bold border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-500 ${showFilters ? 'bg-orange-50 border-orange-300 text-orange-600' : 'border-gray-300 hover:bg-gray-50'}`}>
+            <Filter className="mr-2 h-4 w-4" /> Filters
+          </Button>
+
+
         </div>
 
         {showFilters && (
@@ -248,12 +266,23 @@ export default function MentorStudentsPage() {
                 <div>
                   <p className="text-gray-500 mb-1">Documents</p>
                   <p className="font-medium">{student.documents} available</p>
-                  <p className="text-xs text-gray-400 mt-1">{student.assignments} pending</p>
+                  <p className="text-xs text-gray-400 mt-1">{student.assignments} submissions</p>
                 </div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                <button className="text-xs text-gray-500 hover:text-gray-700 flex items-center">
+                <button
+                  className="text-xs text-gray-500 hover:text-gray-700 flex items-center"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setMessageModalState({
+                      isOpen: true,
+                      studentId: student.id,
+                      studentName: student.name
+                    });
+                  }}
+                >
                   <Mail size={14} className="mr-1" />
                   Message
                 </button>
@@ -279,6 +308,13 @@ export default function MentorStudentsPage() {
           </p>
         </div>
       )}
+
+      <MessageModal
+        isOpen={messageModalState.isOpen}
+        onClose={() => setMessageModalState(prev => ({ ...prev, isOpen: false }))}
+        studentId={messageModalState.studentId}
+        studentName={messageModalState.studentName}
+      />
     </div>
   );
 }

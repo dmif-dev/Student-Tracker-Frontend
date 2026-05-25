@@ -1,21 +1,9 @@
 // packages/web/services/api.ts
 
 // Mock API service - Replace with actual API calls when backend is ready
-import {
-  mockStudents,
-  mockMentors,
-  mockPrograms,
-  mockActivities,
-  mockOutcomes,
-  mockAnalytics,
-  mockDashboardStats,
-  type Student,
-  type Mentor,
-  type Program,
-  type Track,
-  type Activity,
-  type Outcome,
-} from './mockData';
+import { mockStudents, mockMentors, mockPrograms, mockActivities, mockOutcomes, mockAnalytics, mockDashboardStats } from './mockData';
+import { type Student, type Mentor, type Program, type Track, type Activity, type Outcome } from '../types/models';
+
 import { DocumentService } from './documentService';
 import { Document } from '@student-tracker/shared/models/Document';
 import { createClient } from '@/utils/supabase/client';

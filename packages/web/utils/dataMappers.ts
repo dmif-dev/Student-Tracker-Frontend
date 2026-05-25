@@ -1,4 +1,4 @@
-import { Mentor, Student, Outcome, AssignedStudent } from '../services/mockData';
+import { Mentor, Student, Outcome, AssignedStudent } from '../types/models';
 import { Document } from '@student-tracker/shared/models/Document';
 
 // Map Prisma Mentor to Frontend Mentor
@@ -8,7 +8,7 @@ export const mapMentor = (backendMentor: any): Mentor => {
     name: backendMentor.name,
     email: backendMentor.user?.email || '',
     expertise: backendMentor.expertise || [],
-    students: backendMentor.students || 0,
+    students: backendMentor._count?.assignedStudents || backendMentor.students || 0,
     programs: backendMentor.programs?.map((p: string) => p.replace('_', '-')) || [], // G_GMP -> G-GMP
     rating: backendMentor.rating || 0,
     status: backendMentor.status?.toLowerCase() as 'active' | 'inactive',
@@ -20,18 +20,23 @@ export const mapMentor = (backendMentor: any): Mentor => {
     // Add these if they come from the backend, otherwise we'll fetch them separately or handle them in UI
     availability: backendMentor.availability || [],
     assignedStudents: backendMentor.assignedStudents?.map(mapAssignedStudent) || [],
+    stats: backendMentor.stats,
+    performance: backendMentor.performance,
   };
 };
 
-export const mapAssignedStudent = (backendStudent: any): AssignedStudent => {
+export const mapAssignedStudent = (backendStudent: any): AssignedStudent & { _count?: any, user?: any, email?: string } => {
   return {
     id: backendStudent.id,
     name: backendStudent.name,
+    email: backendStudent.user?.email || backendStudent.email || '',
     program: mapProgramType(backendStudent.program?.name || backendStudent.programId),
     track: backendStudent.track?.name || backendStudent.trackId || '',
     joinDate: backendStudent.joinDate ? new Date(backendStudent.joinDate).toISOString().split('T')[0] : '',
     progress: backendStudent.progress || 0,
     hasMentor: !!backendStudent.mentorId,
+    _count: backendStudent._count,
+    user: backendStudent.user,
     // Add logic for lastSession and nextSession if provided by backend
   };
 }

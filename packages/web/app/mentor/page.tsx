@@ -22,8 +22,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
 
 import { useCurrentMentor, useMentorSchedule, useMentorStudents, useMentorDocuments } from '@/hooks/api/useMentor';
+import DocumentViewer from '@/components/common/DocumentViewer';
+import { DocumentViewerService } from '@/services/documentViewerService';
+import { FileHandlerService } from '@/services/fileHandlerService';
+
+interface ViewerDocument {
+  id: string;
+  title: string;
+  description?: string;
+  fileName: string;
+  fileType: string;
+  fileUrl: string;
+  fileSize: number;
+}
 
 interface RecentActivity {
   id: string;
@@ -38,8 +52,50 @@ export default function MentorDashboard() {
   const { data: students = [], isLoading: studentsLoading } = useMentorStudents(mentor?.id);
   const { data: schedule = [], isLoading: scheduleLoading } = useMentorSchedule(mentor?.id);
   const { data: documents = [], isLoading: documentsLoading } = useMentorDocuments();
+  
+  const [selectedDocument, setSelectedDocument] = useState<ViewerDocument | null>(null);
+  const [showViewer, setShowViewer] = useState(false);
 
   const loading = mentorLoading || studentsLoading || scheduleLoading || documentsLoading;
+
+  const handleView = async (doc: any) => {
+    setSelectedDocument({
+      id: doc.id,
+      title: doc.title,
+      description: doc.description,
+      fileName: doc.fileName,
+      fileType: doc.fileType,
+      fileUrl: doc.fileUrl,
+      fileSize: doc.fileSize,
+    });
+    setShowViewer(true);
+    
+    if (mentor?.id) {
+      await DocumentViewerService.trackView(doc.id, mentor.id, 'mentor');
+    }
+  };
+
+  const handleDownload = async (doc: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      if (mentor?.id) {
+        await DocumentViewerService.trackDownload(doc.id, mentor.id, 'mentor');
+      }
+      
+      await FileHandlerService.downloadFile({
+        id: doc.id,
+        title: doc.title,
+        description: doc.description,
+        fileName: doc.fileName,
+        fileType: doc.fileType,
+        fileSize: doc.fileSize,
+      });
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Failed to download file. Please try again.');
+    }
+  };
 
   const stats = useMemo(() => {
     const activeStudents = students.filter((s: any) => s.progress < 100).length;
@@ -58,6 +114,67 @@ export default function MentorDashboard() {
         d.type === 'assignment_material' && d.metadata?.dueDate
       ).length,
     };
+  }, [students, schedule, documents]);
+
+  const chartData = useMemo(() => {
+    // 1. Student Progress
+    let notStarted = 0;
+    let inProgress = 0;
+    let completed = 0;
+    
+    students.forEach((s: any) => {
+      const progress = s.progress || 0;
+      if (progress === 0) notStarted++;
+      else if (progress < 100) inProgress++;
+      else completed++;
+    });
+
+    const studentProgressData = [
+      { name: 'Completed (100%)', value: completed, color: '#22c55e' }, // green-500
+      { name: 'In Progress (1-99%)', value: inProgress, color: '#f97316' }, // orange-500
+      { name: 'Not Started (0%)', value: notStarted, color: '#94a3b8' }, // slate-400
+    ].filter(d => d.value > 0);
+
+    // 2. Document Types
+    const typeCount: Record<string, number> = {};
+    documents.forEach((d: any) => {
+      const type = d.type === 'learning_material' ? 'Learning' : 
+                   d.type === 'assignment_material' ? 'Assignment' : 
+                   d.type === 'pre_reading_material' ? 'Pre-Reading' : 'Other';
+      typeCount[type] = (typeCount[type] || 0) + 1;
+    });
+
+    const documentTypeData = Object.entries(typeCount).map(([name, value]) => ({
+      name,
+      value
+    })).sort((a, b) => b.value - a.value);
+
+    const documentColors = ['#f97316', '#3b82f6', '#8b5cf6', '#eab308']; // orange, blue, purple, yellow
+
+    // 3. Sessions
+    const sessionCount: Record<string, number> = {
+      Scheduled: 0,
+      Completed: 0,
+      Cancelled: 0,
+    };
+    
+    schedule.forEach((s: any) => {
+      const status = s.status === 'scheduled' ? 'Scheduled' :
+                     s.status === 'completed' ? 'Completed' :
+                     s.status === 'cancelled' ? 'Cancelled' : 'Other';
+      if (sessionCount[status] !== undefined) {
+        sessionCount[status]++;
+      } else {
+        sessionCount[status] = 1;
+      }
+    });
+
+    const sessionStatusData = Object.entries(sessionCount).map(([name, count]) => ({
+      name,
+      count
+    }));
+
+    return { studentProgressData, documentTypeData, documentColors, sessionStatusData };
   }, [students, schedule, documents]);
 
   const upcomingSessions = useMemo(() => {
@@ -150,7 +267,7 @@ export default function MentorDashboard() {
         </div>
         <div className="flex gap-3">
           <Link href="/mentor/schedule">
-            <Button variant="outline" className="font-montserrat font-bold border-orange-200 text-orange-600 hover:bg-orange-50">
+            <Button variant="outline" className="font-montserrat font-bold border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-500">
               <Calendar className="mr-2 h-4 w-4" /> View Full Schedule
             </Button>
           </Link>
@@ -162,56 +279,124 @@ export default function MentorDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm transition-all hover:translate-y-[-4px] hover:shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-orange-100 text-orange-600">
-                <Users size={24} />
-              </div>
-              <div className="px-2 py-1 rounded-full bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest">
-                {stats.activeStudents} Active
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground font-montserrat uppercase tracking-wider">My Students</p>
-              <p className="text-3xl font-extrabold tracking-tighter">{stats.totalStudents}</p>
-            </div>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Student Progress Chart */}
+        <Card className="border-none shadow-md bg-white transition-all hover:shadow-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-extrabold font-montserrat">Student Progress</CardTitle>
+            <CardDescription>Distribution of student completion</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[250px]">
+            {chartData.studentProgressData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData.studentProgressData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {chartData.studentProgressData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any) => [`${value} Students`, '']}
+                    separator=""
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">No student data available</div>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm transition-all hover:translate-y-[-4px] hover:shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-amber-100 text-amber-600">
-                <FileText size={24} />
-              </div>
-              <div className="px-2 py-1 rounded-full bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-widest">
-                {stats.pendingAssignments} Pending
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground font-montserrat uppercase tracking-wider">My Documents</p>
-              <p className="text-3xl font-extrabold tracking-tighter">{stats.totalDocuments}</p>
-            </div>
+        {/* Document Types Chart */}
+        <Card className="border-none shadow-md bg-white transition-all hover:shadow-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-extrabold font-montserrat">Materials Posted</CardTitle>
+            <CardDescription>Breakdown of shared materials</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[250px]">
+            {chartData.documentTypeData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData.documentTypeData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="value"
+                    labelLine={false}
+                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      return percent > 0.05 ? (
+                        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="bold">
+                          {`${(percent * 100).toFixed(0)}%`}
+                        </text>
+                      ) : null;
+                    }}
+                  >
+                    {chartData.documentTypeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={chartData.documentColors[index % chartData.documentColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any) => [`${value} Documents`, '']}
+                    separator=""
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">No document data available</div>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm transition-all hover:translate-y-[-4px] hover:shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-indigo-100 text-indigo-600">
-                <Calendar size={24} />
-              </div>
-              <div className="px-2 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest">
-                {stats.completedSessions} Completed
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground font-montserrat uppercase tracking-wider">Sessions</p>
-              <p className="text-3xl font-extrabold tracking-tighter">{stats.upcomingSessions}</p>
-            </div>
+        {/* Session Status Chart */}
+        <Card className="border-none shadow-md bg-white transition-all hover:shadow-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-extrabold font-montserrat">Session Overview</CardTitle>
+            <CardDescription>Status of all mentor sessions</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[250px]">
+            {chartData.sessionStatusData.some(d => d.count > 0) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData.sessionStatusData} margin={{ top: 20, right: 20, bottom: 20, left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} allowDecimals={false} />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    formatter={(value: any) => [`${value} Sessions`, '']}
+                    separator=""
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                    {chartData.sessionStatusData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.name === 'Completed' ? '#22c55e' : entry.name === 'Scheduled' ? '#e55a2b' : '#ef4444'} 
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">No session data available</div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -268,41 +453,47 @@ export default function MentorDashboard() {
 
         {/* Quick Actions */}
         <div className="space-y-6">
-          <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-gray-900 p-8">
-            <h2 className="text-xl font-black font-montserrat mb-6 uppercase tracking-wider flex items-center gap-2 text-white">
+          <Card className="rounded-2xl shadow-xl border-none overflow-hidden bg-white p-8">
+            <h2 className="text-xl font-black font-montserrat mb-6 uppercase tracking-wider flex items-center gap-2 text-gray-900">
               <TrendingUp className="text-orange-500 w-5 h-5" />
               Quick Actions
             </h2>
             <div className="grid gap-3">
               <Link
                 href="/mentor/documents/upload"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300 text-white"
+                className="group flex items-center justify-between p-4 bg-orange-50 hover:bg-orange-100 rounded-2xl transition-all duration-300 text-gray-900 shadow-sm hover:shadow"
               >
                 <div className="flex items-center gap-3">
-                  <FileText size={20} className="text-orange-500 group-hover:text-white" />
+                  <div className="p-2 bg-white rounded-lg shadow-sm group-hover:shadow transition-all">
+                    <FileText size={20} className="text-orange-500" />
+                  </div>
                   <span className="font-bold text-sm tracking-wide">Upload Material</span>
                 </div>
-                <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                <ChevronRight size={18} className="text-orange-500 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </Link>
               <Link
                 href="/mentor/schedule"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300 text-white"
+                className="group flex items-center justify-between p-4 bg-orange-50 hover:bg-orange-100 rounded-2xl transition-all duration-300 text-gray-900 shadow-sm hover:shadow"
               >
                 <div className="flex items-center gap-3">
-                  <Calendar size={20} className="text-orange-500 group-hover:text-white" />
+                  <div className="p-2 bg-white rounded-lg shadow-sm group-hover:shadow transition-all">
+                    <Calendar size={20} className="text-orange-500" />
+                  </div>
                   <span className="font-bold text-sm tracking-wide">Weekly Schedule</span>
                 </div>
-                <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                <ChevronRight size={18} className="text-orange-500 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </Link>
               <Link
                 href="/mentor/students"
-                className="group flex items-center justify-between p-4 bg-white/10 hover:bg-orange-500 rounded-2xl transition-all duration-300 text-white"
+                className="group flex items-center justify-between p-4 bg-orange-50 hover:bg-orange-100 rounded-2xl transition-all duration-300 text-gray-900 shadow-sm hover:shadow"
               >
                 <div className="flex items-center gap-3">
-                  <Users size={20} className="text-orange-500 group-hover:text-white" />
+                  <div className="p-2 bg-white rounded-lg shadow-sm group-hover:shadow transition-all">
+                    <Users size={20} className="text-orange-500" />
+                  </div>
                   <span className="font-bold text-sm tracking-wide">My Students</span>
                 </div>
-                <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                <ChevronRight size={18} className="text-orange-500 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </Link>
             </div>
           </Card>
@@ -357,16 +548,24 @@ export default function MentorDashboard() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recentDocuments.map((doc) => (
-                <div key={doc.id} className="group p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-100 transition-all">
+                <div key={doc.id} className="group p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-100 transition-all cursor-pointer" onClick={() => handleView(doc)}>
                   <div className="flex items-start justify-between mb-4">
                     <div className="p-3 bg-gray-50 group-hover:bg-orange-50 rounded-xl transition-colors">
                       <FileText size={20} className="text-gray-400 group-hover:text-orange-500" />
                     </div>
                     <div className="flex gap-1">
-                      <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors" title="Preview">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleView(doc); }}
+                        className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors" 
+                        title="Preview"
+                      >
                         <Eye size={16} />
                       </button>
-                      <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors" title="Download">
+                      <button 
+                        onClick={(e) => handleDownload(doc, e)}
+                        className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors" 
+                        title="Download"
+                      >
                         <Download size={16} />
                       </button>
                     </div>
@@ -387,6 +586,18 @@ export default function MentorDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Document Viewer Modal */}
+      {showViewer && (
+        <DocumentViewer
+          isOpen={showViewer}
+          onClose={() => {
+            setShowViewer(false);
+            setSelectedDocument(null);
+          }}
+          document={selectedDocument}
+        />
+      )}
     </div>
   );
 }

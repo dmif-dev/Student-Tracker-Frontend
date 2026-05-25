@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
 import { apiClient } from '@/utils/apiClient';
+import { Button } from '@/components/ui/button';
 
 interface MentorProfile {
   id: string;
@@ -141,27 +142,31 @@ export default function MentorProfilePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
         {!isEditing ? (
-          <button
-            onClick={handleEdit}
-            className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            <Edit size={18} className="mr-2" />
-            Edit Profile
-          </button>
+          // <button
+          //   onClick={handleEdit}
+          //   className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          // >
+          //   <Edit size={18} className="mr-2" />
+          //   Edit Profile
+          // </button>
+
+          <Button onClick={handleEdit} variant="outline" className="font-montserrat font-bold border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-500">
+            <Edit className="mr-2 h-4 w-4" /> Edit Profile
+          </Button>
         ) : (
         <div className="flex space-x-2">
-            <button
+            <Button
               onClick={handleCancel}
               disabled={saving}
-              className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              variant="outline" className="font-montserrat font-bold border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-500"
             >
               <X size={18} className="mr-2" />
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              className="font-montserrat font-bold bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20 text-white"
             >
               {saving ? (
                 <>
@@ -174,7 +179,7 @@ export default function MentorProfilePage() {
                   Save Changes
                 </>
               )}
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -196,7 +201,7 @@ export default function MentorProfilePage() {
         {/* Profile Card */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-            <div className="w-24 h-24 bg-orange-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
+            <div className="w-24 h-24 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/20 text-white text-3xl font-bold mx-auto mb-4">
               {profile.name?.charAt(0) || '?'}
             </div>
             

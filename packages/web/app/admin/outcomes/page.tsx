@@ -19,7 +19,8 @@ import {
   Info
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
-import { Outcome } from '@/services/mockData';
+import { type Outcome } from '@/types/models';
+
 
 // interface Outcome {
 //   id: string;
