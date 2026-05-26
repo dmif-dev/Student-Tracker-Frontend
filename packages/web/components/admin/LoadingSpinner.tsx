@@ -1,5 +1,7 @@
 'use client';
 
+import LoaderOne from '@/components/ui/loader-one';
+
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   color?: 'primary' | 'gray' | 'white';
@@ -12,22 +14,14 @@ export default function LoadingSpinner({
   fullScreen = false 
 }: LoadingSpinnerProps) {
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-8 w-8',
-    lg: 'h-12 w-12'
-  };
-
-  const colorClasses = {
-    primary: 'border-orange-600',
-    gray: 'border-gray-600',
-    white: 'border-white'
+    sm: 'scale-75',
+    md: '',
+    lg: 'scale-125'
   };
 
   const spinner = (
-    <div className="flex items-center justify-center">
-      <div
-        className={`animate-spin rounded-full border-b-2 ${sizeClasses[size]} ${colorClasses[color]}`}
-      ></div>
+    <div className={`flex items-center justify-center ${sizeClasses[size]}`}>
+      <LoaderOne />
     </div>
   );
 
@@ -41,3 +35,4 @@ export default function LoadingSpinner({
 
   return spinner;
 }
+

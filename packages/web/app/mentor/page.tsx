@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 import { useCurrentMentor, useMentorSchedule, useMentorStudents, useMentorDocuments } from '@/hooks/api/useMentor';
+import LoaderOne from "@/components/ui/loader-one";
 
 interface RecentActivity {
   id: string;
@@ -133,7 +134,7 @@ export default function MentorDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }

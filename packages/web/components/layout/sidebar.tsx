@@ -228,6 +228,7 @@ export function Sidebar() {
       { label: "My Courses", href: "/Student/my-courses", icon: <BookOpen className="h-5 w-5 flex-shrink-0" /> },
       { label: "Progress", href: "/Student/progress/new", icon: <TrendingUp className="h-5 w-5 flex-shrink-0" /> },
       { label: "My Stats", href: "/Student/my-stats", icon: <FileText className="h-5 w-5 flex-shrink-0" /> },
+      { label: "Notifications", href: "/Student/notifications", icon: <Bell className="h-5 w-5 flex-shrink-0" /> },
       { label: "Mentor Details", href: "/Student/mentor-details", icon: <UserCircle className="h-5 w-5 flex-shrink-0" /> },
       { label: "My Profile", href: "/Student/my-profile", icon: <User className="h-5 w-5 flex-shrink-0" /> },
       { label: "Settings", href: "/Student/settings", icon: <Settings className="h-5 w-5 flex-shrink-0" /> },

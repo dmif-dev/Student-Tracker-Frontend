@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
 import { apiClient } from '@/utils/apiClient';
+import LoaderOne from '@/components/ui/loader-one';
 
 interface MentorProfile {
   id: string;
@@ -122,7 +123,7 @@ export default function MentorProfilePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }
@@ -165,7 +166,7 @@ export default function MentorProfilePage() {
             >
               {saving ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  <span className="scale-75 mr-2"><LoaderOne /></span>
                   Saving...
                 </>
               ) : (

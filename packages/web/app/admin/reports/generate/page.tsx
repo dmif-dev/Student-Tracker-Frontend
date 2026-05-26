@@ -28,6 +28,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
+import LoaderOne from '@/components/ui/loader-one';
 import { ExportService } from '@/services/exportService';
 import { Student, Mentor, Outcome } from '@/services/mockData';
 
@@ -767,7 +768,7 @@ export default function GenerateReportPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }
@@ -1322,10 +1323,10 @@ export default function GenerateReportPage() {
                   className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {generating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Generating...
-                    </>
+                    <div className="flex items-center space-x-2">
+                      <span className="scale-75"><LoaderOne /></span>
+                      <span>Generating...</span>
+                    </div>
                   ) : (
                     <>
                       <FileText size={18} className="mr-2" />

@@ -1,3 +1,5 @@
+import LoaderOne from "@/components/ui/loader-one";
+
 interface LoadingStateProps {
   type?: 'spinner' | 'skeleton' | 'pulse';
   rows?: number;
@@ -8,7 +10,7 @@ export default function LoadingState({ type = 'spinner', rows = 3, columns = 4 }
   if (type === 'spinner') {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <LoaderOne />
       </div>
     );
   }

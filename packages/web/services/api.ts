@@ -1332,4 +1332,69 @@ export class ApiService {
     if (!response.ok) throw new Error('Failed to track download');
     return response.json();
   }
+
+  // User Preferences Settings
+  static async getUserPreferences(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/settings/preferences`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch user preferences');
+    return response.json();
+  }
+
+  static async updateUserPreferences(preferences: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/settings/preferences`, { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+      body: JSON.stringify({ preferences }) 
+    });
+    if (!response.ok) throw new Error('Failed to update user preferences');
+    return response.json();
+  }
+
+  // --- Student Notifications ---
+  static async getStudentNotifications(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/notifications`, { 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    if (!response.ok) throw new Error('Failed to fetch student notifications');
+    return response.json();
+  }
+
+  static async markStudentNotificationAsRead(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/notifications/${id}/read`, { 
+      method: 'POST', 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    if (!response.ok) throw new Error('Failed to mark notification as read');
+    return response.json();
+  }
+
+  static async markAllStudentNotificationsAsRead(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/notifications/read-all`, { 
+      method: 'POST', 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    if (!response.ok) throw new Error('Failed to mark all notifications as read');
+    return response.json();
+  }
+
+  static async deleteStudentNotification(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/notifications/${id}`, { 
+      method: 'DELETE', 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    if (!response.ok) throw new Error('Failed to delete notification');
+    return response.json();
+  }
 }

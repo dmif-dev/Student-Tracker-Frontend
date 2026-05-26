@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ApiService } from '@/services/api';
 import { ArrowLeft, Upload, Download, AlertCircle, CheckCircle } from 'lucide-react';
+import LoaderOne from '@/components/ui/loader-one';
 
 export default function ImportStudentsPage() {
   const router = useRouter();
@@ -249,7 +250,7 @@ Jane Smith,jane.smith@example.com,DMIF2024002,G-CMP,AI Product Development,Prof.
               >
                 {uploading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <span className="scale-75 mr-2"><LoaderOne /></span>
                     Importing...
                   </>
                 ) : (

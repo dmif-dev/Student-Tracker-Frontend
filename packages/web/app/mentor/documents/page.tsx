@@ -26,6 +26,7 @@ import { Document, DocumentType } from '@student-tracker/shared/models/Document'
 import DocumentViewer from '@/components/common/DocumentViewer';
 import { DocumentViewerService } from '@/services/documentViewerService';
 import { FileHandlerService } from '@/services/fileHandlerService';
+import LoaderOne from "@/components/ui/loader-one";
 
 // Define a local interface for the viewer document
 interface ViewerDocument {
@@ -187,7 +188,7 @@ export default function MentorDocumentsPage() {
   if (documentsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }

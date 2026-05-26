@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import LoaderOne from "@/components/ui/loader-one";
 
 export default function AdminProfilePage() {
   const { data: userData, isLoading: profileLoading, refetch: refetchProfile } = useAdminProfile();
@@ -112,7 +113,7 @@ export default function AdminProfilePage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
         <p className="text-gray-500 font-medium">Loading your profile & candidate details...</p>
       </div>
     );

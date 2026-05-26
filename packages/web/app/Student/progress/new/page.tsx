@@ -7,7 +7,6 @@ import * as z from "zod";
 import { format, isPast, startOfToday } from "date-fns";
 import {
     Calendar as CalendarIcon,
-    Loader2,
     CheckCircle2,
     AlertCircle,
     RotateCcw,
@@ -42,6 +41,7 @@ import { useLocalStorage } from "@student-tracker/shared/hooks/useLocalStorage";
 import { RichTextEditor } from "@/components/forms/rich-text-editor";
 import { TopicSelect } from "@/components/forms/topic-select";
 import { ImageUpload } from "@/components/forms/image-upload";
+import LoaderOne from "@/components/ui/loader-one";
 
 const formSchema = z.object({
     title: z.string().min(5, "General title for today's entry is required"),
@@ -436,7 +436,7 @@ export default function ProgressPage() {
                                     disabled={isSubmitting || !isValid}
                                     className="w-full py-8 text-lg font-extrabold bg-orange-500 hover:bg-orange-600 shadow-xl shadow-orange-500/20 rounded-2xl transition-all active:scale-[0.98]"
                                 >
-                                    {isSubmitting ? <Loader2 className="animate-spin" /> : (
+                                    {isSubmitting ? <span className="scale-75"><LoaderOne /></span> : (
                                         <div className="flex items-center gap-2">
                                             <Award className="h-5 w-5" />
                                             Submit Entries

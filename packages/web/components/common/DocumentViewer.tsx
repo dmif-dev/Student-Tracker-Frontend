@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 import { X, Download, FileText, File, FileImage, FileArchive, AlertCircle, ExternalLink } from 'lucide-react';
 import { FileHandlerService } from '@/services/fileHandlerService';
 
+import LoaderOne from '@/components/ui/loader-one';
+
 interface DocumentViewerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -161,7 +163,7 @@ export default function DocumentViewer({ isOpen, onClose, document: doc }: Docum
     if (loading) {
       return (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <LoaderOne />
         </div>
       );
     }

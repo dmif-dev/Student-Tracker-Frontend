@@ -149,3 +149,16 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #f97316;
 }
+
+@keyframes waves {
+  0% {
+    transform: translateY(-170px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.waves {
+  animation: waves 15s linear infinite alternate;
+}

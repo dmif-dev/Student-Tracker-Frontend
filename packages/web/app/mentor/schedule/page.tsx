@@ -30,6 +30,7 @@ import { apiClient } from '@/utils/apiClient';
 import SessionNotesModal from '@/components/mentor/SessionNotesModal';
 import { Session, SessionNote } from '@student-tracker/shared/models/Session';
 import { AssignedStudent as MockAssignedStudent } from '@/services/mockData';
+import LoaderOne from "@/components/ui/loader-one";
 
 interface AssignedStudent {
   id: string;
@@ -253,7 +254,7 @@ export default function MentorSchedulePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }

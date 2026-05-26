@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Upload, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import LoaderOne from "@/components/ui/loader-one";
+import { Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ImageUploadProps {
@@ -78,7 +79,7 @@ export function ImageUpload({ value, onChange, error }: ImageUploadProps) {
                 >
                     {isUploading ? (
                         <div className="flex flex-col items-center gap-2">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <LoaderOne />
                             <p className="text-xs text-muted-foreground font-medium">Uploading...</p>
                         </div>
                     ) : (
