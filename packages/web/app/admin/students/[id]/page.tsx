@@ -51,6 +51,7 @@ interface StudentDetails {
   lastActive: string;
   phone?: string;
   address?: string;
+  notes?: string;
   avatar?: string;
   progress: number;
   // Outcomes only for G-GMP students
@@ -117,6 +118,7 @@ export default function StudentDetailPage() {
     ...baseStudent,
     phone: baseStudent.phone || '',
     address: baseStudent.address || '',
+    notes: baseStudent.notes || '',
     avatar: baseStudent.avatar,
     recentActivity: activities
       .filter((a: any) => a.userId === baseStudent.id || a.user === baseStudent.name)
@@ -406,6 +408,14 @@ export default function StudentDetailPage() {
                   <p className="text-sm text-gray-500">Address</p>
                   <p className="text-gray-900">{student.address || 'Not provided'}</p>
                 </div>
+                {student.notes && (
+                  <div className="col-span-2 mt-2 pt-4 border-t border-gray-100">
+                    <p className="text-sm text-gray-500 font-semibold mb-1">Additional Notes</p>
+                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      {student.notes}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

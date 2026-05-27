@@ -143,6 +143,7 @@ export default function EditStudentPage() {
       setValue('joinDate', student.joinDate);
       setValue('phone', student.phone || '');
       setValue('address', student.address || '');
+      setValue('notes', student.notes || '');
       
       setSelectedProgram(student.program);
       setLoading(false);
@@ -167,6 +168,7 @@ export default function EditStudentPage() {
         program: data.program,
         track: data.track,
         mentor: data.mentor,
+        notes: data.notes,
         joinDate: data.joinDate ? new Date(data.joinDate).toISOString() : undefined,
       };
       

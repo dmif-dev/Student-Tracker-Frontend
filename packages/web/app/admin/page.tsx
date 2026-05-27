@@ -792,13 +792,13 @@ export default function AdminDashboard() {
 
         {/* Action Panel */}
         <div className="space-y-4">
-          <Card className="rounded-xl shadow-sm border border-slate-100 bg-[#0F172A] p-5 text-white flex flex-col justify-between h-[180px] transition-all duration-300 hover:shadow-md">
-            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-white/80">
-              <Shield className="w-3.5 h-3.5 text-orange-500" />
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-5 flex flex-col justify-between h-[180px] transition-all duration-300 hover:shadow-md">
+            <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 text-slate-800">
+              <Shield className="w-4 h-4 text-orange-500" />
               Quick Actions
             </h3>
             
-            <div className="grid grid-cols-2 gap-2 mt-3 flex-1">
+            <div className="grid grid-cols-2 gap-2.5 mt-3 flex-1">
               {[
                 { label: "New Student", href: "/admin/students/add" },
                 { label: "Faculty Mentor", href: "/admin/mentors/add" },
@@ -808,10 +808,10 @@ export default function AdminDashboard() {
                 <Link
                   key={i}
                   href={action.href}
-                  className="flex flex-col justify-between p-2.5 bg-white/5 hover:bg-orange-600 border border-white/5 hover:border-orange-500 rounded-lg transition-colors text-[10px] font-bold text-white group"
+                  className="flex flex-col justify-between p-2.5 bg-slate-50/50 hover:bg-orange-50/60 border border-slate-100 hover:border-orange-200/80 rounded-xl transition-all duration-200 text-[10px] font-extrabold text-slate-700 hover:text-orange-700 group shadow-sm hover:shadow-sm"
                 >
                   <span>{action.label}</span>
-                  <ArrowUpRight size={10} className="self-end text-white/40 group-hover:text-white transition-colors" />
+                  <ArrowUpRight size={11} className="self-end text-slate-400 group-hover:text-orange-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200" />
                 </Link>
               ))}
             </div>

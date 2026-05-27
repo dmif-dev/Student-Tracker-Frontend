@@ -31,6 +31,7 @@ export interface Student {
     total: number;
     attendance: number;
   };
+  notes?: string;
 }
 
 export interface MentorSchedule {
