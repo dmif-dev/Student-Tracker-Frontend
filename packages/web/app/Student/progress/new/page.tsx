@@ -42,15 +42,15 @@ import { useLocalStorage } from "@student-tracker/shared/hooks/useLocalStorage";
 import { RichTextEditor } from "@/components/forms/rich-text-editor";
 import { TopicSelect } from "@/components/forms/topic-select";
 import { ImageUpload } from "@/components/forms/image-upload";
+import { useStudentProfile, useSubmitProgress, useUploadEvidence } from "@/hooks/api/useStudent";
 
 const formSchema = z.object({
     title: z.string().min(5, "General title for today's entry is required"),
     date: z.date(),
     entries: z.array(z.object({
-        studentId: z.string().min(1, "Student ID is required"),
-        programTrack: z.string().min(1, "Program Track is required"),
         topic: z.string().min(1, "Topic title is required"),
         content: z.string().min(10, "Content must be at least 10 characters"),
+        performanceRating: z.number().min(1).max(10),
         file: z.any().optional(),
         fileName: z.string().optional(),
     })).min(1, "At least one topic entry is required"),
@@ -72,6 +72,10 @@ export default function ProgressPage() {
     const [showDraftPrompt, setShowDraftPrompt] = useState(false);
     const [draft, setDraft] = useLocalStorage<FormValues | null>(DRAFT_KEY, null);
 
+    const { data: profile } = useStudentProfile();
+    const submitProgressMutation = useSubmitProgress();
+    const uploadEvidenceMutation = useUploadEvidence();
+
     const {
         register,
         handleSubmit,
@@ -85,15 +89,19 @@ export default function ProgressPage() {
         defaultValues: {
             title: "",
             date: new Date(),
-            entries: [{ studentId: "", programTrack: "", topic: "", content: "" }],
+            entries: [{ topic: "", content: "", performanceRating: 5 }],
         },
-        mode: "onBlur",
+        mode: "onChange",
     });
 
     const entries = watch("entries");
 
     const addEntry = () => {
-        setValue("entries", [...entries, { studentId: "", programTrack: "", topic: "", content: "" }]);
+        setValue("entries", [...entries, { 
+            topic: "", 
+            content: "",
+            performanceRating: 5
+        }]);
     };
 
     const removeEntry = (index: number) => {
@@ -111,6 +119,8 @@ export default function ProgressPage() {
             setShowDraftPrompt(true);
         }
     }, []);
+
+    // Removed Prefill form logic as it's no longer needed
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -148,17 +158,37 @@ export default function ProgressPage() {
         setIsSubmitting(true);
 
         try {
-            // Mock API call
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            for (const entry of values.entries) {
+                let attachments: string[] = [];
+                
+                // If a file is attached, upload it first
+                if (entry.file) {
+                    const uploadRes = await uploadEvidenceMutation.mutateAsync(entry.file);
+                    if (uploadRes?.fileUrl) {
+                        attachments.push(uploadRes.fileUrl);
+                    }
+                }
+
+                await submitProgressMutation.mutateAsync({
+                    studentId: profile?.studentId, // Automatically use the student's actual ID
+                    date: values.date.toISOString(),
+                    topicsCovered: [entry.topic], // Map to backend validation format
+                    notes: entry.content, // Map to backend validation format
+                    attachments,
+                    performanceRating: entry.performanceRating, 
+                    attendanceStatus: "PRESENT"
+                });
+            }
 
             toast.success("🎉 All daily topics recorded successfully!");
             setDraft(null);
             reset({
                 title: "",
                 date: new Date(),
-                entries: [{ studentId: "", programTrack: "", topic: "", content: "" }],
+                entries: [{ topic: "", content: "", performanceRating: 5 }],
             });
         } catch (error) {
+            console.error(error);
             toast.error("Failed to publish entries. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -244,11 +274,11 @@ export default function ProgressPage() {
                                                 <PopoverTrigger asChild>
                                                     <Button variant="outline" className="w-full h-11 justify-start font-bold border-gray-100">
                                                         <CalendarIcon className="mr-2 h-4 w-4 text-orange-500" />
-                                                        {format(field.value, "PPP")}
+                                                        {field.value ? format(field.value, "PPP") : "Select Session Date"}
                                                     </Button>
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-auto p-0 rounded-2xl overflow-hidden border-none shadow-2xl" align="start">
-                                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                                    <Calendar mode="single" selected={field.value} onSelect={(date) => date && field.onChange(date)} initialFocus />
                                                 </PopoverContent>
                                             </Popover>
                                         )}
@@ -290,31 +320,6 @@ export default function ProgressPage() {
                                     )}
 
                                     <div className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-2">
-                                                <Label className="text-xs font-bold uppercase tracking-widest text-gray-500">Student ID</Label>
-                                                <Input
-                                                    placeholder="e.g., STU-123"
-                                                    {...register(`entries.${index}.studentId` as const)}
-                                                    className="h-11 font-bold border-gray-100 bg-gray-50/50 focus:bg-white"
-                                                />
-                                                {errors.entries?.[index]?.studentId && <p className="text-[10px] text-red-500 font-bold">{errors.entries[index].studentId?.message}</p>}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-xs font-bold uppercase tracking-widest text-gray-500">Program Track</Label>
-                                                <select
-                                                    {...register(`entries.${index}.programTrack` as const)}
-                                                    className="w-full h-11 rounded-lg border border-gray-100 bg-gray-50/50 px-3 text-sm font-bold focus:ring-2 focus:ring-orange-500/20 outline-none"
-                                                >
-                                                    <option value="">Select track...</option>
-                                                    {Object.entries(PROGRAM_TRACKS).map(([code, name]) => (
-                                                        <option key={code} value={code}>{code}</option>
-                                                    ))}
-                                                </select>
-                                                {errors.entries?.[index]?.programTrack && <p className="text-[10px] text-red-500 font-bold">{errors.entries[index].programTrack?.message}</p>}
-                                            </div>
-                                        </div>
-
                                         <div className="space-y-2 pt-4 border-t border-gray-50">
                                             <Label className="text-xs font-bold uppercase tracking-widest text-gray-500">Topic name</Label>
                                             <Input
@@ -338,6 +343,31 @@ export default function ProgressPage() {
                                                     />
                                                 )}
                                             />
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-xs font-bold uppercase tracking-widest text-gray-500">Self-Assessment Rating</Label>
+                                                <span className="text-sm font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full">{entries[index].performanceRating} / 10</span>
+                                            </div>
+                                            <Controller
+                                                name={`entries.${index}.performanceRating` as const}
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <input 
+                                                        type="range" 
+                                                        min="1" 
+                                                        max="10" 
+                                                        value={field.value} 
+                                                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                                        className="w-full accent-orange-500"
+                                                    />
+                                                )}
+                                            />
+                                            <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
+                                                <span>Struggling</span>
+                                                <span>Confident</span>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2">
@@ -424,7 +454,7 @@ export default function ProgressPage() {
                                         </div>
                                         <div className="flex justify-between items-center text-xs">
                                             <span className="text-gray-500 font-bold uppercase">Date</span>
-                                            <span className="text-orange-600 font-extrabold">{format(watch("date"), "MMM dd, yyyy")}</span>
+                                            <span className="text-orange-600 font-extrabold">{watch("date") ? format(watch("date"), "MMM dd, yyyy") : "Select Date"}</span>
                                         </div>
                                     </div>
                                 </Card>

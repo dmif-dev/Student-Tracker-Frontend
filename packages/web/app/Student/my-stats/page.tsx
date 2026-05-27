@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { format, subDays } from "date-fns";
+import { format, subDays, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
     ResponsiveContainer,
@@ -54,57 +54,96 @@ import {
     ChevronLeft,
     ChevronRight
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useStudentProfile, useStudentStats, useStudentTrends, useStudentOutcomes, useStudentProgressHistory } from "@/hooks/api/useStudent";
 
-function ContributionGraph() {
+function ContributionGraph({ studentId }: { studentId?: string }) {
     type EntryType = "progress" | "patent" | "research" | "product" | "venture";
     type ViewMode = "week" | "month" | "year";
 
     const [viewMode, setViewMode] = useState<ViewMode>("year");
+    const [pageOffset, setPageOffset] = useState(0);
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    // Generate mock data for the last 365 days with types
-    const streakData = useMemo(() => {
-        const types: EntryType[] = ["progress", "patent", "research", "product", "venture"];
-        const data = [];
-        const baseDate = new Date();
+    const { data: rawStats } = useStudentStats(studentId);
 
-        for (let i = 0; i < 365; i++) {
+    const { data: progressHistory } = useStudentProgressHistory(studentId);
+
+    const baseDate = useMemo(() => subDays(new Date(), pageOffset), [pageOffset]);
+
+    // Generate data for the last 364 days (exactly 52 weeks) based on API and offset
+    const streakData = useMemo(() => {
+        const data = [];
+        
+        // Create a map of dates to progress counts
+        const progressMap = new Map();
+        if (progressHistory?.data) {
+            progressHistory.data.forEach((p: any) => {
+                const dateKey = new Date(p.date).toISOString().split('T')[0];
+                progressMap.set(dateKey, (progressMap.get(dateKey) || 0) + 1);
+            });
+        }
+
+        for (let i = 0; i < 364; i++) {
             const date = subDays(baseDate, i);
-            let count = 0;
-            const rand = Math.random();
-            if (rand > 0.7) count = Math.floor(Math.random() * 5) + 1;
+            const dateKey = date.toISOString().split('T')[0];
+            const count = progressMap.get(dateKey) || 0;
 
             data.push({
                 date,
                 count,
-                type: types[Math.floor(Math.random() * types.length)]
+                type: count > 0 ? "progress" : "none"
             });
         }
         return data.reverse();
-    }, []);
+    }, [progressHistory, baseDate]);
 
     const stats = useMemo(() => {
-        const total = streakData.reduce((acc, day) => acc + day.count, 0);
-        const activeDays = streakData.filter(d => d.count > 0).length;
+        let maxStreak = 0;
+        let runningStreak = 0;
+        let total = 0;
+        let activeDays = 0;
 
-        const typeStats = {
-            progress: streakData.filter(d => d.count > 0 && d.type === "progress").length,
-            patent: streakData.filter(d => d.count > 0 && d.type === "patent").length,
-            research: streakData.filter(d => d.count > 0 && d.type === "research").length,
-            product: streakData.filter(d => d.count > 0 && d.type === "product").length,
-            venture: streakData.filter(d => d.count > 0 && d.type === "venture").length,
+        streakData.forEach((day) => {
+            total += day.count;
+            if (day.count > 0) {
+                activeDays++;
+                runningStreak++;
+                if (runningStreak > maxStreak) {
+                    maxStreak = runningStreak;
+                }
+            } else {
+                runningStreak = 0;
+            }
+        });
+
+        // Calculate current streak by walking backwards from today
+        let currentStreak = 0;
+        for (let i = streakData.length - 1; i >= 0; i--) {
+            const day = streakData[i];
+            if (day.count > 0) {
+                currentStreak++;
+            } else if (i === streakData.length - 1) {
+                // If today is 0, we check yesterday (don't break streak if they just haven't logged yet today)
+                continue;
+            } else {
+                break; // Break on first non-active day before today
+            }
+        }
+
+        return { 
+            total, 
+            activeDays, 
+            currentStreak, 
+            maxStreak 
         };
-
-        return { total, activeDays, currentStreak: 12, maxStreak: 34, typeStats };
     }, [streakData]);
 
     const getIntensityColor = (count: number) => {
-        if (count === 0) return "bg-[#161b22] border-zinc-800/10";
-        if (count === 1) return "bg-[#0e4429] border-green-900/20";
-        if (count === 2) return "bg-[#006d32] border-green-800/30";
-        if (count === 3) return "bg-[#26a641] border-green-600/50";
-        return "bg-[#39d353] border-green-400";
+        if (count === 0) return "bg-gray-50 border-gray-100";
+        if (count === 1) return "bg-orange-200 border-orange-300";
+        if (count === 2) return "bg-orange-400 border-orange-500";
+        if (count === 3) return "bg-orange-500 border-orange-600";
+        return "bg-orange-600 border-orange-700";
     };
 
     const getTypeLabel = (type: string) => {
@@ -127,16 +166,27 @@ function ContributionGraph() {
         } else if (viewMode === "month") {
             // Last 4 weeks (representative of a month view)
             return Array.from({ length: 4 }).map((_, weekIndex) => {
-                return streakData.slice(365 - 28 + (weekIndex * 7), 365 - 28 + ((weekIndex + 1) * 7));
+                return streakData.slice(364 - 28 + (weekIndex * 7), 364 - 28 + ((weekIndex + 1) * 7));
             });
         } else {
             // Current week (last 7 days)
-            return [streakData.slice(365 - 7)];
+            return [streakData.slice(364 - 7)];
         }
     };
 
+    const handlePrev = () => {
+        if (viewMode === "week") setPageOffset(p => p + 7);
+        if (viewMode === "month") setPageOffset(p => p + 28);
+        if (viewMode === "year") setPageOffset(p => p + 364);
+    };
+
+    const handleNext = () => {
+        if (viewMode === "week") setPageOffset(p => Math.max(0, p - 7));
+        if (viewMode === "month") setPageOffset(p => Math.max(0, p - 28));
+        if (viewMode === "year") setPageOffset(p => Math.max(0, p - 364));
+    };
+
     const filteredWeeks = getFilteredData();
-    const months = ["Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb"];
 
     return (
         <div className="space-y-6">
@@ -164,27 +214,27 @@ function ContributionGraph() {
             </div>
 
             {/* Main Heatmap Card */}
-            <Card className="rounded-3xl border-none shadow-2xl bg-[#0d1117] text-white overflow-hidden p-8 border border-zinc-800/50 transition-all hover:shadow-green-500/10">
+            <Card className="rounded-3xl border-none shadow-xl bg-white text-gray-900 overflow-hidden p-8 border border-orange-100 transition-all hover:shadow-orange-500/10">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
                     <div className="flex items-center gap-4">
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-black text-white leading-none">{stats.total}</span>
-                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">submissions in the past year</span>
+                            <span className="text-4xl font-black text-orange-600 leading-none">{stats.total}</span>
+                            <span className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">submissions in this period</span>
                         </div>
-                        <div className="h-6 w-6 rounded-full border border-zinc-700 flex items-center justify-center text-[10px] text-zinc-500 font-black">i</div>
+                        <div className="h-6 w-6 rounded-full border border-gray-200 flex items-center justify-center text-[10px] text-gray-400 font-black">i</div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-8">
                         <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest">
-                            <div className="flex gap-2 text-zinc-500">
-                                Total active days: <span className="text-white">{stats.activeDays}</span>
+                            <div className="flex gap-2 text-gray-500">
+                                Total active days: <span className="text-orange-600">{stats.activeDays}</span>
                             </div>
-                            <div className="flex gap-2 text-zinc-500">
-                                Max streak: <span className="text-white">{stats.maxStreak}</span>
+                            <div className="flex gap-2 text-gray-500">
+                                Max streak: <span className="text-orange-600">{stats.maxStreak}</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 bg-zinc-900/80 p-1.5 rounded-2xl border border-zinc-800">
+                        <div className="flex items-center gap-3 bg-orange-50 p-1.5 rounded-2xl border border-orange-100">
                             {(["week", "month", "year"] as ViewMode[]).map((m) => (
                                 <button
                                     key={m}
@@ -192,8 +242,8 @@ function ContributionGraph() {
                                     className={cn(
                                         "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                                         viewMode === m
-                                            ? "bg-green-600 text-white shadow-lg shadow-green-950/50"
-                                            : "text-zinc-500 hover:text-white"
+                                            ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30"
+                                            : "text-gray-500 hover:text-orange-600"
                                     )}
                                 >
                                     {m}
@@ -202,10 +252,10 @@ function ContributionGraph() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-white h-9 px-4 text-[10px] font-black gap-2 rounded-xl uppercase tracking-widest">
+                            <Button onClick={handlePrev} variant="outline" size="sm" className="bg-white border-orange-200 hover:bg-orange-50 text-orange-600 h-9 px-4 text-[10px] font-black gap-2 rounded-xl uppercase tracking-widest">
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-white h-9 px-4 text-[10px] font-black gap-2 rounded-xl uppercase tracking-widest">
+                            <Button onClick={handleNext} disabled={pageOffset === 0} variant="outline" size="sm" className="bg-white border-orange-200 hover:bg-orange-50 text-orange-600 h-9 px-4 text-[10px] font-black gap-2 rounded-xl uppercase tracking-widest disabled:opacity-50">
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
                         </div>
@@ -236,15 +286,15 @@ function ContributionGraph() {
                                                     )}
                                                 />
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-4 bg-[#0d1117] border-zinc-800 text-white shadow-2xl rounded-2xl" side="top">
+                                            <PopoverContent className="w-auto p-4 bg-white border-orange-200 text-gray-900 shadow-xl rounded-2xl" side="top">
                                                 <div className="space-y-2">
                                                     <div className="flex items-center justify-between gap-6">
-                                                        <span className="text-[10px] font-black uppercase text-zinc-500 px-2 py-0.5 bg-zinc-900 rounded-full border border-zinc-800">Entry Details</span>
-                                                        <span className="text-[10px] font-bold text-green-500">{format(day.date, "MMM dd")}</span>
+                                                        <span className="text-[10px] font-black uppercase text-orange-600 px-2 py-0.5 bg-orange-50 rounded-full border border-orange-200">Entry Details</span>
+                                                        <span className="text-[10px] font-bold text-gray-500">{format(day.date, "MMM dd")}</span>
                                                     </div>
                                                     <div className="font-black text-lg">{count} submissions</div>
-                                                    <div className="flex items-center gap-2 text-xs font-bold text-green-400">
-                                                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                                                    <div className="flex items-center gap-2 text-xs font-bold text-orange-500">
+                                                        <div className="w-2 h-2 rounded-full bg-orange-500" />
                                                         {getTypeLabel(day.type)}
                                                     </div>
                                                     <div className="opacity-40 font-bold text-[9px] uppercase tracking-tighter">{format(day.date, "EEEE, yyyy")}</div>
@@ -258,17 +308,33 @@ function ContributionGraph() {
                     </div>
 
                     {viewMode === "year" && (
-                        <div className="flex justify-between mt-6 text-[10px] text-zinc-500 font-black px-1 tracking-widest uppercase opacity-50">
-                            {months.map(m => <span key={m}>{m}</span>)}
+                        <div className="flex justify-between mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase">
+                            {Array.from({ length: 12 }).map((_, i) => (
+                                <span key={i}>{format(subMonths(baseDate, 11 - i), "MMM")}</span>
+                            ))}
+                        </div>
+                    )}
+                    {viewMode === "month" && filteredWeeks.length > 0 && (
+                        <div className="flex justify-between mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase">
+                            {filteredWeeks.map((w, i) => (
+                                <span key={i}>{format(w[0].date, "MMM dd")}</span>
+                            ))}
+                        </div>
+                    )}
+                    {viewMode === "week" && filteredWeeks.length > 0 && (
+                        <div className="flex justify-center gap-2 mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase">
+                            <span>{format(filteredWeeks[0][0].date, "MMM dd, yyyy")}</span>
+                            <span>-</span>
+                            <span>{format(filteredWeeks[0][6]?.date || filteredWeeks[0][filteredWeeks[0].length - 1].date, "MMM dd, yyyy")}</span>
                         </div>
                     )}
                 </div>
 
                 {/* Footer Breakdown */}
-                <div className="mt-10 pt-8 border-t border-zinc-800/50 flex flex-col md:flex-row justify-between items-center gap-8">
+                <div className="mt-10 pt-8 border-t border-orange-100 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-6">
                         <div className="space-y-1">
-                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block">Intensity Legend</span>
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Intensity Legend</span>
                             <div className="flex gap-2">
                                 {[0, 1, 2, 3, 4].map(lvl => (
                                     <div key={lvl} className={cn("w-3.5 h-3.5 rounded-[3px]", getIntensityColor(lvl))} />
@@ -277,20 +343,17 @@ function ContributionGraph() {
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap justify-center gap-8 lg:gap-12 backdrop-blur-sm bg-zinc-900/30 p-4 rounded-3xl border border-zinc-800/50">
+                    <div className="flex flex-wrap justify-center gap-8 lg:gap-12 backdrop-blur-sm bg-orange-50/50 p-4 rounded-3xl border border-orange-100">
                         {[
-                            { label: "Progress Logs", val: stats.typeStats.progress, color: "text-white", icon: FileText },
-                            { label: "Patents Filed", val: stats.typeStats.patent, color: "text-emerald-500", icon: Award },
-                            { label: "Research Papers", val: stats.typeStats.research, color: "text-green-400", icon: History },
-                            { label: "Products", val: stats.typeStats.product, color: "text-teal-500", icon: Zap },
-                            { label: "Ventures", val: stats.typeStats.venture, color: "text-emerald-300", icon: Target },
+                            { label: "Progress Logs", val: stats.total, color: "text-orange-600", icon: FileText },
+                            { label: "Active Days", val: stats.activeDays, color: "text-orange-500", icon: Award },
                         ].map((t, idx) => (
                             <div key={idx} className="flex items-center gap-3 group cursor-default">
-                                <div className="p-2 bg-zinc-900 rounded-lg group-hover:bg-zinc-800 transition-colors">
+                                <div className="p-2 bg-white rounded-lg group-hover:bg-orange-100 border border-orange-200 transition-colors shadow-sm">
                                     <t.icon className={cn("h-3.5 w-3.5", t.color)} />
                                 </div>
                                 <div>
-                                    <p className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">{t.label}</p>
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">{t.label}</p>
                                     <p className={cn("text-sm font-black", t.color)}>{t.val}</p>
                                 </div>
                             </div>
@@ -302,9 +365,25 @@ function ContributionGraph() {
     );
 }
 
-function ResponseStreak() {
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const status = [true, true, true, true, false, true, true]; // Mock data for current week
+function ResponseStreak({ historyData, currentStreak, maxStreak, totalEntries }: { historyData: any[], currentStreak: number, maxStreak: number, totalEntries: number }) {
+    const days: string[] = [];
+    const status: boolean[] = [];
+    
+    // Generate last 7 days including today
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+        const d = subDays(today, i);
+        days.push(format(d, "EEE"));
+        
+        // Check if there is an entry for this day
+        const hasEntry = historyData.some(entry => {
+            const entryDate = new Date(entry.date);
+            return entryDate.getDate() === d.getDate() && 
+                   entryDate.getMonth() === d.getMonth() && 
+                   entryDate.getFullYear() === d.getFullYear();
+        });
+        status.push(hasEntry);
+    }
 
     return (
         <Card className="rounded-3xl border-none shadow-xl bg-white overflow-hidden p-8 border border-gray-100">
@@ -315,18 +394,18 @@ function ResponseStreak() {
                         <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg">HOT</span>
                     </div>
                     <div>
-                        <h3 className="text-2xl font-black text-gray-900">12 Day Streak</h3>
-                        <p className="text-sm text-gray-500 font-bold">You've responded to feedback 12 days in a row!</p>
+                        <h3 className="text-2xl font-black text-gray-900">{currentStreak} Day Streak</h3>
+                        <p className="text-sm text-gray-500 font-bold">You've recorded progress {currentStreak} days in a row!</p>
                     </div>
                 </div>
                 <div className="flex gap-8">
                     <div className="text-center">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Best Streak</p>
-                        <p className="text-xl font-black text-gray-900">42 Days</p>
+                        <p className="text-xl font-black text-gray-900">{maxStreak} Days</p>
                     </div>
                     <div className="text-center">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Responses</p>
-                        <p className="text-xl font-black text-gray-900">156</p>
+                        <p className="text-xl font-black text-gray-900">{totalEntries}</p>
                     </div>
                 </div>
             </div>
@@ -354,9 +433,11 @@ function ResponseStreak() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-orange-400" />
-                        <p className="text-xs font-bold text-gray-600">Keep it up! Your response time improved by <span className="text-green-600">14%</span> this week.</p>
+                        <p className="text-xs font-bold text-gray-600">Keep it up! Your response consistency is essential for growth.</p>
                     </div>
-                    <Button variant="link" className="text-xs font-black text-orange-600 p-0 h-auto">View Detailed History</Button>
+                    <a href="#contribution-graph">
+                        <Button variant="link" className="text-xs font-black text-orange-600 p-0 h-auto">View Detailed History</Button>
+                    </a>
                 </div>
             </div>
         </Card>
@@ -366,129 +447,143 @@ function ResponseStreak() {
 export default function ReportsPage() {
     const [hoveredStat, setHoveredStat] = useState<string | null>(null);
 
-    // DMIF Outcome Tracking Data
-    const outcomeData = useMemo(() => [
-        { month: "Jan", patents: 0, research: 0, products: 1, ventures: 0, total: 1 },
-        { month: "Feb", patents: 1, research: 1, products: 1, ventures: 0, total: 3 },
-        { month: "Mar", patents: 2, research: 2, products: 2, ventures: 1, total: 7 },
-        { month: "Apr", patents: 2, research: 3, products: 3, ventures: 1, total: 9 },
-        { month: "May", patents: 3, research: 4, products: 3, ventures: 2, total: 12 },
-        { month: "Jun", patents: 4, research: 5, products: 4, ventures: 2, total: 15 },
-    ], []);
+    const { data: profile } = useStudentProfile();
+    const studentId = profile?.studentId;
 
-    // Brain Development Metrics
-    const brainDevelopmentData = useMemo(() => [
-        { week: "W1", creative: 45, analytical: 50, clarity: 40 },
-        { week: "W2", creative: 52, analytical: 55, clarity: 48 },
-        { week: "W3", creative: 58, analytical: 62, clarity: 55 },
-        { week: "W4", creative: 65, analytical: 68, clarity: 62 },
-        { week: "W5", creative: 72, analytical: 75, clarity: 70 },
-        { week: "W6", creative: 78, analytical: 82, clarity: 78 },
-    ], []);
+    const { data: rawStats } = useStudentStats(studentId);
+    const { data: trends } = useStudentTrends(studentId);
+    const { data: outcomesSummary } = useStudentOutcomes(studentId);
+    const { data: progressHistory } = useStudentProgressHistory(studentId);
 
-    // Real Outcomes Achieved
-    const realOutcomes = useMemo(() => [
-        {
-            id: 1,
-            type: "Patent",
-            title: "AI-Assisted Code Generation",
-            status: "Filed (India & US)",
-            date: "May 2024",
-            mentor: "Dr. Madhan",
-            progress: 100,
-            description: "Provisional patents filed in both India and US. Ready for full patent application.",
-            impact: "2 jurisdictions",
-            icon: Award,
-            color: "from-[#6366f1] to-[#a855f7]",
-            lightColor: "bg-indigo-50/50",
-            glowColor: "shadow-indigo-500/20"
-        },
-        {
-            id: 2,
-            type: "Research Paper",
-            title: "Thinking Frameworks in Innovation",
-            status: "Published (IEEE)",
-            date: "Apr 2024",
-            mentor: "Dr. Padma",
-            progress: 100,
-            description: "Published in IEEE Xplore. 2 citations received. Presented at symposium.",
-            impact: "2 citations",
-            icon: FileText,
-            color: "from-[#10b981] to-[#3b82f6]",
-            lightColor: "bg-emerald-50/50",
-            glowColor: "shadow-emerald-500/20"
-        },
-        {
-            id: 3,
-            type: "Product",
-            title: "Learning Tracker Dashboard",
-            status: "Deployed",
-            date: "Jun 2024",
-            mentor: "Prof. Rajesh",
-            progress: 100,
-            description: "Full-stack application deployed to production. 500+ users on platform.",
-            impact: "500+ users",
-            icon: Lightbulb,
-            color: "from-[#f59e0b] to-[#ef4444]",
-            lightColor: "bg-amber-50/50",
-            glowColor: "shadow-amber-500/20"
-        },
-        {
-            id: 4,
-            type: "Venture",
-            title: "EdTech Startup MVP",
-            status: "In Development",
-            date: "Ongoing",
-            mentor: "Dr. Ananya",
-            progress: 65,
-            description: "Business plan completed, MVP development phase 2. Mentorship on funding strategy.",
-            impact: "Phase 2",
-            icon: Target,
-            color: "from-[#ec4899] to-[#8b5cf6]",
-            lightColor: "bg-rose-50/50",
-            glowColor: "shadow-rose-500/20"
-        },
-        {
-            id: 5,
-            type: "Brain Dev",
-            title: "Creative Problem Solving",
-            status: "In Progress",
-            date: "Ongoing",
-            mentor: "Dr. Madhan",
-            progress: 78,
-            description: "Significant improvement in thinking flexibility and innovative ideation.",
-            impact: "+33 pts",
-            icon: Brain,
-            color: "from-[#0ea5e9] to-[#2dd4bf]",
-            lightColor: "bg-blue-50/50",
-            glowColor: "shadow-blue-500/20"
-        },
-    ], []);
+    const calculatedStats = useMemo(() => {
+        const progressMap = new Map();
+        if (progressHistory?.data) {
+            progressHistory.data.forEach((p: any) => {
+                const dateKey = new Date(p.date).toISOString().split('T')[0];
+                progressMap.set(dateKey, true);
+            });
+        }
+
+        const streakData = [];
+        const baseDate = new Date();
+        for (let i = 0; i < 364; i++) {
+            const date = subDays(baseDate, i);
+            const dateKey = date.toISOString().split('T')[0];
+            streakData.push(progressMap.get(dateKey) || false);
+        }
+        streakData.reverse();
+
+        let maxStreak = 0;
+        let runningStreak = 0;
+
+        streakData.forEach((isActive) => {
+            if (isActive) {
+                runningStreak++;
+                if (runningStreak > maxStreak) maxStreak = runningStreak;
+            } else {
+                runningStreak = 0;
+            }
+        });
+
+        let currentStreak = 0;
+        for (let i = streakData.length - 1; i >= 0; i--) {
+            if (streakData[i]) {
+                currentStreak++;
+            } else if (i === streakData.length - 1) {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        return { currentStreak, maxStreak };
+    }, [progressHistory]);
+
+    // Map trends data to the chart
+    const outcomeData = useMemo(() => {
+        if (!trends) return [];
+        return trends.map((t: any) => ({
+            month: t.month.split('-')[1], // Just get the month number or format it
+            total: t.entries || 0
+        }));
+    }, [trends]);
+
+    // Performance Trends mapped from trends
+    const performanceTrendData = useMemo(() => {
+        if (!trends) return [];
+        return trends.map((t: any) => ({
+            week: t.month,
+            performance: t.averagePerformance || 0
+        }));
+    }, [trends]);
+
+    // Real Outcomes Achieved mapped from outcomesSummary
+    const realOutcomes = useMemo(() => {
+        if (!outcomesSummary?.recent) return [];
+        return outcomesSummary.recent.map((outcome: any, index: number) => {
+            let icon = Award;
+            let color = "from-[#6366f1] to-[#a855f7]";
+            let lightColor = "bg-indigo-50/50";
+            let glowColor = "shadow-indigo-500/20";
+
+            if (outcome.type === 'PAPER') {
+                icon = FileText; color = "from-[#10b981] to-[#3b82f6]"; lightColor = "bg-emerald-50/50"; glowColor = "shadow-emerald-500/20";
+            } else if (outcome.type === 'PRODUCT') {
+                icon = Lightbulb; color = "from-[#f59e0b] to-[#ef4444]"; lightColor = "bg-amber-50/50"; glowColor = "shadow-amber-500/20";
+            } else if (outcome.type === 'STARTUP') {
+                icon = Target; color = "from-[#ec4899] to-[#8b5cf6]"; lightColor = "bg-rose-50/50"; glowColor = "shadow-rose-500/20";
+            } else if (outcome.type === 'PROJECT') {
+                icon = Brain; color = "from-[#0ea5e9] to-[#2dd4bf]"; lightColor = "bg-blue-50/50"; glowColor = "shadow-blue-500/20";
+            }
+
+            let progressValue = 50;
+            switch(outcome.status) {
+                case 'PENDING': progressValue = 25; break;
+                case 'FILED': progressValue = 50; break;
+                case 'PUBLISHED':
+                case 'GRANTED':
+                case 'COMPLETED': progressValue = 100; break;
+            }
+
+            return {
+                id: outcome.id,
+                type: outcome.type,
+                title: outcome.title,
+                status: outcome.status,
+                date: new Date(outcome.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                mentor: profile?.mentor || 'Unassigned',
+                progress: progressValue,
+                description: "Recent outcome from student's program.",
+                impact: "View details",
+                icon, color, lightColor, glowColor
+            };
+        });
+    }, [outcomesSummary, profile]);
 
 
     const outcomeTypeDistribution = [
-        { name: "Patents", value: 4, color: "#f97316" },
-        { name: "Papers", value: 5, color: "#ea580c" },
-        { name: "Products", value: 4, color: "#ff9f1c" },
-        { name: "Ventures", value: 2, color: "#fb8500" },
-        { name: "Brain Dev", value: 1, color: "#ffa500" },
+        { name: "Patents", value: outcomesSummary?.byType?.PATENT || 0, color: "#f97316" },
+        { name: "Papers", value: outcomesSummary?.byType?.PAPER || 0, color: "#ea580c" },
+        { name: "Products", value: outcomesSummary?.byType?.PRODUCT || 0, color: "#ff9f1c" },
+        { name: "Ventures", value: outcomesSummary?.byType?.STARTUP || 0, color: "#fb8500" },
+        { name: "Brain Dev", value: outcomesSummary?.byType?.PROJECT || 0, color: "#ffa500" },
     ];
 
     const COLORS = ["#f97316", "#ea580c", "#ff9f1c", "#fb8500", "#ffa500"];
 
     const stats = [
-        { id: "patents", label: "Patents Filed", value: "4", subtext: "India & US", icon: Award, color: "from-orange-500 to-orange-600" },
-        { id: "papers", label: "Research Papers", value: "5", subtext: "Published", icon: FileText, color: "from-orange-600 to-orange-700" },
-        { id: "products", label: "Products", value: "4", subtext: "Deployed", icon: Lightbulb, color: "from-orange-500 to-orange-600" },
-        { id: "ventures", label: "Ventures", value: "2", subtext: "In Dev", icon: Target, color: "from-orange-600 to-orange-500" },
-        { id: "brain", label: "Brain Score", value: "78%", subtext: "+33 points", icon: Brain, color: "from-orange-500 to-red-500" },
+        { id: "patents", label: "Patents Filed", value: `${outcomesSummary?.byType?.PATENT || 0}`, subtext: "Total Filed", icon: Award, color: "from-orange-500 to-orange-600" },
+        { id: "papers", label: "Research Papers", value: `${outcomesSummary?.byType?.PAPER || 0}`, subtext: "Published", icon: FileText, color: "from-orange-600 to-orange-700" },
+        { id: "products", label: "Products", value: `${outcomesSummary?.byType?.PRODUCT || 0}`, subtext: "Deployed", icon: Lightbulb, color: "from-orange-500 to-orange-600" },
+        { id: "ventures", label: "Ventures", value: `${outcomesSummary?.byType?.STARTUP || 0}`, subtext: "In Dev", icon: Target, color: "from-orange-600 to-orange-500" },
+        { id: "brain", label: "Brain Score", value: `${rawStats?.currentProgress || 0}%`, subtext: "Overall", icon: Brain, color: "from-orange-500 to-red-500" },
     ];
 
     const performanceStats = [
-        { id: "streak", label: "Daily Streak", value: "12 Days", subtext: "🔥 3 to Personal Best", icon: Flame, color: "from-orange-500 to-red-600" },
-        { id: "duration", label: "Time Duration", value: "4.5 hrs", subtext: "⏱️ Today's Session", icon: Clock, color: "from-blue-500 to-indigo-600" },
-        { id: "completion", label: "Curriculum Prog", value: "82%", subtext: "✅ Module 4/5", icon: CheckCircle2, color: "from-emerald-500 to-teal-600" },
-        { id: "status", label: "Daily Status", value: "Active", subtext: "🚀 Goal: On Track", icon: ZapIcon, color: "from-purple-500 to-pink-600" },
+        { id: "streak", label: "Total Entries", value: `${rawStats?.totalEntries || 0}`, subtext: "Lifetime", icon: Flame, color: "from-orange-500 to-red-600" },
+        { id: "duration", label: "Attendance", value: `${Math.round(rawStats?.attendance?.rate || 0)}%`, subtext: "Session Presence", icon: Clock, color: "from-blue-500 to-indigo-600" },
+        { id: "completion", label: "Reports", value: `${rawStats?.weeklyReports || 0}`, subtext: "Weekly Gen", icon: CheckCircle2, color: "from-emerald-500 to-teal-600" },
+        { id: "status", label: "Avg Rating", value: `${Math.round(rawStats?.performance?.average || 0)}/10`, subtext: "Mentor Eval", icon: ZapIcon, color: "from-purple-500 to-pink-600" },
     ];
 
     const containerVariants = {
@@ -581,12 +676,12 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Daily Submission Streak (Contribution Graph) */}
-                <div className="space-y-4">
+                <div id="contribution-graph" className="space-y-4">
                     <div className="flex items-center gap-2 px-2">
                         <History className="h-5 w-5 text-orange-500" />
                         <h2 className="text-xl font-bold font-montserrat text-gray-900 uppercase tracking-tight">Submission Streak</h2>
                     </div>
-                    <ContributionGraph />
+                    <ContributionGraph studentId={studentId} />
                 </div>
 
                 {/* Response Streak Section */}
@@ -595,7 +690,12 @@ export default function ReportsPage() {
                         <ZapIcon className="h-5 w-5 text-orange-500" />
                         <h2 className="text-xl font-bold font-montserrat text-gray-900 uppercase tracking-tight">Response Consistency</h2>
                     </div>
-                    <ResponseStreak />
+                    <ResponseStreak 
+                        historyData={progressHistory?.data || []} 
+                        currentStreak={calculatedStats.currentStreak}
+                        maxStreak={calculatedStats.maxStreak}
+                        totalEntries={rawStats?.totalEntries || 0}
+                    />
                 </div>
 
                 {/* Performance & Active Metrics Section */}
@@ -662,7 +762,7 @@ export default function ReportsPage() {
                                 </div>
                             </div>
 
-                            <div className="h-[300px] -mx-6">
+                            <div className="h-[300px] w-full min-w-0">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={outcomeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                         <defs>
@@ -697,7 +797,7 @@ export default function ReportsPage() {
                         </div>
                     </div>
 
-                    {/* Brain Development - Compact */}
+                    {/* Performance Trends - Compact */}
                     <div className="rounded-3xl border border-gray-200/50 bg-white p-8 shadow-sm hover:shadow-xl transition-shadow duration-300 group overflow-hidden">
                         {/* Top accent */}
                         <div className="absolute top-0 left-0 h-1 w-0 bg-gradient-to-r from-orange-500 to-orange-600 group-hover:w-full transition-all duration-300"></div>
@@ -706,21 +806,21 @@ export default function ReportsPage() {
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <div className="p-2.5 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl">
-                                        <Brain className="w-5 h-5 text-orange-600" />
+                                        <TrendingUp className="w-5 h-5 text-orange-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-900">Brain 2.0</h3>
-                                        <p className="text-xs text-gray-600">Thinking development</p>
+                                        <h3 className="text-lg font-bold text-gray-900">Performance Trend</h3>
+                                        <p className="text-xs text-gray-600">Average Rating</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="h-[300px] -mx-6">
+                            <div className="h-[300px] w-full min-w-0">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={brainDevelopmentData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                    <LineChart data={performanceTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                                         <XAxis dataKey="week" fontSize={11} tickLine={false} axisLine={false} stroke="#999" />
-                                        <YAxis fontSize={11} tickLine={false} axisLine={false} stroke="#999" />
+                                        <YAxis fontSize={11} tickLine={false} axisLine={false} stroke="#999" domain={[0, 10]} />
                                         <Tooltip
                                             contentStyle={{
                                                 backgroundColor: "#fff",
@@ -731,19 +831,11 @@ export default function ReportsPage() {
                                         />
                                         <Line
                                             type="monotone"
-                                            dataKey="creative"
+                                            dataKey="performance"
                                             stroke="#f97316"
                                             strokeWidth={2.5}
                                             dot={{ fill: "#f97316", r: 4 }}
-                                            name="Creative"
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="analytical"
-                                            stroke="#ea580c"
-                                            strokeWidth={2.5}
-                                            dot={{ fill: "#ea580c", r: 4 }}
-                                            name="Analytical"
+                                            name="Avg Rating"
                                         />
                                     </LineChart>
                                 </ResponsiveContainer>

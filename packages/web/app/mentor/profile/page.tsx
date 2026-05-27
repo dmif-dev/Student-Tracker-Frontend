@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   User,
@@ -18,11 +18,15 @@ import {
   Save,
   X,
   Clock,
-  Users
+  Users,
+  Camera,
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
 import { apiClient } from '@/utils/apiClient';
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/utils/supabase/client';
 
 interface MentorProfile {
   id: string;
@@ -63,10 +67,22 @@ export default function MentorProfilePage() {
   const { data, isLoading, refetch } = useCurrentMentor();
   const profile = data as MentorProfile | undefined;
   const [isEditing, setIsEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState<Partial<MentorProfile>>({});
+  const [editedProfile, setEditedProfile] = useState<Partial<MentorProfile & { removeAvatar: boolean }>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
+  const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
+
+  const getAvatarUrl = (path: string | undefined | null) => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim()?.replace(/\/api\/?$/, '') || 'http://localhost:4000';
+    // Append the raw path as a version query parameter to break browser cache when a new image is uploaded
+    return `${apiUrl}/api/mentor/${profile?.id}/avatar?v=${encodeURIComponent(path)}`;
+  };
 
   const handleEdit = () => {
     setEditedProfile({
@@ -74,9 +90,12 @@ export default function MentorProfilePage() {
       phone: profile?.phone,
       location: profile?.location,
       bio: profile?.bio,
+      removeAvatar: false,
     });
     setSaveError(null);
     setSaveSuccess(false);
+    setSelectedAvatarFile(null);
+    setPreviewAvatar(null);
     setIsEditing(true);
   };
 
@@ -84,15 +103,29 @@ export default function MentorProfilePage() {
     setSaving(true);
     setSaveError(null);
     try {
+      if (selectedAvatarFile) {
+        setUploadingAvatar(true);
+        const formData = new FormData();
+        formData.append('avatar', selectedAvatarFile);
+        try {
+          await apiClient.post('mentor/profile/avatar', formData);
+        } finally {
+          setUploadingAvatar(false);
+        }
+      }
+
       await apiClient.put('mentor/profile/me', {
         name: editedProfile.name,
         phone: editedProfile.phone,
         location: editedProfile.location,
         bio: editedProfile.bio,
+        removeAvatar: editedProfile.removeAvatar,
       });
       await refetch();
       setSaveSuccess(true);
       setIsEditing(false);
+      setSelectedAvatarFile(null);
+      setPreviewAvatar(null);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: any) {
       setSaveError(err?.message || 'Failed to save profile. Please try again.');
@@ -105,6 +138,25 @@ export default function MentorProfilePage() {
     setIsEditing(false);
     setEditedProfile({});
     setSaveError(null);
+    setSelectedAvatarFile(null);
+    setPreviewAvatar(null);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSelectedAvatarFile(file);
+    setPreviewAvatar(URL.createObjectURL(file));
+    setEditedProfile(prev => ({ ...prev, removeAvatar: false }));
+  };
+
+  const handleRemoveAvatar = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditedProfile(prev => ({ ...prev, removeAvatar: true }));
+    setSelectedAvatarFile(null);
+    setPreviewAvatar(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const getProgramIcon = (program: string) => {
@@ -201,8 +253,55 @@ export default function MentorProfilePage() {
         {/* Profile Card */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-            <div className="w-24 h-24 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/20 text-white text-3xl font-bold mx-auto mb-4">
-              {profile.name?.charAt(0) || '?'}
+            <div className={`relative w-32 h-32 mx-auto mb-4 ${isEditing ? 'group' : ''}`}>
+              <div 
+                className={`w-full h-full relative ${isEditing ? 'cursor-pointer' : ''}`}
+                onClick={() => isEditing && fileInputRef.current?.click()}
+              >
+                {(!editedProfile.removeAvatar) && (previewAvatar || getAvatarUrl(profile.avatar)) ? (
+                  <img 
+                    src={previewAvatar || getAvatarUrl(profile.avatar)!} 
+                    alt={profile.name}
+                    className="w-full h-full rounded-full object-cover shadow-lg border-4 border-white"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/20 text-white text-4xl font-bold border-4 border-white">
+                    {profile.name?.charAt(0) || '?'}
+                  </div>
+                )}
+                
+                {isEditing && (
+                  <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                    {uploadingAvatar ? (
+                      <Loader2 className="w-8 h-8 animate-spin" />
+                    ) : (
+                      <>
+                        <Camera className="w-8 h-8 mb-1" />
+                        <span className="text-xs font-bold uppercase tracking-widest">Upload</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {isEditing && !editedProfile.removeAvatar && (previewAvatar || getAvatarUrl(profile.avatar)) && (
+                <button
+                  type="button"
+                  onClick={handleRemoveAvatar}
+                  className="absolute bottom-0 right-0 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-transform hover:scale-110"
+                  title="Remove avatar"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleAvatarChange}
+                accept="image/*"
+                className="hidden" 
+              />
             </div>
             
             {isEditing ? (

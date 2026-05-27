@@ -255,7 +255,7 @@ export default function DashboardPage() {
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <Link href="/Student/progress/new">
+                    <Link href="/Student/my-stats#contribution-graph">
                         <Button variant="outline" className="font-montserrat font-bold border-orange-200 text-orange-600 hover:bg-orange-50">
                             <History className="mr-2 h-4 w-4" /> View History
                         </Button>
