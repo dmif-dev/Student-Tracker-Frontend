@@ -263,11 +263,12 @@ function ContributionGraph({ studentId }: { studentId?: string }) {
                 </div>
 
                 <div className="overflow-x-auto pb-4 scrollbar-hide">
-                    <div className={cn(
-                        "flex gap-1.5 min-w-max",
-                        viewMode === "week" && "justify-center py-10",
-                        viewMode === "month" && "justify-center py-6"
-                    )}>
+                    <div className={cn("mx-auto", viewMode === "year" ? "w-max" : "w-full")}>
+                        <div className={cn(
+                            "flex gap-1.5 min-w-max",
+                            viewMode === "week" && "justify-center py-10",
+                            viewMode === "month" && "justify-center py-6"
+                        )}>
                         {filteredWeeks.map((week, weekIndex) => (
                             <div key={weekIndex} className="flex flex-col gap-1.5">
                                 {week.map((day, dayIndex) => {
@@ -307,27 +308,28 @@ function ContributionGraph({ studentId }: { studentId?: string }) {
                         ))}
                     </div>
 
-                    {viewMode === "year" && (
-                        <div className="flex justify-between mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase">
-                            {Array.from({ length: 12 }).map((_, i) => (
-                                <span key={i}>{format(subMonths(baseDate, 11 - i), "MMM")}</span>
-                            ))}
-                        </div>
-                    )}
-                    {viewMode === "month" && filteredWeeks.length > 0 && (
-                        <div className="flex justify-between mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase">
-                            {filteredWeeks.map((w, i) => (
-                                <span key={i}>{format(w[0].date, "MMM dd")}</span>
-                            ))}
-                        </div>
-                    )}
-                    {viewMode === "week" && filteredWeeks.length > 0 && (
-                        <div className="flex justify-center gap-2 mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase">
-                            <span>{format(filteredWeeks[0][0].date, "MMM dd, yyyy")}</span>
-                            <span>-</span>
-                            <span>{format(filteredWeeks[0][6]?.date || filteredWeeks[0][filteredWeeks[0].length - 1].date, "MMM dd, yyyy")}</span>
-                        </div>
-                    )}
+                        {viewMode === "year" && (
+                            <div className="flex justify-between mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase w-full">
+                                {Array.from({ length: 12 }).map((_, i) => (
+                                    <span key={i}>{format(subMonths(baseDate, 11 - i), "MMM")}</span>
+                                ))}
+                            </div>
+                        )}
+                        {viewMode === "month" && filteredWeeks.length > 0 && (
+                            <div className="flex justify-between mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase w-full">
+                                {filteredWeeks.map((w, i) => (
+                                    <span key={i}>{format(w[0].date, "MMM dd")}</span>
+                                ))}
+                            </div>
+                        )}
+                        {viewMode === "week" && filteredWeeks.length > 0 && (
+                            <div className="flex justify-center gap-2 mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase w-full">
+                                <span>{format(filteredWeeks[0][0].date, "MMM dd, yyyy")}</span>
+                                <span>-</span>
+                                <span>{format(filteredWeeks[0][6]?.date || filteredWeeks[0][filteredWeeks[0].length - 1].date, "MMM dd, yyyy")}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Footer Breakdown */}
@@ -449,6 +451,8 @@ export default function ReportsPage() {
 
     const { data: profile } = useStudentProfile();
     const studentId = profile?.studentId;
+    const programName = profile?.programName || '';
+    const trackName = profile?.trackName || '';
 
     const { data: rawStats } = useStudentStats(studentId);
     const { data: trends } = useStudentTrends(studentId);
@@ -566,18 +570,60 @@ export default function ReportsPage() {
         { name: "Papers", value: outcomesSummary?.byType?.PAPER || 0, color: "#ea580c" },
         { name: "Products", value: outcomesSummary?.byType?.PRODUCT || 0, color: "#ff9f1c" },
         { name: "Ventures", value: outcomesSummary?.byType?.STARTUP || 0, color: "#fb8500" },
+        { name: "Certifications", value: outcomesSummary?.byType?.CERTIFICATION || 0, color: "#f59e0b" },
         { name: "Brain Dev", value: outcomesSummary?.byType?.PROJECT || 0, color: "#ffa500" },
     ];
 
-    const COLORS = ["#f97316", "#ea580c", "#ff9f1c", "#fb8500", "#ffa500"];
+    const COLORS = ["#f97316", "#ea580c", "#ff9f1c", "#fb8500", "#f59e0b", "#ffa500"];
 
-    const stats = [
-        { id: "patents", label: "Patents Filed", value: `${outcomesSummary?.byType?.PATENT || 0}`, subtext: "Total Filed", icon: Award, color: "from-orange-500 to-orange-600" },
-        { id: "papers", label: "Research Papers", value: `${outcomesSummary?.byType?.PAPER || 0}`, subtext: "Published", icon: FileText, color: "from-orange-600 to-orange-700" },
-        { id: "products", label: "Products", value: `${outcomesSummary?.byType?.PRODUCT || 0}`, subtext: "Deployed", icon: Lightbulb, color: "from-orange-500 to-orange-600" },
-        { id: "ventures", label: "Ventures", value: `${outcomesSummary?.byType?.STARTUP || 0}`, subtext: "In Dev", icon: Target, color: "from-orange-600 to-orange-500" },
-        { id: "brain", label: "Brain Score", value: `${rawStats?.currentProgress || 0}%`, subtext: "Overall", icon: Brain, color: "from-orange-500 to-red-500" },
+    const allStats = [
+        { id: "patents", type: "PATENT", label: "Patents Filed", value: `${outcomesSummary?.byType?.PATENT || 0}`, subtext: "Total Filed", icon: Award, color: "from-orange-500 to-orange-600" },
+        { id: "papers", type: "PAPER", label: "Research Papers", value: `${outcomesSummary?.byType?.PAPER || 0}`, subtext: "Published", icon: FileText, color: "from-orange-600 to-orange-700" },
+        { id: "products", type: "PRODUCT", label: "Products", value: `${outcomesSummary?.byType?.PRODUCT || 0}`, subtext: "Deployed", icon: Lightbulb, color: "from-orange-500 to-orange-600" },
+        { id: "ventures", type: "STARTUP", label: "Ventures", value: `${outcomesSummary?.byType?.STARTUP || 0}`, subtext: "In Dev", icon: Target, color: "from-orange-600 to-orange-500" },
+        { id: "certifications", type: "CERTIFICATION", label: "Certifications", value: `${outcomesSummary?.byType?.CERTIFICATION || 0}`, subtext: "Earned", icon: Award, color: "from-orange-500 to-orange-600" },
+        { id: "projects", type: "PROJECT", label: "Projects", value: `${outcomesSummary?.byType?.PROJECT || 0}`, subtext: "Completed", icon: Brain, color: "from-orange-500 to-orange-600" },
     ];
+
+    const brainScoreStat = { id: "brain", label: "Brain Score", value: `${rawStats?.currentProgress || 0}%`, subtext: "Overall", icon: Brain, color: "from-orange-500 to-red-500" };
+
+    let visibleStats = [];
+    let outcomesText = "Outcomes created over 6 months.";
+
+    if (programName === 'G_GMP' || programName === 'G-GMP') {
+        if (trackName.includes('Patent')) {
+            visibleStats.push(allStats.find(s => s.id === 'patents'));
+            outcomesText = "Patents filed over 6 months.";
+        } else if (trackName.includes('Research')) {
+            visibleStats.push(allStats.find(s => s.id === 'papers'));
+            outcomesText = "Research papers published over 6 months.";
+        } else if (trackName.includes('Entrepreneurship')) {
+            visibleStats.push(allStats.find(s => s.id === 'ventures'));
+            outcomesText = "Ventures developed over 6 months.";
+        } else if (trackName.includes('Inventor')) {
+            visibleStats.push(allStats.find(s => s.id === 'projects'));
+            outcomesText = "Projects created over 6 months.";
+        } else {
+            visibleStats.push(allStats.find(s => s.id === 'patents'), allStats.find(s => s.id === 'papers'), allStats.find(s => s.id === 'ventures'));
+            outcomesText = "Patents, papers, and ventures created over 6 months.";
+        }
+    } else if (programName === 'G_CMP' || programName === 'G-CMP') {
+        visibleStats.push(allStats.find(s => s.id === 'products'));
+        visibleStats.push(allStats.find(s => s.id === 'projects'));
+        outcomesText = "Products and applications developed over 6 months.";
+    } else if (programName === 'E_TIP' || programName === 'E-TIP') {
+        visibleStats.push(allStats.find(s => s.id === 'products'));
+        visibleStats.push(allStats.find(s => s.id === 'projects'));
+        outcomesText = "Systems and products architected over 6 months.";
+    } else if (programName === 'PCP') {
+        visibleStats.push(allStats.find(s => s.id === 'certifications'));
+        visibleStats.push(allStats.find(s => s.id === 'projects'));
+        outcomesText = "Certifications and projects completed over 6 months.";
+    } else {
+        visibleStats.push(allStats.find(s => s.id === 'patents'), allStats.find(s => s.id === 'papers'), allStats.find(s => s.id === 'products'), allStats.find(s => s.id === 'ventures'));
+    }
+
+    const stats: any[] = [...visibleStats.filter(Boolean), brainScoreStat];
 
     const performanceStats = [
         { id: "streak", label: "Total Entries", value: `${rawStats?.totalEntries || 0}`, subtext: "Lifetime", icon: Flame, color: "from-orange-500 to-red-600" },
@@ -641,7 +687,12 @@ export default function ReportsPage() {
 
             <div className="px-6 py-12 space-y-12">
                 {/* Premium Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", 
+                    stats.length === 2 ? "lg:grid-cols-2" : 
+                    stats.length === 3 ? "lg:grid-cols-3" : 
+                    stats.length === 4 ? "lg:grid-cols-4" : 
+                    "lg:grid-cols-5"
+                )}>
                     {stats.map((stat) => {
                         const IconComponent = stat.icon;
                         const isHovered = hoveredStat === stat.id;
@@ -757,7 +808,7 @@ export default function ReportsPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-900">Real Outcomes Growth</h3>
-                                        <p className="text-sm text-gray-600">Patents, papers, products, and ventures created over 6 months.</p>
+                                        <p className="text-sm text-gray-600">{outcomesText}</p>
                                     </div>
                                 </div>
                             </div>
