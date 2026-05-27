@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ShoppingCart, CheckCircle, AlertCircle } from 'lucide-react';
+import LoaderOne from '@/components/ui/loader-one';
 
 export default function CheckoutButton() {
   const [loading, setLoading] = useState(false);
@@ -61,7 +62,7 @@ export default function CheckoutButton() {
       >
         {loading ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-b-transparent"></div>
+            <span className="scale-75 mr-2"><LoaderOne /></span>
             <span>Processing...</span>
           </>
         ) : (

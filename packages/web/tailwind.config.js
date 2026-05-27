@@ -76,6 +76,10 @@ module.exports = {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			keyframes: {
+				waves: {
+					'0%': { transform: 'translateY(-170px)' },
+					'100%': { transform: 'translateY(0)' },
+				},
 				aurora: {
 					from: {
 						backgroundPosition: "50% 50%, 50% 50%",
@@ -102,6 +106,7 @@ module.exports = {
 				}
 			},
 			animation: {
+				waves: 'waves 15s linear infinite alternate',
 				aurora: "aurora 60s linear infinite",
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'

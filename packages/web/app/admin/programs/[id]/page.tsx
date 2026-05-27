@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
 import { Activity as ActivityType } from '@/types/models';
-
+import LoaderOne from '@/components/ui/loader-one';
 
 interface ProgramDetails {
   id: string;
@@ -204,7 +204,7 @@ export default function ProgramDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <LoaderOne />
       </div>
     );
   }

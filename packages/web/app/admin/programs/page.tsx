@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiService } from '@/services/api';
+import LoaderOne from '@/components/ui/loader-one';
 import { 
   GraduationCap, 
   Users, 
@@ -310,6 +311,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
 export default function ProgramsPage() {
   const router = useRouter();
   const [programs, setPrograms] = useState<Program[]>([]);
+  const [programMetrics, setProgramMetrics] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [showTrackModal, setShowTrackModal] = useState<Program | null>(null);
@@ -317,12 +319,27 @@ export default function ProgramsPage() {
   const [reportFormat, setReportFormat] = useState<'pdf' | 'excel' | 'csv'>('pdf');
   const [reportDateRange, setReportDateRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [savingTrack, setSavingTrack] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
         const data = await ApiService.getPrograms();
         setPrograms(data);
+
+        // Fetch detailed metrics for each program (mentor counts, outcome breakdowns)
+        const metricsMap: Record<string, any> = {};
+        await Promise.all(
+          data.map(async (program) => {
+            try {
+              const metrics = await ApiService.getProgramMetrics(program.id);
+              metricsMap[program.id] = metrics;
+            } catch {
+              // Metrics are optional; silently skip if unavailable
+            }
+          })
+        );
+        setProgramMetrics(metricsMap);
       } catch (error) {
         console.error('Error fetching programs:', error);
       } finally {
@@ -602,15 +619,13 @@ export default function ProgramsPage() {
   };
 
   const handleUpdateTrack = async (trackId: string, updates: Partial<Track>) => {
-    console.log('Updating track:', trackId, updates);
-    
-    // Update local state immediately for UI feedback
-    setPrograms(prevPrograms => 
+    // Optimistic update in UI
+    setPrograms(prevPrograms =>
       prevPrograms.map(program => {
         if (program.id === showTrackModal?.id) {
           return {
             ...program,
-            tracks: program.tracks.map(track => 
+            tracks: program.tracks.map(track =>
               track.id === trackId ? { ...track, ...updates } : track
             )
           };
@@ -619,8 +634,16 @@ export default function ProgramsPage() {
       })
     );
 
-    // In a real app, you would also call an API here
-    // await ApiService.updateTrack(trackId, updates);
+    // Persist to backend
+    try {
+      setSavingTrack(trackId);
+      await ApiService.updateTrack(trackId, updates as Record<string, any>);
+    } catch (error) {
+      console.error('Failed to save track update:', error);
+      // Optionally revert local state on failure here
+    } finally {
+      setSavingTrack(null);
+    }
   };
 
   const filteredPrograms = selectedType === 'all' 
@@ -635,7 +658,7 @@ export default function ProgramsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }
@@ -790,9 +813,7 @@ export default function ProgramsPage() {
                     <div className="bg-white/50 rounded-lg p-3">
                       <p className="text-xs text-gray-500">Mentors</p>
                       <p className="text-xl font-bold text-gray-900">
-                        {program.id === 'g-gmp' ? '18' : 
-                         program.id === 'g-cmp' ? '19' : 
-                         program.id === 'e-tip' ? '10' : '0'}
+                        {programMetrics[program.id]?.mentorCount ?? '—'}
                       </p>
                       <p className="text-xs text-orange-600 mt-1">Active mentors</p>
                     </div>
@@ -808,22 +829,22 @@ export default function ProgramsPage() {
                         <OutcomeIcon size={18} className={getOutcomeColor(program.id)} />
                         <p className="text-xl font-bold text-gray-900">{program.outcomeCount}</p>
                       </div>
-                      {program.id === 'g-gmp' && (
+                      {program.id === 'g-gmp' && programMetrics[program.id]?.outcomes && (
                         <div className="flex items-center space-x-2 mt-1 text-xs">
-                          <span className="text-purple-600">12 patents</span>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-orange-600">15 papers</span>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-green-600">8 startups</span>
+                          <span className="text-purple-600">{programMetrics[program.id].outcomes.patent ?? 0} patents</span>
+                          <span className="text-gray-300">&bull;</span>
+                          <span className="text-orange-600">{programMetrics[program.id].outcomes.paper ?? 0} papers</span>
+                          <span className="text-gray-300">&bull;</span>
+                          <span className="text-green-600">{programMetrics[program.id].outcomes.startup ?? 0} startups</span>
                         </div>
                       )}
-                      {program.id === 'pcp' && (
+                      {program.id === 'pcp' && programMetrics[program.id]?.outcomes && (
                         <div className="flex items-center space-x-2 mt-1 text-xs">
-                          <span className="text-orange-600">25 associate</span>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-orange-600">12 specialist</span>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-orange-600">5 professional</span>
+                          <span className="text-orange-600">{programMetrics[program.id].outcomes.associate ?? 0} associate</span>
+                          <span className="text-gray-300">&bull;</span>
+                          <span className="text-orange-600">{programMetrics[program.id].outcomes.specialist ?? 0} specialist</span>
+                          <span className="text-gray-300">&bull;</span>
+                          <span className="text-orange-600">{programMetrics[program.id].outcomes.professional ?? 0} professional</span>
                         </div>
                       )}
                     </div>
@@ -1067,7 +1088,7 @@ export default function ProgramsPage() {
               >
                 {generatingReport ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <span className="scale-75 mr-2"><LoaderOne /></span>
                     Generating...
                   </>
                 ) : (

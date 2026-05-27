@@ -28,6 +28,7 @@ import { useCurrentMentor, useMentorSchedule, useMentorStudents, useMentorDocume
 import DocumentViewer from '@/components/common/DocumentViewer';
 import { DocumentViewerService } from '@/services/documentViewerService';
 import { FileHandlerService } from '@/services/fileHandlerService';
+import LoaderOne from "@/components/ui/loader-one";
 
 interface ViewerDocument {
   id: string;
@@ -250,7 +251,7 @@ export default function MentorDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }

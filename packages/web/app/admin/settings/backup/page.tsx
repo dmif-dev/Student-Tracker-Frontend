@@ -5,6 +5,7 @@ import { Download, Upload, Clock, Database, RefreshCw, CheckCircle, AlertCircle,
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiService } from '@/services/api';
 import { toast } from 'sonner';
+import LoaderOne from '@/components/ui/loader-one';
 
 interface Backup {
   id: string;
@@ -116,7 +117,11 @@ export default function BackupSettingsPage() {
   };
 
   if (isLoading || isConfigLoading) {
-    return <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">Loading backups...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoaderOne />
+      </div>
+    );
   }
 
   return (
@@ -205,7 +210,7 @@ export default function BackupSettingsPage() {
             >
               {createMutation.isPending ? (
                 <>
-                  <RefreshCw size={18} className="mr-2 animate-spin" />
+                  <span className="scale-75 mr-2"><LoaderOne /></span>
                   Creating backup...
                 </>
               ) : (

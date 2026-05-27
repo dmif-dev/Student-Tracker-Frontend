@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useAdminMentor, useAdminMentorSessions, useAdminCreateSession } from '@/hooks/api/useAdmin';
 import { type MentorSchedule, type AssignedStudent } from '@/types/models';
-
+import LoaderOne from '@/components/ui/loader-one';
 
 interface SessionFormData {
   studentId: string;
@@ -51,6 +51,16 @@ export default function MentorSchedulePage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
+
+  const [formData, setFormData] = useState<SessionFormData>({
+    studentId: '',
+    date: '',
+    startTime: '',
+    endTime: '',
+    topic: '',
+    notes: '',
+    meetingLink: ''
+  });
 
   useEffect(() => {
     if (serverSessions) {
@@ -80,8 +90,6 @@ export default function MentorSchedulePage() {
       setStudents(nonPCPStudents);
     }
   }, [mentorData]);
-
-
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -134,7 +142,7 @@ export default function MentorSchedulePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }

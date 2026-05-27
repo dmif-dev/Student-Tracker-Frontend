@@ -20,6 +20,7 @@ import { apiClient } from '@/utils/apiClient';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
 import { useQueryClient } from '@tanstack/react-query';
 import { DocumentType } from '@student-tracker/shared/models/Document';
+import LoaderOne from '@/components/ui/loader-one';
 
 interface Student {
   id: string;
@@ -655,7 +656,7 @@ export default function MentorUploadDocumentPage() {
             >
               {uploading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <span className="scale-75 mr-2"><LoaderOne /></span>
                   Uploading...
                 </>
               ) : (

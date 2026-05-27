@@ -38,6 +38,7 @@ import {
   Target,
   Activity
 } from 'lucide-react';
+import LoaderOne from "@/components/ui/loader-one";
 
 interface ProgramData {
   id: string;
@@ -225,10 +226,8 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const mockData = generateMockData(dateRange, selectedProgram, selectedTrack);
-      setData(mockData);
+      const dbData = await ApiService.getAnalytics(dateRange, selectedProgram, selectedTrack);
+      setData(dbData);
     } catch (error) {
       console.error('Error fetching analytics:', error);
     } finally {
@@ -611,7 +610,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }
@@ -640,7 +639,7 @@ export default function AnalyticsPage() {
           >
             {exporting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <span className="scale-75 mr-2"><LoaderOne /></span>
                 Exporting...
               </>
             ) : (

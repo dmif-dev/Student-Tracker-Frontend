@@ -78,7 +78,7 @@ const mapBackendOutcome = (outcome: any): Outcome => ({
   status: (outcome.status || 'pending').toLowerCase(),
   date: outcome.date ? new Date(outcome.date).toISOString().split('T')[0] : '',
   mentor: outcome.mentor?.name || outcome.mentor || '',
-  program: getProgramName(outcome.programId || outcome.program || ''),
+  program: getProgramName(outcome.programId || outcome.program || '') as any,
 });
 
 const normalizeActivityType = (action: string): Activity['type'] => {
@@ -233,49 +233,58 @@ export class ApiService {
 
   // Programs
   static async getPrograms(): Promise<Program[]> {
-    await delay(800);
-    return mockPrograms;
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/programs`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    if (!response.ok) throw new Error('Failed to fetch programs');
+    const data = await response.json();
+    return data.map(mapBackendProgram);
   }
 
   static async getProgramById(id: string): Promise<Program | undefined> {
-    await delay(500);
-    return mockPrograms.find(p => p.id === id);
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/programs/${id}`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    if (!response.ok) return undefined;
+    const data = await response.json();
+    return mapBackendProgram(data);
+  }
+
+  // Update a track via backend
+  static async updateTrack(trackId: string, updates: Record<string, any>): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/programs/tracks/${trackId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      }
+    );
+    if (!response.ok) throw new Error('Failed to update track');
+    return response.json();
   }
 
   // Get program metrics by ID
   static async getProgramMetrics(programId: string): Promise<any> {
-    await delay(500);
-    
-    const program = mockPrograms.find(p => p.id === programId);
-    const programName = getProgramName(programId);
-    const students = mockStudents.filter(s => s.program === programName);
-    const outcomes = mockOutcomes.filter(o => o.program === programName);
-    
-    // Get mentors for this program (excluding PCP)
-    let mentors: any[] = [];
-    if (programName !== 'PCP') {
-      mentors = mockMentors.filter(m => m.programs.includes(programName));
-    }
-    
-    return {
-      program,
-      studentCount: students.length,
-      activeCount: students.filter(s => s.status === 'active').length,
-      completionRate: program?.completionRate || 0,
-      outcomes: program?.hasOutcomes ? outcomes.length : undefined,
-      outcomeDetails: program?.hasOutcomes ? {
-        patents: outcomes.filter(o => o.type === 'patent').length,
-        papers: outcomes.filter(o => o.type === 'paper').length,
-        startups: outcomes.filter(o => o.type === 'startup').length,
-        certifications: outcomes.filter(o => o.type === 'certification').length,
-      } : undefined,
-      mentorCount: mentors.length,
-      mentors: mentors.map(m => ({
-        id: m.id,
-        name: m.name,
-        students: m.students,
-      })),
-    };
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/programs/${programId}/metrics`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    if (!response.ok) throw new Error('Failed to fetch program metrics');
+    return response.json();
   }
 
   // Activities
@@ -412,55 +421,25 @@ export class ApiService {
     return mockDashboardStats;
   }
 
-  static async getAnalytics(dateRange: string = '6m', program?: string): Promise<typeof mockAnalytics> {
-    await delay(1000);
-    
-    // Filter data based on dateRange and program
-    let filteredData = { ...mockAnalytics };
-    
-    // Filter by program if specified
-    if (program && program !== 'all') {
-      // Adjust program distribution based on selected program
-      filteredData.programDistribution = mockAnalytics.programDistribution.filter(
-        (p: any) => p.name.toLowerCase().replace('-', '') === program
-      );
-      
-      // Filter track performance by program
-      if (program === 'g-gmp') {
-        filteredData.trackPerformance = mockAnalytics.trackPerformance.filter(
-          (t: any) => t.track.includes('Patent') || t.track.includes('Research') || t.track.includes('Entrepreneurship')
-        );
-      } else if (program === 'g-cmp') {
-        filteredData.trackPerformance = mockAnalytics.trackPerformance.filter(
-          (t: any) => t.track.includes('AI') || t.track.includes('Full') || t.track.includes('Cloud')
-        );
-      } else if (program === 'e-tip') {
-        filteredData.trackPerformance = mockAnalytics.trackPerformance.filter(
-          (t: any) => t.track.includes('Executive')
-        );
-      } else if (program === 'pcp') {
-        filteredData.trackPerformance = mockAnalytics.trackPerformance.filter(
-          (t: any) => t.program === 'PCP'
-        );
-      }
+  static async getAnalytics(dateRange: string = '6m', program?: string, track?: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const queryParams = new URLSearchParams({
+      dateRange,
+      ...(program && { program }),
+      ...(track && { track })
+    });
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/outcomes/analytics/admin?${queryParams.toString()}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch admin analytics');
     }
-    
-    // Filter by date range
-    if (dateRange !== 'all') {
-      const months = {
-        '1m': 1,
-        '3m': 3,
-        '6m': 6,
-        '1y': 12
-      };
-      
-      const limit = months[dateRange as keyof typeof months] || 6;
-      filteredData.enrollmentTrend = mockAnalytics.enrollmentTrend.slice(-limit);
-      filteredData.outcomesByMonth = mockAnalytics.outcomesByMonth.slice(-limit);
-      filteredData.engagementMetrics = mockAnalytics.engagementMetrics.slice(-limit);
-    }
-    
-    return filteredData;
+
+    return response.json();
   }
 
   // Get program comparison data
@@ -612,33 +591,170 @@ export class ApiService {
   }
 
   static async getSavedReports(): Promise<any[]> {
-    await delay(600);
-    return [
-      {
-        id: '1',
-        name: 'Weekly Progress Report - Week 12',
-        type: 'weekly',
-        generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        format: 'pdf',
-        programs: ['G-GMP', 'G-CMP', 'E-TIP'],
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/admin/generated`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch generated reports');
+    const result = await response.json();
+    return result.data || [];
+  }
+
+  static async generateWeeklyReport(studentId: string, weekStart?: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const url = new URL(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/weekly/generate/${studentId}`);
+    if (weekStart) {
+      url.searchParams.append('weekStart', weekStart);
+    }
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to generate report for student ${studentId}`);
+    }
+
+    return response.json();
+  }
+
+  static async getScheduledReports(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/scheduled`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch scheduled reports');
+    const result = await response.json();
+
+    // Map scheduled reports from backend format to frontend format
+    return (result || []).map((s: any) => {
+      const config = typeof s.config === 'string' ? JSON.parse(s.config) : s.config || {};
+      return {
+        id: s.id,
+        name: s.name,
+        type: (s.frequency || 'weekly') as 'weekly' | 'monthly',
+        schedule: config.schedule || (s.frequency === 'weekly' ? 'Every Monday' : '1st of every month'),
+        time: config.time || '09:00 AM',
+        recipients: s.recipients || [],
+        format: config.format || 'pdf',
+        programs: config.programs || ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'],
+        status: s.isActive ? 'active' as const : 'paused' as const,
+        lastGenerated: s.lastRunAt,
+        nextGeneration: s.nextRunAt,
+      };
+    });
+  }
+
+  static async createScheduledReport(data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/schedule`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
-      {
-        id: '2',
-        name: 'G-GMP Outcomes Report - March 2024',
-        type: 'monthly',
-        generatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        format: 'pdf',
-        programs: ['G-GMP'],
+      body: JSON.stringify({
+        name: data.name,
+        frequency: data.type || 'weekly',
+        config: {
+          format: data.format || 'pdf',
+          programs: data.programs || [],
+          schedule: data.schedule || 'Every Monday',
+          time: data.time || '09:00',
+        },
+        recipients: data.recipients || [],
+        startDate: new Date().toISOString(),
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to create scheduled report');
+    }
+    return response.json();
+  }
+
+  static async updateScheduledReport(id: string, data: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    // Build the payload dynamically so we support partial updates (like toggling isActive)
+    const payload: any = {};
+    if (data.name !== undefined) payload.name = data.name;
+    if (data.type !== undefined) payload.frequency = data.type;
+    if (data.recipients !== undefined) payload.recipients = data.recipients;
+    if (data.isActive !== undefined) payload.isActive = data.isActive;
+    
+    // If we're updating details, we should supply a full config
+    if (data.format !== undefined || data.programs !== undefined || data.schedule !== undefined || data.time !== undefined) {
+      payload.config = {
+        format: data.format,
+        programs: data.programs,
+        schedule: data.schedule,
+        time: data.time
+      };
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/scheduled/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
-      {
-        id: '3',
-        name: 'PCP Certification Report - Q1 2024',
-        type: 'quarterly',
-        generatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        format: 'excel',
-        programs: ['PCP'],
-      },
-    ];
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to update scheduled report');
+    }
+    return response.json();
+  }
+
+  static async deleteScheduledReport(id: string): Promise<void> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/scheduled/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to delete scheduled report');
+    }
+  }
+
+  static async downloadGeneratedReport(reportId: string, format: string, fileName: string): Promise<void> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/reports/export/${reportId}?format=${format}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) throw new Error('Failed to download report');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   }
 
   // Document methods
@@ -1070,7 +1186,16 @@ export class ApiService {
       headers: { 'Authorization': `Bearer ${token}` }, // Browser sets Content-Type to multipart/form-data with boundary
       body: formData
     });
-    if (!response.ok) throw new Error('Failed to upload document');
+    if (!response.ok) {
+      let errorMessage = 'Failed to upload document';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.error || errorData?.message || errorMessage;
+      } catch {
+        // Ignore parse failure and use fallback message
+      }
+      throw new Error(errorMessage);
+    }
     return response.json();
   }
 
@@ -1119,6 +1244,71 @@ export class ApiService {
     if (!token) throw new Error('Not authenticated');
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/admin/documents/${id}/track-download`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
     if (!response.ok) throw new Error('Failed to track download');
+    return response.json();
+  }
+
+  // User Preferences Settings
+  static async getUserPreferences(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/settings/preferences`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Failed to fetch user preferences');
+    return response.json();
+  }
+
+  static async updateUserPreferences(preferences: any): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/settings/preferences`, { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+      body: JSON.stringify({ preferences }) 
+    });
+    if (!response.ok) throw new Error('Failed to update user preferences');
+    return response.json();
+  }
+
+  // --- Student Notifications ---
+  static async getStudentNotifications(): Promise<any[]> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/notifications`, { 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    if (!response.ok) throw new Error('Failed to fetch student notifications');
+    return response.json();
+  }
+
+  static async markStudentNotificationAsRead(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/notifications/${id}/read`, { 
+      method: 'POST', 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    if (!response.ok) throw new Error('Failed to mark notification as read');
+    return response.json();
+  }
+
+  static async markAllStudentNotificationsAsRead(): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/notifications/read-all`, { 
+      method: 'POST', 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    if (!response.ok) throw new Error('Failed to mark all notifications as read');
+    return response.json();
+  }
+
+  static async deleteStudentNotification(id: string): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/notifications/${id}`, { 
+      method: 'DELETE', 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    if (!response.ok) throw new Error('Failed to delete notification');
     return response.json();
   }
 }

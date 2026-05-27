@@ -31,8 +31,10 @@ import { DocumentService } from '@/services/documentService';
 import { ApiService } from '@/services/api';
 import { Document, DocumentType } from '@student-tracker/shared/models/Document';
 import DocumentViewer from '@/components/common/DocumentViewer';
+import LoaderOne from '@/components/ui/loader-one';
 import { DocumentViewerService } from '@/services/documentViewerService';
 import { FileHandlerService } from '@/services/fileHandlerService';
+import { toast } from 'sonner';
 
 // Define types for the component
 interface Mentor {
@@ -254,7 +256,7 @@ export default function DocumentsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }
@@ -473,9 +475,14 @@ export default function DocumentsPage() {
           students={students}
           onClose={() => setShowUploadModal(false)}
           onUpload={async (docData: UploadDocumentData) => {
-            await ApiService.uploadAdminDocument(docData);
-            queryClient.invalidateQueries({ queryKey: ['adminDocuments'] });
-            setShowUploadModal(false);
+            try {
+              await ApiService.uploadAdminDocument(docData);
+              queryClient.invalidateQueries({ queryKey: ['adminDocuments'] });
+              setShowUploadModal(false);
+              toast.success('Document uploaded successfully.');
+            } catch (error: any) {
+              toast.error(error?.message || 'Unable to upload document. Please try again.');
+            }
           }}
         />
       )}
@@ -821,7 +828,7 @@ function EditDocumentModal({ document, mentors, onClose, onSave, isSaving }: any
             >
               {isSaving ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  <span className="scale-75 mr-2"><LoaderOne /></span>
                   <span>Saving...</span>
                 </>
               ) : (
@@ -1129,7 +1136,30 @@ function UploadDocumentModal({ mentors, students, onClose, onUpload }: any) {
             </label>
             <input
               type="file"
-              onChange={(e) => setFormData({ ...formData, file: e.target.files?.[0] || null })}
+              accept=".pdf,.doc,.docx"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                if (file) {
+                  const allowedExtensions = ['.pdf', '.doc', '.docx'];
+                  const fileName = file.name.toLowerCase();
+                  const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+                  
+                  const allowedMimeTypes = [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                  ];
+                  const hasValidMime = allowedMimeTypes.includes(file.type);
+                  
+                  if (!hasValidExtension && !hasValidMime) {
+                    toast.error('Only PDF, DOC, and DOCX files are allowed.');
+                    e.target.value = ''; // Reset input
+                    setFormData({ ...formData, file: null });
+                    return;
+                  }
+                }
+                setFormData({ ...formData, file });
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />

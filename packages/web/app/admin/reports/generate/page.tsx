@@ -2,6 +2,8 @@
 
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -26,6 +28,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
+import LoaderOne from '@/components/ui/loader-one';
 import { ExportService } from '@/services/exportService';
 import { type Student, type Mentor, type Outcome } from '@/types/models';
 
@@ -315,15 +318,39 @@ export default function GenerateReportPage() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
+      if (config.students.length === 0) {
+        throw new Error('Please select at least one student.');
+      }
+
+      const errors: string[] = [];
+      let generatedCount = 0;
+
+      for (const studentId of config.students) {
+        try {
+          await ApiService.generateWeeklyReport(studentId, config.dateRange.start);
+          generatedCount++;
+        } catch (err: any) {
+          const studentName = students.find(s => s.id === studentId)?.name || studentId;
+          errors.push(`${studentName}: ${err.message}`);
+        }
+      }
+
+      if (generatedCount === 0) {
+        throw new Error(errors.join('\n'));
+      }
+
       // Generate report data
       const data = generateReportData();
       setReportData(data);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (errors.length > 0) {
+        alert(`Some reports could not be saved to the database:\n${errors.join('\n')}`);
+      }
+      
       setGenerated(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating report:', error);
+      alert(`Failed to save report to database:\n${error.message}`);
     } finally {
       setGenerating(false);
     }
@@ -742,7 +769,7 @@ export default function GenerateReportPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }
@@ -1297,10 +1324,10 @@ export default function GenerateReportPage() {
                   className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {generating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Generating...
-                    </>
+                    <div className="flex items-center space-x-2">
+                      <span className="scale-75"><LoaderOne /></span>
+                      <span>Generating...</span>
+                    </div>
                   ) : (
                     <>
                       <FileText size={18} className="mr-2" />

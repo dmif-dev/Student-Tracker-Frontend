@@ -24,6 +24,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
+import LoaderOne from '@/components/ui/loader-one';
 
 // Extend the Outcome interface for the detail view
 interface OutcomeDetail {
@@ -210,7 +211,7 @@ export default function OutcomeDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <LoaderOne />
       </div>
     );
   }

@@ -37,6 +37,7 @@ import { FileHandlerService } from '@/services/fileHandlerService';
 import { mapStudent } from '@/utils/dataMappers';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
 import MessageModal from '@/components/mentor/MessageModal';
+import LoaderOne from '@/components/ui/loader-one';
 
 interface Student {
   id: string;
@@ -310,7 +311,7 @@ export default function MentorStudentDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }

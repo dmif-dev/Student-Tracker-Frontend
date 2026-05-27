@@ -26,7 +26,6 @@ import {
     UploadCloud,
     CheckCircle,
     TrendingUp,
-    Loader2,
     X,
     History,
     Target,

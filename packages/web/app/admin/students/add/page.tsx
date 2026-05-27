@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCreateStudent } from '@/hooks/api/useAdmin';
+import LoaderOne from '@/components/ui/loader-one';
 
 // Form validation schema
 const studentSchema = z.object({
@@ -449,7 +450,7 @@ export default function AddStudentPage() {
           >
             {isSubmitting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <span className="scale-75 mr-2"><LoaderOne /></span>
                 Saving...
               </>
             ) : (

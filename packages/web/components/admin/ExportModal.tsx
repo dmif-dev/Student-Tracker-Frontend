@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Download, FileText, Calendar, Mail, X, ChevronDown } from 'lucide-react';
 import { ExportService, exportTemplates, ExportOptions } from '@/services/exportService';
+import LoaderOne from '@/components/ui/loader-one';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -287,7 +288,7 @@ export default function ExportModal({ isOpen, onClose, data, context, filename }
           >
             {isExporting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <span className="scale-75 mr-2"><LoaderOne /></span>
                 Exporting...
               </>
             ) : (

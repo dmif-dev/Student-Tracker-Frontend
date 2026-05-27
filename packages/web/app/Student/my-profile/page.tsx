@@ -242,6 +242,61 @@ export default function ProfilePage() {
 
             <div className="max-w-6xl mx-auto px-6 py-12 space-y-12">
 
+                {/* Dynamic Telemetry Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Card className="rounded-2xl border-gray-200/50 shadow-sm p-5 hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 h-1 w-0 bg-gradient-to-r from-orange-500 to-orange-600 group-hover:w-full transition-all duration-300"></div>
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-orange-50 rounded-xl">
+                                <Award className="w-6 h-6 text-orange-600" />
+                            </div>
+                            <div>
+                                <p className="text-3xl font-black text-gray-900">{profile.stats?.patentsCreated ?? 0}</p>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Patents Filed</p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="rounded-2xl border-gray-200/50 shadow-sm p-5 hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 h-1 w-0 bg-gradient-to-r from-orange-500 to-orange-600 group-hover:w-full transition-all duration-300"></div>
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-orange-50 rounded-xl">
+                                <BookOpen className="w-6 h-6 text-orange-600" />
+                            </div>
+                            <div>
+                                <p className="text-3xl font-black text-gray-900">{profile.stats?.paperPublished ?? 0}</p>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Papers Published</p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="rounded-2xl border-gray-200/50 shadow-sm p-5 hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 h-1 w-0 bg-gradient-to-r from-orange-500 to-orange-600 group-hover:w-full transition-all duration-300"></div>
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-orange-50 rounded-xl">
+                                <Zap className="w-6 h-6 text-orange-600" />
+                            </div>
+                            <div>
+                                <p className="text-3xl font-black text-gray-900">{profile.stats?.productDeployed ?? 0}</p>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Products Deployed</p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="rounded-2xl border-gray-200/50 shadow-sm p-5 hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 h-1 w-0 bg-gradient-to-r from-orange-500 to-orange-600 group-hover:w-full transition-all duration-300"></div>
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-orange-50 rounded-xl">
+                                <Users className="w-6 h-6 text-orange-600" />
+                            </div>
+                            <div>
+                                <p className="text-3xl font-black text-gray-900">{profile.stats?.mentorshipSessions ?? 0}</p>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Mentoring Sessions</p>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
                 {/* Main Content - Two Column Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column - Editable Profile Info */}

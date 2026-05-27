@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Mail, Send, CheckCircle, AlertCircle, BookOpen, Clock, Video, AlertTriangle } from 'lucide-react';
+import LoaderOne from '@/components/ui/loader-one';
 
 type TemplateType = 'ASSIGNMENT' | 'TEST' | 'MEETING' | 'WARNING';
 
@@ -167,7 +168,7 @@ export default function EmailSender() {
           }`}
         >
           {status === 'sending' ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white" />
+            <span className="scale-75"><LoaderOne /></span>
           ) : (
             <>
               <Send className="w-5 h-5" />

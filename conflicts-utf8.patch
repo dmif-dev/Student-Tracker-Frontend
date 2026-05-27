@@ -1,0 +1,365 @@
+﻿diff --cc packages/web/app/Student/progress/new/page.tsx
+index 0d5e850,536c0fb..0000000
+--- a/packages/web/app/Student/progress/new/page.tsx
++++ b/packages/web/app/Student/progress/new/page.tsx
+@@@ -42,7 -41,7 +41,11 @@@ import { useLocalStorage } from "@stude
+  import { RichTextEditor } from "@/components/forms/rich-text-editor";
+  import { TopicSelect } from "@/components/forms/topic-select";
+  import { ImageUpload } from "@/components/forms/image-upload";
+++<<<<<<< HEAD
+ +import { useStudentProfile, useSubmitProgress, useUploadEvidence } from "@/hooks/api/useStudent";
+++=======
++ import LoaderOne from "@/components/ui/loader-one";
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  const formSchema = z.object({
+      title: z.string().min(5, "General title for today's entry is required"),
+diff --cc packages/web/app/admin/mentors/[id]/schedule/page.tsx
+index e16b80d,a094dc1..0000000
+--- a/packages/web/app/admin/mentors/[id]/schedule/page.tsx
++++ b/packages/web/app/admin/mentors/[id]/schedule/page.tsx
+@@@ -25,8 -25,8 +25,13 @@@ import 
+    Info
+  } from 'lucide-react';
+  import { useAdminMentor, useAdminMentorSessions, useAdminCreateSession } from '@/hooks/api/useAdmin';
+++<<<<<<< HEAD
+ +import { type MentorSchedule, type AssignedStudent } from '@/types/models';
+ +
+++=======
++ import LoaderOne from '@/components/ui/loader-one';
++ import { MentorSchedule, AssignedStudent } from '@/services/mockData';
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  interface SessionFormData {
+    studentId: string;
+diff --cc packages/web/app/admin/outcomes/page.tsx
+index 750b3b5,7e80168..0000000
+--- a/packages/web/app/admin/outcomes/page.tsx
++++ b/packages/web/app/admin/outcomes/page.tsx
+@@@ -19,8 -19,8 +19,13 @@@ import 
+    Info
+  } from 'lucide-react';
+  import { ApiService } from '@/services/api';
+++<<<<<<< HEAD
+ +import { type Outcome } from '@/types/models';
+ +
+++=======
++ import { Outcome } from '@/services/mockData';
++ import LoaderOne from '@/components/ui/loader-one';
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  // interface Outcome {
+  //   id: string;
+diff --cc packages/web/app/admin/programs/[id]/page.tsx
+index 6945d04,cc8d994..0000000
+--- a/packages/web/app/admin/programs/[id]/page.tsx
++++ b/packages/web/app/admin/programs/[id]/page.tsx
+@@@ -30,8 -30,8 +30,13 @@@ import 
+    ChevronRight
+  } from 'lucide-react';
+  import { ApiService } from '@/services/api';
+++<<<<<<< HEAD
+ +import { Activity as ActivityType } from '@/types/models';
+ +
+++=======
++ import LoaderOne from '@/components/ui/loader-one';
++ import { Activity as ActivityType } from '@/services/mockData';
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  interface ProgramDetails {
+    id: string;
+diff --cc packages/web/app/admin/students/[id]/page.tsx
+index 4c378e6,c0c469e..0000000
+--- a/packages/web/app/admin/students/[id]/page.tsx
++++ b/packages/web/app/admin/students/[id]/page.tsx
+@@@ -35,8 -35,8 +35,13 @@@ import 
+    useToggleStudentStatus,
+    useResetStudentProgress
+  } from '@/hooks/api/useAdmin';
+++<<<<<<< HEAD
+ +import { type Outcome } from '@/types/models';
+ +
+++=======
++ import { Outcome } from '@/services/mockData';
++ import LoaderOne from "@/components/ui/loader-one";
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  interface StudentDetails {
+    id: string;
+diff --cc packages/web/app/mentor/documents/page.tsx
+index 3f98ab2,4ee6dfb..0000000
+--- a/packages/web/app/mentor/documents/page.tsx
++++ b/packages/web/app/mentor/documents/page.tsx
+@@@ -26,7 -26,7 +26,11 @@@ import { Document, DocumentType } from 
+  import DocumentViewer from '@/components/common/DocumentViewer';
+  import { DocumentViewerService } from '@/services/documentViewerService';
+  import { FileHandlerService } from '@/services/fileHandlerService';
+++<<<<<<< HEAD
+ +import { Button } from "@/components/ui/button";
+++=======
++ import LoaderOne from "@/components/ui/loader-one";
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  // Define a local interface for the viewer document
+  interface ViewerDocument {
+diff --cc packages/web/app/mentor/page.tsx
+index 9ef23d8,bc79d49..0000000
+--- a/packages/web/app/mentor/page.tsx
++++ b/packages/web/app/mentor/page.tsx
+@@@ -22,22 -22,9 +22,26 @@@ import { Button } from "@/components/ui
+  import { Badge } from "@/components/ui/badge";
+  import { cn } from "@/lib/utils";
+  import { motion } from "framer-motion";
+ +import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
+  
+  import { useCurrentMentor, useMentorSchedule, useMentorStudents, useMentorDocuments } from '@/hooks/api/useMentor';
+++<<<<<<< HEAD
+ +import DocumentViewer from '@/components/common/DocumentViewer';
+ +import { DocumentViewerService } from '@/services/documentViewerService';
+ +import { FileHandlerService } from '@/services/fileHandlerService';
+ +
+ +interface ViewerDocument {
+ +  id: string;
+ +  title: string;
+ +  description?: string;
+ +  fileName: string;
+ +  fileType: string;
+ +  fileUrl: string;
+ +  fileSize: number;
+ +}
+++=======
++ import LoaderOne from "@/components/ui/loader-one";
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  interface RecentActivity {
+    id: string;
+diff --cc packages/web/app/mentor/profile/page.tsx
+index e3d1d31,cf42c06..0000000
+--- a/packages/web/app/mentor/profile/page.tsx
++++ b/packages/web/app/mentor/profile/page.tsx
+@@@ -25,8 -22,7 +25,12 @@@ import 
+  } from 'lucide-react';
+  import { useCurrentMentor } from '@/hooks/api/useMentor';
+  import { apiClient } from '@/utils/apiClient';
+++<<<<<<< HEAD
+ +import { Button } from '@/components/ui/button';
+ +import { createClient } from '@/utils/supabase/client';
+++=======
++ import LoaderOne from '@/components/ui/loader-one';
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  interface MentorProfile {
+    id: string;
+diff --cc packages/web/app/mentor/schedule/page.tsx
+index f04b4b7,148a7c9..0000000
+--- a/packages/web/app/mentor/schedule/page.tsx
++++ b/packages/web/app/mentor/schedule/page.tsx
+@@@ -28,9 -29,8 +28,14 @@@ import { useCurrentMentor, useMentorSch
+  import { apiClient } from '@/utils/apiClient';
+  import SessionNotesModal from '@/components/mentor/SessionNotesModal';
+  import { Session, SessionNote } from '@student-tracker/shared/models/Session';
+++<<<<<<< HEAD
+ +
+ +import { Button } from "@/components/ui/button";
+ +
+++=======
++ import { AssignedStudent as MockAssignedStudent } from '@/services/mockData';
++ import LoaderOne from "@/components/ui/loader-one";
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  interface AssignedStudent {
+    id: string;
+diff --cc packages/web/app/mentor/students/[id]/page.tsx
+index 25d86fd,ad254d8..0000000
+--- a/packages/web/app/mentor/students/[id]/page.tsx
++++ b/packages/web/app/mentor/students/[id]/page.tsx
+@@@ -35,8 -35,7 +35,12 @@@ import DocumentViewer from '@/component
+  import { DocumentViewerService } from '@/services/documentViewerService';
+  import { FileHandlerService } from '@/services/fileHandlerService';
+  import { mapStudent } from '@/utils/dataMappers';
+++<<<<<<< HEAD
+ +import { useCurrentMentor } from '@/hooks/api/useMentor';
+ +import MessageModal from '@/components/mentor/MessageModal';
+++=======
++ import LoaderOne from '@/components/ui/loader-one';
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  interface Student {
+    id: string;
+diff --cc packages/web/app/mentor/students/page.tsx
+index f9daeed,419fc4f..0000000
+--- a/packages/web/app/mentor/students/page.tsx
++++ b/packages/web/app/mentor/students/page.tsx
+@@@ -21,8 -21,7 +21,12 @@@ import 
+    Eye
+  } from 'lucide-react';
+  import { useCurrentMentor } from '@/hooks/api/useMentor';
+++<<<<<<< HEAD
+ +import MessageModal from '@/components/mentor/MessageModal';
+ +import { Button } from '@/components/ui/button';
+++=======
++ import LoaderOne from '@/components/ui/loader-one';
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  interface Student {
+    id: string;
+diff --cc packages/web/services/mockData.ts
+index 1097cb8,5208d21..0000000
+--- a/packages/web/services/mockData.ts
++++ b/packages/web/services/mockData.ts
+@@@ -2,17 -2,141 +2,155 @@@
+  
+  // Mock data service for admin dashboard
+  
+++<<<<<<< HEAD
+ +import { 
+ +  Student, 
+ +  MentorSchedule, 
+ +  Availability, 
+ +  AssignedStudent, 
+ +  Mentor, 
+ +  Program, 
+ +  Track, 
+ +  Activity, 
+ +  Outcome 
+ +} from '../types/models';
+++=======
++ export interface Student {
++   id: string;
++   name: string;
++   email: string;
++   registrationNumber: string;
++   program: 'G-GMP' | 'G-CMP' | 'E-TIP' | 'PCP';
++   track: string;
++   mentor?: string; // Made optional - PCP students don't have mentors
++   status: 'active' | 'inactive' | 'pending' | 'completed';
++   joinDate: string;
++   lastActive: string;
++   progress: number;
++   phone?: string;
++   address?: string;
++   avatar?: string;
++   accountActive?: boolean;
++   projects?: {
++     completed: number;
++     inProgress: number;
++   };
++   certifications?: {
++     completed: number;
++     inProgress: number;
++   };
++   sessionStats?: {
++     completed: number;
++     total: number;
++     attendance: number;
++   };
++   notes?: string;
++ }
++ 
++ export interface MentorSchedule {
++   id: string;
++   studentId: string;
++   studentName: string;
++   studentProgram: 'G-GMP' | 'G-CMP' | 'E-TIP' | 'PCP';
++   date: string;
++   startTime: string;
++   endTime: string;
++   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
++   topic?: string;
++   notes?: string;
++   meetingLink?: string;
++ }
++ 
++ export interface Availability {
++   id: string;
++   dayOfWeek: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday, 1 = Monday, etc.
++   startTime: string;
++   endTime: string;
++   isRecurring: boolean;
++   specificDate?: string;
++ }
++ 
++ export interface AssignedStudent {
++   id: string;
++   name: string;
++   program: 'G-GMP' | 'G-CMP' | 'E-TIP' | 'PCP';
++   track: string;
++   joinDate: string;
++   lastSession?: string;
++   nextSession?: string;
++   progress: number;
++   hasMentor: boolean; // Added to indicate if student has mentor
++ }
++ 
++ export interface Mentor {
++   id: string;
++   name: string;
++   email: string;
++   expertise: string[];
++   students: number;
++   programs: string[]; // Should not include PCP
++   rating: number;
++   status: 'active' | 'inactive';
++   joinDate: string;
++   bio?: string;
++   phone?: string;
++   location?: string;
++   avatar?: string;
++   schedule?: MentorSchedule[];
++   availability?: Availability[];
++   assignedStudents?: AssignedStudent[]; // Should only include G-GMP, G-CMP, E-TIP students
++ }
++ 
++ // Update the Program interface
++ export interface Program {
++   id: string;
++   name: string;
++   description: string;
++   icon: string;
++   color: string;
++   tracks: Track[];
++   totalStudents: number;
++   activeStudents: number;
++   completionRate: number;
++   hasMentors: boolean;
++   hasOutcomes: boolean;  // Add this
++   outcomeCount?: number;  // Add this (optional, only for G-GMP)
++ }
++ 
++ export interface Track {
++   id: string;
++   name: string;
++   students: number;
++   mentors: number;
++   progress: number;
++   outcomes: number;
++   requiresMentor: boolean; // Added to indicate if track requires mentor
++ }
++ 
++ export interface Activity {
++   id: string;
++   type: 'enrollment' | 'progress' | 'outcome' | 'session' | 'completion' | 'student_registered' | 'progress_submitted' | 'report_generated' | 'outcome_achieved';
++   title: string;
++   description: string;
++   time: string;
++   user?: string;
++   userId?: string;
++   date?: string;
++   program?: string; // Added to track which program the activity belongs to
++ }
++ 
++ export interface Outcome {
++   id: string;
++   type: 'patent' | 'paper' | 'project' | 'certification' | 'startup';
++   title: string;
++   student: string;
++   studentId: string;
++   status: 'pending' | 'filed' | 'published' | 'granted' | 'completed';
++   date: string;
++   mentor?: string;
++   program: 'G-GMP' | 'G-CMP' | 'E-TIP' | 'PCP'; // Make it required and specific type
++ }
+++>>>>>>> origin/feature/merged-admin-integrations-settings
+  
+  // Mock Students Data - Updated with PCP students having no mentor
+  export const mockStudents: Student[] = [

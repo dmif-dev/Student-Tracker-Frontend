@@ -14,6 +14,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useAdminMentorPerformance } from '@/hooks/api/useAdmin';
+import LoaderOne from '@/components/ui/loader-one';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -35,7 +36,7 @@ export default function MentorPerformancePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoaderOne />
       </div>
     );
   }

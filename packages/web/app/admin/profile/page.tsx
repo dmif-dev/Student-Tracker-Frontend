@@ -3,10 +3,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
-  User, Mail, Calendar, Shield, Edit2, CheckCircle, Search, 
-  Filter, GraduationCap, Award, BookOpen, Award as AchievementIcon,
-  TrendingUp, Users, RefreshCw
+  User, Mail, Calendar, Shield, Edit2, CheckCircle,
+  GraduationCap, Award, BookOpen, TrendingUp, Users, 
+  RefreshCw, Settings, FileText, ArrowRight, Briefcase
 } from 'lucide-react';
 import { useAdminStudents, useAdminProfile, useUpdateAdminProfile } from '@/hooks/api/useAdmin';
 import { toast } from 'sonner';
@@ -14,19 +15,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import LoaderOne from "@/components/ui/loader-one";
 
 export default function AdminProfilePage() {
   const { data: userData, isLoading: profileLoading, refetch: refetchProfile } = useAdminProfile();
   const { data: students = [] as any[], isLoading: studentsLoading, refetch: refetchStudents } = useAdminStudents();
-
   const updateProfileMutation = useUpdateAdminProfile();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [programFilter, setProgramFilter] = useState('ALL');
-  const [pageIndex, setPageIndex] = useState(0);
-  const pageSize = 10;
 
   useEffect(() => {
     if (userData?.profile?.name) {
@@ -55,65 +52,13 @@ export default function AdminProfilePage() {
     );
   };
 
-  const getProgramBadgeColor = (programName: string) => {
-    switch (programName?.toUpperCase()) {
-      case 'G-GMP': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'G-CMP': return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'E-TIP': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'PCP': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status?.toUpperCase()) {
-      case 'ACTIVE': return 'bg-green-100 text-green-800';
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-      case 'INACTIVE': return 'bg-red-100 text-red-800';
-      case 'COMPLETED': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Filter candidates (students) based on search and program filter
-  const filteredCandidates = students.filter((candidate: any) => {
-    const matchesSearch = 
-      candidate.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesProgram = 
-      programFilter === 'ALL' || 
-      (typeof candidate.program === 'string'
-        ? candidate.program.toUpperCase() === programFilter.toUpperCase()
-        : candidate.program?.name?.toUpperCase() === programFilter.toUpperCase() || candidate.program?.toUpperCase() === programFilter.toUpperCase());
-
-    return matchesSearch && matchesProgram;
-  });
-
-  const totalPages = Math.max(1, Math.ceil(filteredCandidates.length / pageSize));
-  const paginatedCandidates = filteredCandidates.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize
-  );
-
-  useEffect(() => {
-    setPageIndex(0);
-  }, [searchTerm, programFilter]);
-
-  useEffect(() => {
-    if (pageIndex > totalPages - 1) {
-      setPageIndex(Math.max(0, totalPages - 1));
-    }
-  }, [pageIndex, totalPages]);
-
   const isLoading = profileLoading || studentsLoading;
 
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
-        <p className="text-gray-500 font-medium">Loading your profile & candidate details...</p>
+        <LoaderOne />
+        <p className="text-slate-500 font-medium animate-pulse">Loading your profile & portal data...</p>
       </div>
     );
   }
@@ -124,31 +69,113 @@ export default function AdminProfilePage() {
     ? new Date(userData.profile.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
     : 'May 18, 2026';
 
+  // Count candidates by program
+  const ggmpCount = students.filter((s: any) => s.program === 'G-GMP').length;
+  const gcmpCount = students.filter((s: any) => s.program === 'G-CMP').length;
+  const etipCount = students.filter((s: any) => s.program === 'E-TIP').length;
+  const pcpCount = students.filter((s: any) => s.program === 'PCP').length;
+
+  const adminPortalLinks = [
+    {
+      title: 'Students Directory',
+      description: 'Manage enrolled candidates, track daily progress logs, and supervise academic portfolio outcomes.',
+      icon: Users,
+      badge: `${students.length} Candidates Enrolled`,
+      path: '/admin/students',
+      color: 'from-orange-500 to-amber-500 shadow-orange-500/10',
+      textColor: 'text-orange-600',
+      bgColor: 'bg-orange-50 border-orange-100/50',
+      accentColor: 'orange'
+    },
+    {
+      title: 'Mentor Directory',
+      description: 'Supervise professional mentor profiles, select research expertise fields, and audit schedules.',
+      icon: GraduationCap,
+      badge: 'Manage Expert Mentors',
+      path: '/admin/mentors',
+      color: 'from-emerald-500 to-teal-500 shadow-emerald-500/10',
+      textColor: 'text-emerald-600',
+      bgColor: 'bg-emerald-50 border-emerald-100/50',
+      accentColor: 'emerald'
+    },
+    {
+      title: 'Analytics & Streaks',
+      description: 'Inspect live enrollment demographics, cohort milestones, active streaks, and grading reports.',
+      icon: TrendingUp,
+      badge: 'Live Operations Metric',
+      path: '/admin/analytics',
+      color: 'from-blue-500 to-indigo-500 shadow-blue-500/10',
+      textColor: 'text-blue-600',
+      bgColor: 'bg-blue-50 border-blue-100/50',
+      accentColor: 'blue'
+    },
+    {
+      title: 'Programs & Tracks',
+      description: 'Configure and design courses across G-GMP, G-CMP, E-TIP, and self-paced PCP curricula.',
+      icon: BookOpen,
+      badge: '4 Active Main Curriculum Types',
+      path: '/admin/programs',
+      color: 'from-purple-500 to-pink-500 shadow-purple-500/10',
+      textColor: 'text-purple-600',
+      bgColor: 'bg-purple-50 border-purple-100/50',
+      accentColor: 'purple'
+    },
+    {
+      title: 'Document & Resource Library',
+      description: 'Manage pre-read assignments, share core learning content resources, and configure files.',
+      icon: FileText,
+      badge: 'Shared Collaborative Spaces',
+      path: '/admin/documents',
+      color: 'from-rose-500 to-red-500 shadow-rose-500/10',
+      textColor: 'text-rose-600',
+      bgColor: 'bg-rose-50 border-rose-100/50',
+      accentColor: 'rose'
+    },
+    {
+      title: 'System Settings',
+      description: 'Configure automated email templates, schedule server database backups, and fine-tune preferences.',
+      icon: Settings,
+      badge: 'Full Root Access Config',
+      path: '/admin/settings',
+      color: 'from-slate-600 to-stone-700 shadow-slate-600/10',
+      textColor: 'text-slate-600',
+      bgColor: 'bg-slate-50 border-slate-200/50',
+      accentColor: 'slate'
+    }
+  ];
+
   return (
-    <div className="space-y-8 p-6 bg-gradient-to-br from-white via-orange-50/10 to-white min-h-screen">
+    <div className="space-y-8 p-6 md:p-8 bg-gradient-to-br from-slate-50 via-orange-50/10 to-stone-50 min-h-screen">
       {/* Header title */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight font-montserrat text-gray-900">Your Profile & Candidates</h1>
-          <p className="text-muted-foreground mt-2 text-lg">Manage your details and monitor candidate enrollments real-time.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight font-montserrat text-slate-900 bg-clip-text bg-gradient-to-r from-slate-900 via-orange-950 to-slate-900">
+            Administrative Dashboard
+          </h1>
+          <p className="text-slate-500 mt-2 text-md font-medium">Manage root access parameters and route to tracking directories.</p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={() => { refetchProfile(); refetchStudents(); toast.success('Data refreshed!'); }}
-          className="border-orange-200 text-orange-600 hover:bg-orange-50 font-bold"
-        >
-          <RefreshCw className="mr-2 h-4 w-4" /> Refresh Data
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            onClick={() => { refetchProfile(); refetchStudents(); toast.success('Dashboard metrics refreshed!'); }}
+            className="border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:text-orange-600 hover:border-orange-200 font-bold rounded-2xl active:scale-[0.98] transition-all"
+          >
+            <RefreshCw className="mr-2 h-4 w-4 stroke-[2.2px]" /> Refresh Live Counts
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Column: Admin profile card */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="border border-gray-150 shadow-md bg-white rounded-2xl overflow-hidden transition-all hover:shadow-lg">
-            <div className="h-32 bg-gradient-to-r from-orange-500 to-amber-500 relative">
+        {/* Left Column: Admin profile card & Stats info */}
+        <div className="lg:col-span-1 space-y-8">
+          <Card className="border border-slate-200/60 shadow-md bg-white rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-lg relative group">
+            {/* Ambient glowing card background */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100/10 rounded-full blur-2xl group-hover:scale-150 transition-all duration-500" />
+            
+            <div className="h-32 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 relative">
               <div className="absolute -bottom-12 left-6">
-                <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-br from-orange-600 to-amber-500 text-white font-extrabold flex items-center justify-center text-4xl shadow-md">
+                <div className="w-24 h-24 rounded-3xl border-4 border-white bg-gradient-to-br from-orange-600 to-amber-500 text-white font-black flex items-center justify-center text-4xl shadow-md transform hover:rotate-6 transition-transform duration-300">
                   {adminName.charAt(0).toUpperCase()}
                 </div>
               </div>
@@ -157,262 +184,188 @@ export default function AdminProfilePage() {
             <CardContent className="pt-16 pb-8 px-6 space-y-6">
               <div>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">{adminName}</h2>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">{adminName}</h2>
                   {!isEditing && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setIsEditing(true)}
-                      className="text-gray-500 hover:text-orange-600 rounded-full"
+                      className="text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"
                     >
-                      <Edit2 size={16} />
+                      <Edit2 size={15} className="stroke-[2.2px]" />
                     </Button>
                   )}
                 </div>
-                <p className="text-sm font-semibold uppercase tracking-wider text-orange-600 mt-1">System Administrator</p>
+                <p className="text-xs font-black uppercase tracking-widest text-orange-600 mt-1">System Administrator</p>
               </div>
 
-              {isEditing ? (
-                <div className="space-y-3 bg-orange-50/50 p-4 rounded-xl border border-orange-100">
-                  <label className="text-xs font-black uppercase text-orange-800 tracking-wider">Update Name</label>
-                  <input
-                    type="text"
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium bg-white"
-                    placeholder="Enter your name"
-                  />
-                  <div className="flex space-x-2 pt-2">
-                    <Button 
-                      size="sm" 
-                      onClick={handleSaveProfile}
-                      disabled={updateProfileMutation.isPending}
-                      className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold"
-                    >
-                      {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      onClick={() => { setIsEditing(false); setEditedName(adminName); }}
-                      className="text-gray-500 text-xs"
-                    >
-                      Cancel
-                    </Button>
+              <AnimatePresence>
+                {isEditing && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-3 bg-orange-50/40 p-4 rounded-2xl border border-orange-100"
+                  >
+                    <label className="text-[10px] font-black uppercase text-orange-800 tracking-wider">Update Profile Name</label>
+                    <input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 text-sm font-semibold bg-white text-slate-800 transition-all"
+                      placeholder="Enter new name"
+                    />
+                    <div className="flex space-x-2 pt-1">
+                      <Button 
+                        size="sm" 
+                        onClick={handleSaveProfile}
+                        disabled={updateProfileMutation.isPending}
+                        className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-bold rounded-xl shadow-sm shadow-orange-500/10"
+                      >
+                        {updateProfileMutation.isPending ? 'Saving...' : 'Save Name'}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => { setIsEditing(false); setEditedName(adminName); }}
+                        className="text-slate-500 text-xs font-bold rounded-xl hover:bg-slate-100"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="border-t border-slate-100 my-4" />
+
+              <div className="space-y-5 text-sm text-slate-600">
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center text-slate-400">
+                    <Mail className="w-4.5 h-4.5 stroke-[2.2px]" />
                   </div>
-                </div>
-              ) : null}
-
-              <div className="border-t border-gray-100 my-4"></div>
-
-              <div className="space-y-4 text-sm text-gray-600">
-                <div className="flex items-center space-x-3">
-                  <Mail className="text-gray-400 w-5 h-5 flex-shrink-0" />
                   <div className="overflow-hidden">
-                    <p className="text-xs text-gray-400 font-black uppercase tracking-wider">Email Address</p>
-                    <p className="font-bold text-gray-900 truncate">{adminEmail}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Email Address</p>
+                    <p className="font-bold text-slate-800 truncate">{adminEmail}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <Shield className="text-gray-400 w-5 h-5 flex-shrink-0" />
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-10 h-10 bg-purple-50 border border-purple-100/50 rounded-xl flex items-center justify-center text-purple-400">
+                    <Shield className="w-4.5 h-4.5 stroke-[2.2px]" />
+                  </div>
                   <div>
-                    <p className="text-xs text-gray-400 font-black uppercase tracking-wider">Access Level</p>
-                    <Badge className="bg-purple-100 text-purple-800 border-none font-bold uppercase text-[10px] tracking-wider mt-0.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Access Level</p>
+                    <Badge className="bg-purple-100 border border-purple-200 text-purple-800 font-bold uppercase text-[9px] tracking-wider mt-0.5 shadow-sm rounded-lg px-2 py-0.5">
                       Full Root Access
                     </Badge>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <Calendar className="text-gray-400 w-5 h-5 flex-shrink-0" />
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center text-slate-400">
+                    <Calendar className="w-4.5 h-4.5 stroke-[2.2px]" />
+                  </div>
                   <div>
-                    <p className="text-xs text-gray-400 font-black uppercase tracking-wider">Member Since</p>
-                    <p className="font-bold text-gray-900">{joinedDate}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Member Since</p>
+                    <p className="font-bold text-slate-800">{joinedDate}</p>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Quick Admin Stats */}
-          <Card className="border border-gray-150 shadow-md bg-white rounded-2xl overflow-hidden transition-all hover:shadow-lg p-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Administration Stats</h3>
+          {/* Dynamic Cohort breakdown stats */}
+          <Card className="border border-slate-200/60 shadow-md bg-white rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-lg p-6 space-y-6">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Academic Cohort Sizes</h3>
+              <p className="text-xs text-slate-400 mt-1 font-semibold">Active enrollments count classified by track.</p>
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
-                <p className="text-xs font-bold text-orange-700 uppercase tracking-wide">Candidates</p>
-                <p className="text-2xl font-black text-orange-950 mt-1">{students.length}</p>
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100/30 border border-orange-100 rounded-2xl p-4 transition-transform duration-300 hover:scale-[1.02]">
+                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">G-GMP Candidates</p>
+                <p className="text-3xl font-black text-orange-950 mt-1.5">{ggmpCount}</p>
               </div>
-              <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-                <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">Managed Tracks</p>
-                <p className="text-2xl font-black text-amber-950 mt-1">4</p>
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100/30 border border-amber-100 rounded-2xl p-4 transition-transform duration-300 hover:scale-[1.02]">
+                <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">G-CMP Candidates</p>
+                <p className="text-3xl font-black text-amber-950 mt-1.5">{gcmpCount}</p>
+              </div>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100/30 border border-blue-100 rounded-2xl p-4 transition-transform duration-300 hover:scale-[1.02]">
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">E-TIP Candidates</p>
+                <p className="text-3xl font-black text-blue-950 mt-1.5">{etipCount}</p>
+              </div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100/30 border border-purple-100 rounded-2xl p-4 transition-transform duration-300 hover:scale-[1.02]">
+                <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">PCP Candidates</p>
+                <p className="text-3xl font-black text-purple-950 mt-1.5">{pcpCount}</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Right Column: Candidates list */}
+        {/* Right Column: High-level Administrative Hub (Quick Actions & Shortcuts) */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border border-gray-150 shadow-md bg-white rounded-2xl overflow-hidden transition-all hover:shadow-lg">
-            <CardHeader className="p-6 pb-2 border-b border-gray-100">
+          <Card className="border border-slate-200/60 shadow-md bg-white rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-lg relative group">
+            {/* Decorative background light elements */}
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-orange-100/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+            
+            <CardHeader className="p-8 pb-4 border-b border-slate-100 relative">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <CardTitle className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-                    <Users className="text-orange-500" /> Managed Candidates ({filteredCandidates.length})
+                  <Badge className="bg-orange-50 border border-orange-200 text-orange-600 font-black uppercase text-[9px] tracking-wider mb-2.5 shadow-sm rounded-lg px-2.5 py-0.5">
+                    Root Control Center
+                  </Badge>
+                  <CardTitle className="text-3xl font-black text-slate-800 tracking-tight font-montserrat">
+                    Administrative Navigation Hub
                   </CardTitle>
-                  <CardDescription className="mt-1">Real-time candidate profile entries, registration records, and track statuses.</CardDescription>
+                  <CardDescription className="mt-1.5 text-slate-400 font-medium">
+                    Monitor metrics, launch tracking, and route to database record directories.
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="p-6 space-y-6">
-              {/* Search & Filters */}
-              <div className="flex flex-col sm:flex-row gap-4 items-center">
-                <div className="relative w-full sm:flex-1">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search candidate by name, email, or reg number..."
-                    className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium bg-gray-50/50"
-                  />
-                </div>
+            <CardContent className="p-8">
+              {/* Shortcut Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {adminPortalLinks.map((link, idx) => {
+                  const IconComponent = link.icon;
+                  return (
+                    <Link key={idx} href={link.path}>
+                      <motion.div 
+                        whileHover={{ y: -4 }}
+                        className="h-full border border-slate-150 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 hover:bg-slate-50/20 active:scale-[0.99] transition-all duration-200 group/item flex flex-col justify-between relative overflow-hidden"
+                      >
+                        {/* Interactive glow effect */}
+                        <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl ${link.color} opacity-0 group-hover/item:opacity-[0.04] rounded-full blur-xl transition-all duration-300`} />
+                        
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className={`p-3 rounded-2xl bg-gradient-to-tr ${link.color} text-white shadow-md transition-transform duration-300 group-hover/item:scale-105`}>
+                              <IconComponent size={20} className="stroke-[2.2px]" />
+                            </div>
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border border-current/10 ${link.bgColor} ${link.textColor} shadow-sm`}>
+                              {link.badge}
+                            </span>
+                          </div>
 
-                <div className="flex items-center space-x-2 w-full sm:w-auto">
-                  <Filter size={16} className="text-gray-500" />
-                  <select
-                    value={programFilter}
-                    onChange={(e) => setProgramFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium bg-white w-full sm:w-auto"
-                  >
-                    <option value="ALL">All Programs</option>
-                    <option value="G-GMP">G-GMP</option>
-                    <option value="G-CMP">G-CMP</option>
-                    <option value="E-TIP">E-TIP</option>
-                    <option value="PCP">PCP</option>
-                  </select>
-                </div>
+                          <div className="space-y-1.5">
+                            <h4 className="text-[15px] font-black text-slate-800 group-hover/item:text-orange-600 transition-colors duration-200">
+                              {link.title}
+                            </h4>
+                            <p className="text-slate-400 text-xs font-semibold leading-relaxed">
+                              {link.description}
+                            </p>
+                          </div>
+                        </div>
 
-                <div className="flex items-center space-x-2 w-full sm:w-auto">
-                  <span className="text-xs font-black uppercase tracking-wider text-gray-400 whitespace-nowrap">
-                    10 per page
-                  </span>
-                </div>
-              </div>
-
-              {/* Candidates Grid/Table */}
-              <div className="overflow-x-auto border border-gray-100 rounded-2xl shadow-inner bg-gray-50/30">
-                <table className="min-w-full divide-y divide-gray-100 text-sm text-left">
-                  <thead className="bg-gray-50 font-black uppercase text-[10px] tracking-wider text-gray-500">
-                    <tr>
-                      <th className="px-6 py-4">Candidate Name</th>
-                      <th className="px-6 py-4">Reg Number</th>
-                      <th className="px-6 py-4">Program & Track</th>
-                      <th className="px-6 py-4">Joined Date</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4 text-right">Progress</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-150 font-medium text-gray-700">
-                    <AnimatePresence mode="popLayout">
-                      {paginatedCandidates.length > 0 ? (
-                        paginatedCandidates.map((candidate) => (
-                          <motion.tr 
-                            key={candidate.id}
-                            layout
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="hover:bg-orange-50/20 transition-colors"
-                          >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-100 to-amber-100 text-orange-700 font-extrabold flex items-center justify-center text-xs">
-                                  {candidate.name?.charAt(0).toUpperCase() || 'C'}
-                                </div>
-                                <div>
-                                  <p className="font-bold text-gray-900">{candidate.name}</p>
-                                  <p className="text-xs text-gray-400">{candidate.email}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-xs font-bold tracking-widest text-gray-500">
-                              {candidate.registrationNumber || 'N/A'}
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="space-y-1">
-                                <Badge className={`border uppercase text-[9px] font-black tracking-widest ${getProgramBadgeColor(typeof candidate.program === 'string' ? candidate.program : candidate.program?.name || '')}`}>
-                                  {(typeof candidate.program === 'string' ? candidate.program : candidate.program?.name) || 'N/A'}
-                                </Badge>
-                                <p className="text-xs text-gray-500 italic truncate max-w-[150px]">{(typeof candidate.track === 'string' ? candidate.track : candidate.track?.name) || 'General Track'}</p>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-xs text-gray-500">
-                              {candidate.joinDate ? new Date(candidate.joinDate).toLocaleDateString() : 'N/A'}
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusBadgeColor(candidate.status || 'PENDING')}`}>
-                                {candidate.status || 'PENDING'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end space-x-2">
-                                <div className="w-20 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                  <div 
-                                    className="bg-gradient-to-r from-orange-500 to-amber-500 h-1.5 rounded-full"
-                                    style={{ width: `${candidate.progress || 0}%` }}
-                                  ></div>
-                                </div>
-                                <span className="text-xs font-black text-gray-900">{candidate.progress || 0}%</span>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                            <GraduationCap className="mx-auto w-12 h-12 mb-3 opacity-30 text-orange-500" />
-                            <p className="font-bold">No candidates matched the filters</p>
-                            <p className="text-xs mt-1 text-gray-400">Try adjusting your search criteria or program dropdown.</p>
-                          </td>
-                        </tr>
-                      )}
-                    </AnimatePresence>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Showing {filteredCandidates.length === 0 ? 0 : pageIndex * pageSize + 1} to{' '}
-                  {Math.min((pageIndex + 1) * pageSize, filteredCandidates.length)} of{' '}
-                  {filteredCandidates.length} records
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
-                    disabled={pageIndex === 0}
-                    className="border-orange-200 text-orange-600 hover:bg-orange-50 font-bold"
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-xs font-black uppercase tracking-wider text-gray-400 px-2">
-                    Page {pageIndex + 1} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPageIndex((current) => Math.min(totalPages - 1, current + 1))}
-                    disabled={pageIndex >= totalPages - 1}
-                    className="border-orange-200 text-orange-600 hover:bg-orange-50 font-bold"
-                  >
-                    Next
-                  </Button>
-                </div>
+                        <div className="flex items-center text-[10px] font-black uppercase tracking-widest text-slate-400 mt-5 pt-3 border-t border-slate-50 group-hover/item:text-orange-600 transition-colors duration-200">
+                          Open Section <ArrowRight size={12} className="ml-1.5 stroke-[2.5px] transform group-hover/item:translate-x-1 transition-transform" />
+                        </div>
+                      </motion.div>
+                    </Link>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

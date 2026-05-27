@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { Loader2 } from "lucide-react";
+import LoaderOne from "@/components/ui/loader-one";
 
 interface LoadingStateProps {
   message?: string;
@@ -14,7 +13,7 @@ export function LoadingState({
 }: LoadingStateProps) {
   const content = (
     <div className="flex flex-col items-center justify-center gap-3">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <LoaderOne />
       <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
