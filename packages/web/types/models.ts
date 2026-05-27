@@ -13,6 +13,12 @@ export interface Student {
   phone?: string;
   address?: string;
   avatar?: string;
+  bio?: string;
+  notes?: string;
+  additionalNotes?: string;
+  website?: string;
+  linkedin?: string;
+  github?: string;
   accountActive?: boolean;
   projects?: {
     completed: number;
