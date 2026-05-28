@@ -108,3 +108,18 @@ export const useStudentSessionsHistory = () => {
     },
   });
 };
+export const useStudentDocuments = (program?: string, track?: string) => {
+  return useQuery({
+    queryKey: ['studentDocuments', program, track],
+    queryFn: async () => {
+      let url = 'documents';
+      const params = new URLSearchParams();
+      if (program) params.append('program', program);
+      if (track) params.append('track', track);
+      if (params.toString()) url += `?${params.toString()}`;
+      
+      const response = await apiClient.get<any[]>(url);
+      return response;
+    }
+  });
+};

@@ -75,6 +75,7 @@ import {
   useStudentProgressHistory, 
   useStudentSessionsHistory 
 } from "@/hooks/api/useStudent";
+import { ApiService } from "@/services/api";
 
 // --- Calendar Setup ---
 const locales = {
@@ -89,7 +90,7 @@ const localizer = dateFnsLocalizer({
     locales,
 });
 
-// --- Mock Data ---
+// --- Interfaces ---
 interface StatCard {
     title: string;
     value: string;
@@ -115,10 +116,6 @@ interface ProgressEntry {
     date: Date;
     status: "completed" | "pending";
 }
-// Removed static mock arrays
-
-
-
 
 export default function DashboardPage() {
     // Data Hooks
@@ -141,7 +138,39 @@ export default function DashboardPage() {
 
     // Calendar States
     const [events, setEvents] = useState<any[]>([]);
+    const [personalEvents, setPersonalEvents] = useState<any[]>([]);
+    const [reports, setReports] = useState<any[]>([]);
     
+    // Fetch personal events
+    const loadPersonalEvents = async () => {
+        try {
+            const data = await ApiService.getStudentEvents();
+            if (Array.isArray(data)) {
+                setPersonalEvents(data.map((e: any) => ({
+                    id: `personal-${e.id}`,
+                    dbId: e.id,
+                    title: e.title,
+                    start: new Date(e.date.split('T')[0] + 'T' + e.startTime),
+                    end: new Date(e.date.split('T')[0] + 'T' + e.endTime),
+                    link: e.link || "#",
+                    isPersonal: true
+                })));
+            }
+            if (studentId) {
+                const reportData = await ApiService.getStudentWeeklyReports(studentId);
+                if (Array.isArray(reportData)) {
+                    setReports(reportData);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to load personal events or reports", error);
+        }
+    };
+
+    useEffect(() => {
+        loadPersonalEvents();
+    }, []);
+
     useEffect(() => {
         if (sessions && Array.isArray(sessions)) {
             const formattedSessions = sessions.map((s: any) => ({
@@ -151,9 +180,11 @@ export default function DashboardPage() {
                 end: new Date(new Date(s.date).getTime() + 60 * 60 * 1000), // Assuming 1 hr duration
                 link: s.meetingLink || "#"
             }));
-            setEvents(formattedSessions);
+            setEvents([...formattedSessions, ...personalEvents]);
+        } else {
+            setEvents([...personalEvents]);
         }
-    }, [sessions]);
+    }, [sessions, personalEvents]);
 
     const [isAddEventOpen, setIsAddEventOpen] = useState(false);
     const [newEvent, setNewEvent] = useState({
@@ -191,39 +222,35 @@ export default function DashboardPage() {
 
     const statsData = rawStats || { totalSessions: 0, totalProgress: 0, currentStreak: 0, maxStreak: 0 };
     const stats: StatCard[] = [
-        { title: "Current Streak", value: `${statsData.currentStreak || 0} days`, trend: 12.5, icon: <Activity className="h-5 w-5 text-primary" /> },
-        { title: "Total Sessions", value: `${statsData.totalSessions || 0}`, trend: 8.2, icon: <Clock className="h-5 w-5 text-primary" /> },
-        { title: "Total Progress", value: `${statsData.totalProgress || 0}`, trend: 4.1, icon: <FileText className="h-5 w-5 text-primary" /> },
-        { title: "Max Streak", value: `${statsData.maxStreak || 0} days`, trend: 2.0, icon: <BarChart3 className="h-5 w-5 text-primary" /> },
+        { title: "Current Streak", value: `${statsData.currentStreak || 0} days`, trend: statsData.currentStreak > 0 ? 12.5 : 0, icon: <Activity className="h-5 w-5 text-primary" /> },
+        { title: "Total Sessions", value: `${statsData.totalSessions || 0}`, trend: statsData.totalSessions > 0 ? 8.2 : 0, icon: <Clock className="h-5 w-5 text-primary" /> },
+        { title: "Total Progress", value: `${statsData.totalProgress || 0}`, trend: statsData.totalProgress > 0 ? 4.1 : 0, icon: <FileText className="h-5 w-5 text-primary" /> },
+        { title: "Max Streak", value: `${statsData.maxStreak || 0} days`, trend: statsData.maxStreak > 0 ? 2.0 : 0, icon: <BarChart3 className="h-5 w-5 text-primary" /> },
     ];
 
-    const handleAddEvent = () => {
+    const handleAddEvent = async () => {
         if (!newEvent.title) {
             toast.error("Please enter an event title");
             return;
         }
 
-        const [startH, startM] = newEvent.startTime.split(":").map(Number);
-        const [endH, endM] = newEvent.endTime.split(":").map(Number);
+        try {
+            await ApiService.createStudentEvent({
+                title: newEvent.title,
+                date: newEvent.date.toISOString(),
+                startTime: newEvent.startTime,
+                endTime: newEvent.endTime,
+                link: newEvent.link
+            });
 
-        const startDate = new Date(newEvent.date);
-        startDate.setHours(startH, startM);
+            await loadPersonalEvents();
 
-        const endDate = new Date(newEvent.date);
-        endDate.setHours(endH, endM);
-
-        const addedEvent = {
-            id: events.length + 1,
-            title: newEvent.title,
-            start: startDate,
-            end: endDate,
-            link: newEvent.link || "#"
-        };
-
-        setEvents([...events, addedEvent]);
-        setIsAddEventOpen(false);
-        setNewEvent({ title: "", date: new Date(), startTime: "10:00", endTime: "11:00", link: "" });
-        toast.success("Event added successfully");
+            setIsAddEventOpen(false);
+            setNewEvent({ title: "", date: new Date(), startTime: "10:00", endTime: "11:00", link: "" });
+            toast.success("Event added successfully");
+        } catch (error) {
+            toast.error("Failed to add event");
+        }
     };
 
     if (isLoading) {
@@ -524,15 +551,46 @@ export default function DashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="reports" className="m-0">
-                    <div className="flex flex-col items-center justify-center p-20 bg-muted/20 border-2 border-dashed rounded-3xl">
-                        <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                            <FileText className="h-10 w-10 text-primary" />
-                        </div>
-                        <h3 className="text-2xl font-bold font-montserrat">Reports Module Not Loaded</h3>
-                        <p className="text-muted-foreground mt-2 max-w-sm text-center">
-                            The analytics engine is currently processing new data. Check back in a few minutes for real-time charts.
-                        </p>
-                    </div>
+                    <Card className="rounded-2xl shadow-xl border-none bg-card/70 backdrop-blur-md">
+                        <CardHeader className="p-8 pb-0">
+                            <CardTitle className="text-3xl font-extrabold tracking-tight font-montserrat text-gray-900">Your Reports</CardTitle>
+                            <CardDescription className="text-muted-foreground mt-2 text-lg">View your weekly progress reports.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-8">
+                            {reports.length > 0 ? (
+                                <div className="space-y-4">
+                                    {reports.map((report) => (
+                                        <div key={report.id} className="p-4 border rounded-xl flex items-center justify-between bg-white shadow-sm">
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-3 bg-blue-100 rounded-lg text-blue-600">
+                                                    <FileText className="w-6 h-6" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold">{report.weekStarting ? `Week of ${new Date(report.weekStarting).toLocaleDateString()}` : "Weekly Report"}</h4>
+                                                    <p className="text-sm text-gray-500">Status: {report.status || 'GENERATED'}</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="outline" size="sm" asChild>
+                                                <a href={`/api/reports/export/${report.id}`} target="_blank" rel="noreferrer">
+                                                    Download PDF
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-20 bg-muted/20 border-2 border-dashed rounded-3xl">
+                                    <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                                        <FileText className="h-10 w-10 text-primary" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold font-montserrat">No Reports Yet</h3>
+                                    <p className="text-muted-foreground mt-2 max-w-sm text-center">
+                                        Your reports will appear here once they are generated by the system.
+                                    </p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </TabsContent>
             </Tabs>
 

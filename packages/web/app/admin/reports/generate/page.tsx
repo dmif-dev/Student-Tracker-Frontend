@@ -31,6 +31,7 @@ import { ApiService } from '@/services/api';
 import LoaderOne from '@/components/ui/loader-one';
 import { ExportService } from '@/services/exportService';
 import { type Student, type Mentor, type Outcome } from '@/types/models';
+import { toast } from "sonner";
 
 
 interface ReportConfig {
@@ -140,6 +141,7 @@ export default function GenerateReportPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
+  const [programsList, setProgramsList] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState<'students' | 'mentors'>('students');
@@ -196,19 +198,21 @@ export default function GenerateReportPage() {
     };
   });
 
-  const programs = ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'];
+  // Fetched dynamically below
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [studentsData, mentorsData, outcomesData] = await Promise.all([
+        const [studentsData, mentorsData, outcomesData, programsData] = await Promise.all([
           ApiService.getStudents(),
           ApiService.getMentors(),
-          ApiService.getOutcomes()
+          ApiService.getOutcomes(),
+          ApiService.getPrograms()
         ]);
         setStudents(studentsData);
         setMentors(mentorsData);
         setOutcomes(outcomesData);
+        setProgramsList(programsData.map(p => p.name));
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -219,7 +223,7 @@ export default function GenerateReportPage() {
     fetchData();
   }, []);
 
-  // Generate mock report data based on config
+  // Generate report data based on config and real backend data
   const generateReportData = (): ReportData => {
     const selectedStudentsList = students.filter(s => config.students.includes(s.id));
     const selectedMentorsList = mentors.filter(m => config.mentors.includes(m.id));
@@ -358,13 +362,13 @@ export default function GenerateReportPage() {
       setReportData(data);
       
       if (errors.length > 0) {
-        alert(`Some reports could not be saved to the database:\n${errors.join('\n')}`);
+        toast.success(`Some reports could not be saved to the database:\n${errors.join('\n')}`);
       }
       
       setGenerated(true);
     } catch (error: any) {
       console.error('Error generating report:', error);
-      alert(`Failed to save report to database:\n${error.message}`);
+      toast.error(`Failed to save report to database:\n${error.message}`);
     } finally {
       setGenerating(false);
     }
@@ -391,14 +395,14 @@ export default function GenerateReportPage() {
   };
 
   const handleSchedule = () => {
-    alert('Report scheduled successfully! This feature will be implemented with the backend.');
+    toast.success('Report scheduled successfully! This feature will be implemented with the backend.');
     router.push('/admin/reports');
   };
 
   const downloadPDF = (data: ReportData, filename: string) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Please allow pop-ups to generate PDF');
+      toast.error('Please allow pop-ups to generate PDF');
       return;
     }
 
@@ -951,7 +955,7 @@ export default function GenerateReportPage() {
                   Filter by Program
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {programs.map((program) => (
+                  {programsList.map((program: string) => (
                     <button
                       key={program}
                       onClick={() => {

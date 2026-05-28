@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiService } from '@/services/api';
 import LoaderOne from '@/components/ui/loader-one';
+import { toast } from 'sonner';
 import { 
   GraduationCap, 
   Users, 
@@ -96,9 +97,10 @@ const programTypeDescriptions: Record<string, { type: string; description: strin
 
 // ==================== TrackEditor Component with Integrated Edit Functionality ====================
 
-function TrackEditor({ track, programId, hasOutcomes, onUpdate }: { 
+function TrackEditor({ track, programId, programName, hasOutcomes, onUpdate }: { 
   track: Track; 
   programId: string;
+  programName: string;
   hasOutcomes: boolean;
   onUpdate: (trackId: string, updates: Partial<Track>) => void;
 }) {
@@ -170,12 +172,12 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
           </p>
         </div>
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          programId === 'g-gmp' ? 'bg-purple-100 text-purple-700' :
-          programId === 'pcp' ? 'bg-orange-100 text-orange-700' :
+          programName.toLowerCase() === 'g-gmp' ? 'bg-purple-100 text-purple-700' :
+          programName.toLowerCase() === 'pcp' ? 'bg-orange-100 text-orange-700' :
           'bg-orange-100 text-orange-700'
         }`}>
-          {programId === 'g-gmp' ? 'Innovation' :
-           programId === 'pcp' ? 'Certification' :
+          {programName.toLowerCase() === 'g-gmp' ? 'Innovation' :
+           programName.toLowerCase() === 'pcp' ? 'Certification' :
            'Learning'}
         </span>
       </div>
@@ -198,7 +200,7 @@ function TrackEditor({ track, programId, hasOutcomes, onUpdate }: {
         {hasOutcomes && (
           <div>
             <label className="block text-xs text-gray-500 mb-1">
-              {programId === 'g-gmp' ? 'Outcome Target' : 'Certification Target'}
+              {programName.toLowerCase() === 'g-gmp' ? 'Outcome Target' : 'Certification Target'}
             </label>
             <input
               type="number"
@@ -416,12 +418,12 @@ export default function ProgramsPage() {
         ...(program.hasOutcomes && {
           outcomes: {
             count: program.outcomeCount,
-            ...(program.id === 'g-gmp' && {
+            ...(program.name.toLowerCase() === 'g-gmp' && {
               patents: 12,
               papers: 15,
               startups: 8,
             }),
-            ...(program.id === 'pcp' && {
+            ...(program.name.toLowerCase() === 'pcp' && {
               associate: 25,
               specialist: 12,
               professional: 5,
@@ -446,11 +448,11 @@ export default function ProgramsPage() {
       setShowReportModal(null);
       
       // Show success message (you might want to use a toast notification here)
-      alert(`Report generated successfully!`);
+      toast.success(`Report generated successfully!`);
       
     } catch (error) {
       console.error('Error generating report:', error);
-      alert('Failed to generate report. Please try again.');
+      toast.error('Failed to generate report. Please try again.');
     } finally {
       setGeneratingReport(false);
     }
@@ -461,7 +463,7 @@ export default function ProgramsPage() {
     // For now, create a simple HTML representation
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Please allow pop-ups to generate PDF');
+      toast.error('Please allow pop-ups to generate PDF');
       return;
     }
 
@@ -649,9 +651,10 @@ export default function ProgramsPage() {
   const filteredPrograms = selectedType === 'all' 
     ? programs 
     : programs.filter(p => {
-        if (selectedType === 'innovation') return p.id === 'g-gmp';
-        if (selectedType === 'learning') return p.id === 'g-cmp' || p.id === 'e-tip';
-        if (selectedType === 'certification') return p.id === 'pcp';
+        const pName = p.name.toLowerCase();
+        if (selectedType === 'innovation') return pName === 'g-gmp';
+        if (selectedType === 'learning') return pName === 'g-cmp' || pName === 'e-tip';
+        if (selectedType === 'certification') return pName === 'pcp';
         return true;
       });
 
@@ -735,10 +738,11 @@ export default function ProgramsPage() {
       <div className="grid grid-cols-1 gap-6">
         {filteredPrograms.map((program) => {
           const IconComponent = getProgramIcon(program);
-          const OutcomeIcon = outcomeIconMap[program.id === 'g-gmp' ? 'G-GMP' : program.id === 'pcp' ? 'PCP' : ''] || Award;
+          const pName = program.name.toLowerCase();
+          const OutcomeIcon = outcomeIconMap[pName === 'g-gmp' ? 'G-GMP' : pName === 'pcp' ? 'PCP' : ''] || Award;
           const stats = getProgramStats(program);
           const colorClasses = getProgramColorClasses(program.color);
-          const typeInfo = programTypeDescriptions[program.id] || {
+          const typeInfo = programTypeDescriptions[pName] || {
             type: 'Program',
             description: program.description,
             icon: BookOpen,
@@ -1120,6 +1124,7 @@ export default function ProgramsPage() {
                   key={track.id}
                   track={track}
                   programId={showTrackModal.id}
+                  programName={showTrackModal.name}
                   hasOutcomes={showTrackModal.hasOutcomes}
                   onUpdate={handleUpdateTrack}
                 />
@@ -1147,7 +1152,7 @@ export default function ProgramsPage() {
                 onClick={() => {
                   // Save all changes
                   setShowTrackModal(null);
-                  alert('Track changes saved successfully!');
+                  toast.success('Track changes saved successfully!');
                 }}
                 className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
               >

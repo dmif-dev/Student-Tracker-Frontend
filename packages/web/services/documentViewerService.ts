@@ -17,10 +17,10 @@ class DocumentViewerServiceClass {
   // Track document downloads
   async trackDownload(documentId: string, userId: string, userRole: 'admin' | 'mentor' | 'student') {
     try {
-      // Backend should track it upon download
-      // No specific track endpoint, download handled by FileHandlerService
+      // Calling download endpoint to register a download
+      await apiClient.getBlob(`documents/${documentId}/download`);
     } catch {
-      // Silent catch
+      console.warn('Failed to track document download');
     }
   }
 

@@ -38,6 +38,7 @@ import { mapStudent } from '@/utils/dataMappers';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
 import MessageModal from '@/components/mentor/MessageModal';
 import LoaderOne from '@/components/ui/loader-one';
+import { toast } from "sonner";
 
 interface Student {
   id: string;
@@ -230,7 +231,7 @@ export default function MentorStudentDetailPage() {
       setShowScheduleModal(false);
     } catch (error) {
       console.error('Error scheduling session:', error);
-      alert('Failed to schedule session. Please try again.');
+      toast.error('Failed to schedule session. Please try again.');
     }
   };
 
@@ -544,7 +545,7 @@ export default function MentorStudentDetailPage() {
                       if (link) {
                         window.open(link, '_blank', 'noopener,noreferrer');
                       } else {
-                        alert('No meeting link available for this session.');
+                        toast.error('No meeting link available for this session.');
                       }
                     }}
                     className="mt-4 w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"

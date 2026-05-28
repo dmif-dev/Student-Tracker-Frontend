@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { useAdminMentor, useUpdateMentor } from '@/hooks/api/useAdmin';
 
 import LoaderOne from '@/components/ui/loader-one';
+import { ApiService } from '@/services/api';
 
 interface MentorFormData {
   name: string;
@@ -37,7 +38,11 @@ export default function EditMentorPage() {
   } = useForm<MentorFormData>();
 
   const mentorId = params.id as string;
-  const programs = ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'];
+  const [programs, setPrograms] = useState<string[]>([]);
+  
+  useEffect(() => {
+    ApiService.getPrograms().then(data => setPrograms(data.map(p => p.name))).catch(console.error);
+  }, []);
   const { data: mentor, isLoading: mentorLoading, error: mentorError } = useAdminMentor(mentorId);
   const updateMentorMutation = useUpdateMentor();
 

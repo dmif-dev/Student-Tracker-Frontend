@@ -28,6 +28,7 @@ import { DocumentViewerService } from '@/services/documentViewerService';
 import { FileHandlerService } from '@/services/fileHandlerService';
 import { Button } from "@/components/ui/button";
 import LoaderOne from "@/components/ui/loader-one";
+import { toast } from "sonner";
 
 // Define a local interface for the viewer document
 interface ViewerDocument {
@@ -96,7 +97,7 @@ export default function MentorDocumentsPage() {
       });
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Failed to download file. Please try again.');
+      toast.error('Failed to download file. Please try again.');
     }
   };
 
@@ -158,7 +159,7 @@ export default function MentorDocumentsPage() {
       refetch();
     } catch (error) {
       console.error('Error updating document:', error);
-      alert('Failed to update document');
+      toast.error('Failed to update document');
     } finally {
       setIsUpdating(false);
     }

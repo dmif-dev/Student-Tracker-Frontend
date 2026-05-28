@@ -116,12 +116,7 @@ export default function AdminDashboard() {
           color: color
         };
       })
-    : [
-        { name: 'G-GMP Program', value: 34, color: '#0ea5e9' },
-        { name: 'G-CMP Program', value: 27, color: '#ec4899' },
-        { name: 'E-TIP Program', value: 20, color: '#eab308' },
-        { name: 'PCP Program', value: 19, color: '#f97316' }
-      ];
+    : [];
 
   // 2. Trend lines (Enrollment vs Outcomes) - Purely fetched from the backend database!
   const rawTrendData = (statsData?.enrollmentTrend || []).map((et: any) => {
@@ -133,14 +128,7 @@ export default function AdminDashboard() {
     };
   });
 
-  const activeTrendData = rawTrendData.length > 0 ? rawTrendData : [
-    { month: 'Dec', Enrollment: 0, Outcomes: 0 },
-    { month: 'Jan', Enrollment: 0, Outcomes: 0 },
-    { month: 'Feb', Enrollment: 0, Outcomes: 0 },
-    { month: 'Mar', Enrollment: 0, Outcomes: 0 },
-    { month: 'Apr', Enrollment: 0, Outcomes: 0 },
-    { month: 'May', Enrollment: 0, Outcomes: 0 },
-  ];
+  const activeTrendData = rawTrendData.length > 0 ? rawTrendData : [];
 
   // 3. Alternate Capsule weekday bars heights and custom scores (Purely fetched from DB!)
   const dbProgressTrend = statsData?.progressTrend || [];
@@ -164,22 +152,7 @@ export default function AdminDashboard() {
           color: colors[idx % colors.length]
         };
       })
-    : [
-        { label: 'M', value: 4.5, height: '45%', color: 'from-sky-400 to-sky-500' },
-        { label: 'T', value: 3.5, height: '35%', color: 'from-rose-400 to-rose-500' },
-        { label: 'W', value: 6.0, height: '60%', color: 'from-fuchsia-400 to-fuchsia-500' },
-        { label: 'T', value: 5.0, height: '50%', color: 'from-amber-400 to-amber-500' },
-        { label: 'F', value: 3.0, height: '30%', color: 'from-orange-400 to-orange-500' },
-        { label: 'S', value: 7.5, height: '75%', color: 'from-violet-400 to-violet-500' },
-        { label: 'S', value: 8.5, height: '85%', color: 'from-cyan-400 to-cyan-500' },
-        { label: 'M', value: 4.5, height: '45%', color: 'from-sky-400 to-sky-500' },
-        { label: 'T', value: 4.0, height: '40%', color: 'from-rose-400 to-rose-500' },
-        { label: 'W', value: 6.5, height: '65%', color: 'from-fuchsia-400 to-fuchsia-500' },
-        { label: 'T', value: 5.5, height: '55%', color: 'from-amber-400 to-amber-500' },
-        { label: 'F', value: 3.2, height: '32%', color: 'from-orange-400 to-orange-500' },
-        { label: 'S', value: 8.0, height: '80%', color: 'from-violet-400 to-violet-500' },
-        { label: 'S', value: 9.0, height: '90%', color: 'from-cyan-400 to-cyan-500' },
-      ];
+    : [];
 
   // Map progress ring to actual DB average attendance!
   const progressAttendance = statsData?.engagementMetrics?.averageAttendance || 72;
@@ -202,12 +175,7 @@ export default function AdminDashboard() {
           color: colors[idx % colors.length]
         };
       })
-    : [
-        { name: 'Completed Outcomes', value: 35, color: '#38bdf8' },
-        { name: 'Course Progress', value: 25, color: '#8b5cf6' },
-        { name: 'Advising Sessions', value: 20, color: '#2563eb' },
-        { name: 'Approved Papers', value: 15, color: '#34d399' }
-      ];
+    : [];
 
   const radarNodes = [
     { id: 1, name: 'Total Students', value: stats.totalStudents, label: '01', color: '#f97316', desc: 'Total enrolled student profiles in system database.' },
@@ -219,15 +187,9 @@ export default function AdminDashboard() {
   ];
 
   const getRadarCoordinates = (index: number) => {
-    const angles = [
-      (210 * Math.PI) / 180,
-      (175 * Math.PI) / 180,
-      (140 * Math.PI) / 180,
-      (330 * Math.PI) / 180,
-      (5 * Math.PI) / 180,
-      (40 * Math.PI) / 180,
-    ];
-    const angle = angles[index];
+    const totalNodes = radarNodes.length;
+    // Calculate angle evenly distributed in a circle, starting from top (270 degrees)
+    const angle = (index * (360 / totalNodes) - 90) * (Math.PI / 180);
     const radius = 72;
     return {
       x: 150 + radius * Math.cos(angle),
@@ -462,6 +424,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between gap-4 h-[170px] my-auto">
             <div className="w-[125px] h-[125px] relative flex items-center justify-center flex-shrink-0">
               {mounted ? (
+                cohortDistribution.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -483,6 +446,9 @@ export default function AdminDashboard() {
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">No Data</div>
+                )
               ) : null}
               <div className="absolute text-center select-none pointer-events-none">
                 <span className="text-[9px] font-bold uppercase text-slate-400 tracking-widest block leading-none">Tracks</span>

@@ -27,6 +27,7 @@ import {
 import { useAdminMentor, useAdminMentorSessions, useAdminCreateSession, useAdminUpdateSession, useAdminDeleteSession } from '@/hooks/api/useAdmin';
 import { type MentorSchedule, type AssignedStudent } from '@/types/models';
 import LoaderOne from '@/components/ui/loader-one';
+import { toast } from "sonner";
 
 interface SessionFormData {
   studentId: string;
@@ -197,7 +198,7 @@ export default function MentorSchedulePage() {
       setSessionToDelete(null);
     } catch (error) {
       console.error('Failed to delete session:', error);
-      alert('Failed to delete session. Please try again.');
+      toast.error('Failed to delete session. Please try again.');
     } finally {
       setIsDeletingSession(false);
     }

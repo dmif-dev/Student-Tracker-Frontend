@@ -70,20 +70,33 @@ function ContributionGraph({ studentId }: { studentId?: string }) {
 
     const baseDate = useMemo(() => subDays(new Date(), pageOffset), [pageOffset]);
 
-    // Generate data for the last 364 days (exactly 52 weeks) based on API and offset
+    // Generate data dynamically based on the available history rather than assuming 364 days
     const streakData = useMemo(() => {
         const data = [];
         
         // Create a map of dates to progress counts
         const progressMap = new Map();
-        if (progressHistory?.data) {
+        let earliestDate = baseDate;
+        
+        if (progressHistory?.data && progressHistory.data.length > 0) {
             progressHistory.data.forEach((p: any) => {
-                const dateKey = new Date(p.date).toISOString().split('T')[0];
+                const pDate = new Date(p.date);
+                if (pDate < earliestDate) earliestDate = pDate;
+                const dateKey = pDate.toISOString().split('T')[0];
                 progressMap.set(dateKey, (progressMap.get(dateKey) || 0) + 1);
             });
+        } else {
+            // Default to past 90 days if no history exists
+            earliestDate = subDays(baseDate, 90);
         }
+        
+        // Ensure we show at least 90 days, or go back to the earliest record
+        const daysDiff = Math.max(90, Math.floor((baseDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24)));
+        
+        // Cap to 365 days max for UI performance
+        const renderDays = Math.min(365, daysDiff);
 
-        for (let i = 0; i < 364; i++) {
+        for (let i = 0; i < renderDays; i++) {
             const date = subDays(baseDate, i);
             const dateKey = date.toISOString().split('T')[0];
             const count = progressMap.get(dateKey) || 0;
@@ -470,7 +483,8 @@ export default function ReportsPage() {
 
         const streakData = [];
         const baseDate = new Date();
-        for (let i = 0; i < 364; i++) {
+        const daysToScan = 365;
+        for (let i = 0; i < daysToScan; i++) {
             const date = subDays(baseDate, i);
             const dateKey = date.toISOString().split('T')[0];
             streakData.push(progressMap.get(dateKey) || false);
@@ -506,10 +520,21 @@ export default function ReportsPage() {
     // Map trends data to the chart
     const outcomeData = useMemo(() => {
         if (!trends) return [];
-        return trends.map((t: any) => ({
-            month: t.month.split('-')[1], // Just get the month number or format it
-            total: t.entries || 0
-        }));
+        return trends.map((t: any) => {
+            let label = t.month || '';
+            // If it's a YYYY-MM format, format it nicely
+            if (label.includes('-')) {
+                const [year, month] = label.split('-');
+                const d = new Date(parseInt(year), parseInt(month) - 1, 1);
+                if (!isNaN(d.getTime())) {
+                    label = d.toLocaleDateString('en-US', { month: 'short' });
+                }
+            }
+            return {
+                month: label,
+                total: t.entries || 0
+            };
+        });
     }, [trends]);
 
     // Performance Trends mapped from trends
@@ -585,7 +610,14 @@ export default function ReportsPage() {
         { id: "projects", type: "PROJECT", label: "Projects", value: `${outcomesSummary?.byType?.PROJECT || 0}`, subtext: "Completed", icon: Brain, color: "from-orange-500 to-orange-600" },
     ];
 
-    const brainScoreStat = { id: "brain", label: "Brain Score", value: `${rawStats?.currentProgress || 0}%`, subtext: "Overall", icon: Brain, color: "from-orange-500 to-red-500" };
+    const brainScoreStat = { 
+        id: "brain", 
+        label: "Brain Score", 
+        value: `${profile?.stats?.brainScore || rawStats?.currentProgress || 0}%`, 
+        subtext: "Overall", 
+        icon: Brain, 
+        color: "from-orange-500 to-red-500" 
+    };
 
     let visibleStats = [];
     let outcomesText = "Outcomes created over 6 months.";

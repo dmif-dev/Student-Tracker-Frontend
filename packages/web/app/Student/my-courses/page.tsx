@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ApiService } from "@/services/api";
-import { useStudentProfile } from "@/hooks/api/useStudent";
+import { useStudentProfile, useStudentStats, useStudentOutcomes } from "@/hooks/api/useStudent";
 
 // --- Types and Enums from Inspiration ---
 enum Strength {
@@ -282,6 +282,9 @@ export default function MyCoursesPage() {
     const [programs, setPrograms] = useState<any[]>([]);
     const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
     const { data: profile, isLoading: isProfileLoading } = useStudentProfile();
+    const studentId = profile?.student?.id;
+    const { data: rawStats } = useStudentStats(studentId);
+    const { data: outcomesSummary } = useStudentOutcomes(studentId);
 
     useEffect(() => {
         const fetchPrograms = async () => {
@@ -320,9 +323,9 @@ export default function MyCoursesPage() {
 
     const stats = [
         { label: "Active Courses", value: programs.length.toString(), icon: BookOpen, color: "text-indigo-500" },
-        { label: "Innovation Points", value: "1.8k", icon: Sparkles, color: "text-orange-500" },
-        { label: "Learning Hours", value: "142h", icon: Clock, color: "text-blue-500" },
-        { label: "Achievements", value: "7", icon: Trophy, color: "text-amber-500" },
+        { label: "Innovation Points", value: ((rawStats?.totalEntries || 0) * 10).toString(), icon: Sparkles, color: "text-orange-500" },
+        { label: "Learning Hours", value: `${Math.round((rawStats?.totalSessions || 0) * 1.5)}h`, icon: Clock, color: "text-blue-500" },
+        { label: "Achievements", value: (outcomesSummary?.total || 0).toString(), icon: Trophy, color: "text-amber-500" },
     ];
 
     return (

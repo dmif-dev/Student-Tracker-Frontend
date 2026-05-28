@@ -32,7 +32,7 @@ export default function ApiSettingsPage() {
       setShowNewKeyForm(false);
       setNewKeyName('');
       toast.success('API Key generated!');
-      alert(`Your new API Key is: ${data.key}\nPlease store it safely, it may not be visible again.`);
+      toast.error(`Your new API Key is: ${data.key}\nPlease store it safely, it may not be visible again.`);
     },
     onError: (error) => {
       console.error(error);

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoaderOne from '@/components/ui/loader-one';
+import { ApiService } from '@/services/api';
 import {
   ArrowLeft,
   Users,
@@ -54,58 +55,35 @@ export default function TrackDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data - replace with API call
     const fetchTrack = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 800));
+        const programId = params.id as string;
+        const trackId = params.trackId as string;
         
-        setTrack({
-          id: params.trackId as string,
-          name: params.trackId === 'patent' ? 'Patent Track' :
-                params.trackId === 'research' ? 'Research Paper Track' :
-                params.trackId === 'ai-product' ? 'AI Product Development' :
-                'Track Details',
-          programId: params.id as string,
-          programName: params.id === 'g-gmp' ? 'G-GMP' :
-                      params.id === 'g-cmp' ? 'G-CMP' :
-                      params.id === 'e-tip' ? 'E-TIP' : 'PCP',
-          description: 'Comprehensive track covering all aspects of the domain with hands-on projects and mentor guidance.',
-          students: 45,
-          mentors: 5,
-          progress: 75,
-          outcomes: 12,
-          duration: '6 months',
-          modules: [
-            { id: '1', name: 'Introduction & Fundamentals', completionRate: 85, studentsEnrolled: 45 },
-            { id: '2', name: 'Advanced Concepts', completionRate: 70, studentsEnrolled: 42 },
-            { id: '3', name: 'Project Phase 1', completionRate: 60, studentsEnrolled: 38 },
-            { id: '4', name: 'Project Phase 2', completionRate: 45, studentsEnrolled: 35 },
-            { id: '5', name: 'Final Assessment', completionRate: 30, studentsEnrolled: 30 },
-          ],
-          recentActivity: [
-            {
-              id: '1',
-              type: 'enrollment',
-              description: 'John Doe enrolled in the track',
-              student: 'John Doe',
-              date: '2024-03-21',
-            },
-            {
-              id: '2',
-              type: 'completion',
-              description: 'Jane Smith completed Module 2',
-              student: 'Jane Smith',
-              date: '2024-03-20',
-            },
-            {
-              id: '3',
-              type: 'outcome',
-              description: 'Mike Johnson filed a patent',
-              student: 'Mike Johnson',
-              date: '2024-03-19',
-            },
-          ],
-        });
+        const program = await ApiService.getProgramById(programId);
+        
+        if (program && program.tracks) {
+          const foundTrack = program.tracks.find((t: any) => t.id === trackId || t.name.toLowerCase().replace(/ /g, '-') === trackId);
+          if (foundTrack) {
+            setTrack({
+              ...foundTrack,
+              programId: program.id,
+              programName: program.name,
+              description: (foundTrack as any).description || 'Comprehensive track covering all aspects of the domain with hands-on projects and mentor guidance.',
+              duration: (foundTrack as any).duration || '6 months',
+              modules: [ // Backend doesn't have modules yet, keeping empty or dummy for UI
+                { id: '1', name: 'Introduction & Fundamentals', completionRate: 85, studentsEnrolled: foundTrack.students || 0 },
+                { id: '2', name: 'Advanced Concepts', completionRate: 70, studentsEnrolled: foundTrack.students || 0 },
+                { id: '3', name: 'Final Assessment', completionRate: 30, studentsEnrolled: foundTrack.students || 0 },
+              ],
+              recentActivity: [], // Real backend activity should go here when available per track
+            } as any);
+          } else {
+             setTrack(null);
+          }
+        } else {
+          setTrack(null);
+        }
       } catch (error) {
         console.error('Error fetching track:', error);
       } finally {

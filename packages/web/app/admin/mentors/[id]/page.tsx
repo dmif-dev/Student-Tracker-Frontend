@@ -20,7 +20,7 @@ import {
   Trash2,
   AlertTriangle
 } from 'lucide-react';
-import { useAdminMentor, useDeleteMentor } from '@/hooks/api/useAdmin';
+import { useAdminMentor, useDeleteMentor, useAdminMentorSessions, useAdminMentorPerformance } from '@/hooks/api/useAdmin';
 import LoaderOne from '@/components/ui/loader-one';
 
 interface MentorDetails {
@@ -57,8 +57,10 @@ export default function MentorDetailPage() {
   const router = useRouter();
   const pathname = usePathname();
   const { data: mentor, isLoading: loading } = useAdminMentor(params.id as string);
+  const { data: sessions = [], isLoading: sessionsLoading } = useAdminMentorSessions(params.id as string);
+  const { data: performance, isLoading: performanceLoading } = useAdminMentorPerformance(params.id as string);
+  
   const deleteMentorMutation = useDeleteMentor();
-  const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -77,45 +79,19 @@ export default function MentorDetailPage() {
 
 
 
-  useEffect(() => {
-    if (mentor?.assignedStudents) {
-      const sessions = generateUpcomingSessions(mentor);
-      setUpcomingSessions(sessions);
-    }
-  }, [mentor]);
-
-  const generateUpcomingSessions = (mentorData: any) => {
-    const sessions: UpcomingSession[] = [];
-    const now = new Date();
-    const students = mentorData.assignedStudents || [];
-
-    students.forEach((student: any, index: number) => {
-      if (student.program === 'PCP') return;
-
-      // Determine day of week based on program
-      let dayOfWeek = 1; // Monday default
-      if (student.program === 'G-GMP') dayOfWeek = 1; // Monday
-      if (student.program === 'G-CMP') dayOfWeek = 3; // Wednesday
-      if (student.program === 'E-TIP') dayOfWeek = 5; // Friday
-
-      // Calculate next session date
-      const sessionDate = new Date(now);
-      const daysUntilNext = (dayOfWeek - now.getDay() + 7) % 7;
-      sessionDate.setDate(now.getDate() + daysUntilNext);
-
-      sessions.push({
-        id: `s${student.id}`,
-        studentName: student.name,
-        studentProgram: student.program,
-        studentTrack: student.track,
-        date: sessionDate.toLocaleDateString(),
-        time: '10:00 AM - 11:00 AM',
-        topic: `${student.track} - Weekly Review`
-      });
-    });
-
-    return sessions.slice(0, 3); // Show only next 3 sessions
-  };
+  const upcomingSessions: UpcomingSession[] = sessions
+    .filter((s: any) => new Date(s.date) >= new Date(new Date().setHours(0,0,0,0)) && s.status !== 'CANCELLED')
+    .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 3)
+    .map((s: any) => ({
+      id: s.id,
+      studentName: s.student.name,
+      studentProgram: s.student?.program?.name || s.student?.program || 'Unknown',
+      studentTrack: s.student?.track?.name || s.student?.track || 'Unknown',
+      date: new Date(s.date).toLocaleDateString(),
+      time: `${s.startTime} - ${s.endTime}`,
+      topic: s.topic
+    }));
 
   const getProgramColor = (program: string) => {
     const colors = {
@@ -442,10 +418,10 @@ export default function MentorDetailPage() {
                   <div>
                     <p className="font-medium text-gray-900">{student.name}</p>
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className={`px-2 py-1 rounded-full text-xs ${getProgramColor(student.program)}`}>
-                        {student.program}
+                      <span className={`px-2 py-1 rounded-full text-xs ${getProgramColor(student.program?.name || student.program)}`}>
+                        {student.program?.name || student.program}
                       </span>
-                      <span className="text-xs text-gray-500">{student.track}</span>
+                      <span className="text-xs text-gray-500">{student.track?.name || student.track}</span>
                     </div>
                   </div>
                   <div className="text-right">
@@ -481,23 +457,23 @@ export default function MentorDetailPage() {
             <div className="p-4 bg-purple-50 rounded-lg">
               <h4 className="font-medium text-purple-700 mb-2">G-GMP Sessions</h4>
               <p className="text-2xl font-bold text-purple-700">
-                {mentor.assignedStudents?.filter((s: any) => s.program === 'G-GMP').length || 0}
+                {sessions.filter((s: any) => s.student?.program?.name === 'G-GMP' || s.student?.program === 'G-GMP').length}
               </p>
-              <p className="text-sm text-purple-600">Mondays</p>
+              <p className="text-sm text-purple-600">Total Scheduled</p>
             </div>
             <div className="p-4 bg-green-50 rounded-lg">
               <h4 className="font-medium text-green-700 mb-2">G-CMP Sessions</h4>
               <p className="text-2xl font-bold text-green-700">
-                {mentor.assignedStudents?.filter((s: any) => s.program === 'G-CMP').length || 0}
+                {sessions.filter((s: any) => s.student?.program?.name === 'G-CMP' || s.student?.program === 'G-CMP').length}
               </p>
-              <p className="text-sm text-green-600">Wednesdays</p>
+              <p className="text-sm text-green-600">Total Scheduled</p>
             </div>
             <div className="p-4 bg-blue-50 rounded-lg">
               <h4 className="font-medium text-blue-700 mb-2">E-TIP Sessions</h4>
               <p className="text-2xl font-bold text-blue-700">
-                {mentor.assignedStudents?.filter((s: any) => s.program === 'E-TIP').length || 0}
+                {sessions.filter((s: any) => s.student?.program?.name === 'E-TIP' || s.student?.program === 'E-TIP').length}
               </p>
-              <p className="text-sm text-blue-600">Fridays</p>
+              <p className="text-sm text-blue-600">Total Scheduled</p>
             </div>
           </div>
         </div>
@@ -510,15 +486,15 @@ export default function MentorDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-600 mb-1">Session Completion</p>
-              <p className="text-2xl font-bold text-blue-700">94%</p>
+              <p className="text-2xl font-bold text-blue-700">{performance?.completionRate || 0}%</p>
             </div>
             <div className="p-4 bg-green-50 rounded-lg">
               <p className="text-sm text-green-600 mb-1">Student Satisfaction</p>
-              <p className="text-2xl font-bold text-green-700">4.8/5</p>
+              <p className="text-2xl font-bold text-green-700">{performance?.rating ? performance.rating.toFixed(1) : 'N/A'}/5</p>
             </div>
             <div className="p-4 bg-purple-50 rounded-lg">
               <p className="text-sm text-purple-600 mb-1">Total Sessions</p>
-              <p className="text-2xl font-bold text-purple-700">156</p>
+              <p className="text-2xl font-bold text-purple-700">{performance?.totalSessions || 0}</p>
             </div>
           </div>
         </div>

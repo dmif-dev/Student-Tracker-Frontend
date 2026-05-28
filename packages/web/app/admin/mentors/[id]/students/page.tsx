@@ -55,6 +55,7 @@ interface AssignedStudent {
   nextSession?: string;
   progress: number;
   hasMentor: boolean;
+  outcomes?: any[];
 }
 
 export default function MentorStudentsPage() {
@@ -89,9 +90,9 @@ export default function MentorStudentsPage() {
             lastSession: s.lastSession,
             nextSession: s.nextSession,
             outcomes: {
-              patents: 0, // Default values
-              papers: 0,
-              projects: 0
+              patents: s.outcomes?.filter((o: any) => o.type === 'patent').length || 0,
+              papers: s.outcomes?.filter((o: any) => o.type === 'paper').length || 0,
+              projects: s.outcomes?.filter((o: any) => o.type === 'startup' || o.type === 'project').length || 0
             },
             hasMentor: s.hasMentor
           }));

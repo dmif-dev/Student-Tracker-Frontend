@@ -19,24 +19,25 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-// --- Mock Data ---
+import { useStudentProfile, useStudentDocuments } from "@/hooks/api/useStudent";
+import { formatDistanceToNow } from "date-fns";
+
+// --- Formatter for file size ---
+const formatBytes = (bytes: number, decimals = 2) => {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+};
+
 const RESOURCE_CATEGORIES = [
     { id: "all", label: "All Resources", icon: null },
     { id: "pre-reading", label: "Pre-Reading", icon: <BookOpen className="w-4 h-4" /> },
     { id: "learning", label: "Learning", icon: <FileText className="w-4 h-4" /> },
     { id: "assignments", label: "Assignments", icon: <FileCheck className="w-4 h-4" /> },
 ];
-
-const TRACKS_CONTENT: Record<string, any> = {
-    "AI Product Development": {
-        resources: [
-            { id: 1, title: "Foundations of LLMs", category: "pre-reading", type: "PDF", size: "2.4 MB", time: "15 min read", date: "Oct 12, 2023" },
-            { id: 2, title: "Product-Led Growth for AI", category: "learning", type: "Slide", size: "12 MB", time: "45 min prep", date: "Oct 15, 2023" },
-            { id: 3, title: "Build your first RAG Workflow", category: "assignments", type: "Docs", size: "1.1 MB", time: "3 hours", date: "Oct 18, 2023" },
-            { id: 4, title: "Prompt Engineering Best Practices", category: "learning", type: "PDF", size: "850 KB", time: "20 min read", date: "Oct 20, 2023" },
-        ]
-    }
-};
 
 const ResourceCard = ({ resource, index }: { resource: any; index: number }) => {
     const iconMap: Record<string, any> = {
@@ -99,8 +100,32 @@ export default function TrackResourcesPage() {
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
 
-    const trackData = TRACKS_CONTENT[trackName] || { resources: [] };
-    const filteredResources = trackData.resources.filter((res: any) => {
+    const { data: profile } = useStudentProfile();
+    const programName = profile?.program?.name || profile?.programName;
+    const trackNameReal = profile?.track?.name || profile?.trackName || trackName;
+
+    const { data: documentsData, isLoading } = useStudentDocuments(programName, trackNameReal);
+
+    const documents = React.useMemo(() => {
+        if (!documentsData) return [];
+        return documentsData.map((doc: any) => {
+            let category = "learning";
+            if (doc.type === "PRE_READING_MATERIAL") category = "pre-reading";
+            if (doc.type === "ASSIGNMENT_MATERIAL") category = "assignments";
+
+            return {
+                id: doc.id,
+                title: doc.title,
+                category,
+                type: doc.fileType?.split('/').pop()?.toUpperCase() || 'FILE',
+                size: formatBytes(doc.fileSize),
+                time: doc.metadata?.duration || "15 mins",
+                date: new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            };
+        });
+    }, [documentsData]);
+
+    const filteredResources = documents.filter((res: any) => {
         const matchesCategory = selectedCategory === "all" || res.category === selectedCategory;
         const matchesSearch = res.title.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCategory && matchesSearch;
@@ -180,9 +205,11 @@ export default function TrackResourcesPage() {
                             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
                             <h4 className="text-lg font-black leading-tight">Need Help with Assignments?</h4>
                             <p className="text-orange-100 text-xs font-medium leading-relaxed">Schedule a quick 15-min sync with your mentor for any blockers.</p>
-                            <button className="w-full py-3 bg-white text-orange-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-50 transition-colors">
-                                BOOK SYNC
-                            </button>
+                            <Link href="/Student/mentor-details" className="w-full">
+                                <button className="w-full py-3 bg-white text-orange-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-50 transition-colors">
+                                    BOOK SYNC
+                                </button>
+                            </Link>
                         </div>
                     </div>
 

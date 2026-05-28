@@ -233,7 +233,7 @@ export default function DocumentsPage() {
       });
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Failed to download file. Please try again.');
+      toast.error('Failed to download file. Please try again.');
     }
   };
 

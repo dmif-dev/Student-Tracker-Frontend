@@ -30,6 +30,7 @@ import SessionNotesModal from '@/components/mentor/SessionNotesModal';
 import { Session, SessionNote } from '@student-tracker/shared/models/Session';
 import { Button } from "@/components/ui/button";
 import LoaderOne from "@/components/ui/loader-one";
+import { toast } from "sonner";
 
 interface AssignedStudent {
   id: string;
@@ -142,7 +143,7 @@ export default function MentorSchedulePage() {
       // Find the selected student
       const selectedStudent = students.find(s => s.id === sessionData.studentId);
       if (!selectedStudent) {
-        alert('Please select a valid student.');
+        toast.error('Please select a valid student.');
         return;
       }
 
@@ -160,7 +161,7 @@ export default function MentorSchedulePage() {
       setShowScheduleModal(false);
     } catch (error) {
       console.error('Error scheduling session:', error);
-      alert('Failed to schedule session. Please try again.');
+      toast.error('Failed to schedule session. Please try again.');
     }
   };
 
@@ -181,7 +182,7 @@ export default function MentorSchedulePage() {
       setEditingSession(null);
     } catch (error) {
       console.error('Error updating session:', error);
-      alert('Failed to update session. Please try again.');
+      toast.error('Failed to update session. Please try again.');
     }
   };
 
@@ -194,7 +195,7 @@ export default function MentorSchedulePage() {
       setShowDeleteConfirm(null);
     } catch (error) {
       console.error('Error deleting session:', error);
-      alert('Failed to delete session. Please try again.');
+      toast.error('Failed to delete session. Please try again.');
     }
   };
 
@@ -218,7 +219,7 @@ export default function MentorSchedulePage() {
       setSessionNotes([]);
     } catch (error) {
       console.error('Error adding session notes:', error);
-      alert('Failed to add session notes. Please try again.');
+      toast.error('Failed to add session notes. Please try again.');
     }
   };
 

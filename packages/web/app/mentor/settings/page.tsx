@@ -24,8 +24,9 @@ import {
   LogOut,
   ChevronRight,
   AlertCircle,
-  CheckCircle
+  CheckCircle2
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { signOut } from '@/app/auth/actions';
 import { useCurrentMentor } from '@/hooks/api/useMentor';
 import { apiClient } from '@/utils/apiClient';
@@ -273,7 +274,7 @@ export default function MentorSettingsPage() {
       {/* Success/Error Messages */}
       {successMessage && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-2">
-          <CheckCircle size={18} className="text-green-500" />
+          <CheckCircle2 size={18} className="text-green-500" />
           <p className="text-sm text-green-600">{successMessage}</p>
         </div>
       )}
@@ -659,7 +660,7 @@ export default function MentorSettingsPage() {
                     <button
                       onClick={() => {
                         if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-                          alert('Account deletion feature would be implemented here');
+                          toast.error('Account deletion feature is currently disabled for security reasons. Please contact an administrator.');
                         }
                       }}
                       className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"

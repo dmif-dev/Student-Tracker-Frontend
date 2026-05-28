@@ -21,6 +21,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
+import { toast } from "sonner";
 
 interface Report {
   id: string;
@@ -60,18 +61,29 @@ export default function ReportsPage() {
 
   const [allReports, setAllReports] = useState<Report[]>([]);
   const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
+  const [reportTemplates, setReportTemplates] = useState<any[]>([]);
+  const [programsList, setProgramsList] = useState<string[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
 
     const loadData = async () => {
       try {
-        const [reports, schedules] = await Promise.all([
+        const [reports, schedules, templates, programs] = await Promise.all([
           ApiService.getSavedReports(),
-          ApiService.getScheduledReports()
+          ApiService.getScheduledReports(),
+          ApiService.getReportTemplates(),
+          ApiService.getPrograms()
         ]);
         setAllReports(reports);
         setScheduledReports(schedules);
+        
+        const mappedTemplates = templates.map((t: any) => ({
+          ...t,
+          icon: t.icon === 'TrendingUp' ? TrendingUp : Clock
+        }));
+        setReportTemplates(mappedTemplates);
+        setProgramsList(programs.map((p: any) => p.name));
       } catch (error) {
         console.error('Failed to load reports and schedules:', error);
       } finally {
@@ -81,26 +93,6 @@ export default function ReportsPage() {
 
     loadData();
   }, []);
-
-  // Only two report templates as requested
-  const reportTemplates = [
-    {
-      id: 'weekly-progress',
-      name: 'Weekly Progress Report',
-      description: 'Student progress, attendance, and activity for the week',
-      icon: Clock,
-      color: 'blue',
-      href: '/admin/reports/generate?template=weekly-progress',
-    },
-    {
-      id: 'monthly-analytics',
-      name: 'Monthly Analytics Report',
-      description: 'Comprehensive analytics including trends and outcomes',
-      icon: TrendingUp,
-      color: 'green',
-      href: '/admin/reports/generate?template=monthly-analytics',
-    },
-  ];
 
   // Get unique values for filter options
   const uniqueGenerators = useMemo(() => {
@@ -190,7 +182,7 @@ export default function ReportsPage() {
       } catch (error) {
         console.error('Failed to delete scheduled report:', error);
         setScheduledReports(originalSchedules);
-        alert('Failed to delete scheduled report. Please try again.');
+        toast.error('Failed to delete scheduled report. Please try again.');
       }
     }
   };
@@ -215,7 +207,7 @@ export default function ReportsPage() {
       setScheduledReports(prev => prev.map(s => 
         s.id === scheduleId ? { ...s, status: schedule.status } : s
       ));
-      alert('Failed to update scheduled report status. Please try again.');
+      toast.error('Failed to update scheduled report status. Please try again.');
     }
   };
 
@@ -251,7 +243,7 @@ export default function ReportsPage() {
       setEditingSchedule(null);
     } catch (error) {
       console.error('Failed to save scheduled report:', error);
-      alert('Failed to save scheduled report. Please try again.');
+      toast.error('Failed to save scheduled report. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -263,7 +255,7 @@ export default function ReportsPage() {
       await ApiService.downloadGeneratedReport(reportId, format, fileName);
     } catch (error) {
       console.error('Failed to download report:', error);
-      alert('Failed to download report. Please try again.');
+      toast.error('Failed to download report. Please try again.');
     }
   };
 
@@ -639,6 +631,7 @@ export default function ReportsPage() {
       {showEditModal && editingSchedule && (
         <EditScheduleModal
           schedule={editingSchedule}
+          programsList={programsList}
           onClose={() => {
             setShowEditModal(false);
             setEditingSchedule(null);
@@ -651,8 +644,9 @@ export default function ReportsPage() {
 }
 
 // Edit Schedule Modal Component
-function EditScheduleModal({ schedule, onClose, onSave }: { 
+function EditScheduleModal({ schedule, programsList, onClose, onSave }: { 
   schedule: ScheduledReport; 
+  programsList: string[];
   onClose: () => void; 
   onSave: (updated: ScheduledReport) => void;
 }) {
@@ -666,8 +660,6 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
     recipients: schedule.recipients.join(', '),
     status: schedule.status,
   });
-
-  const programs = ['G-GMP', 'G-CMP', 'E-TIP', 'PCP'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -785,7 +777,7 @@ function EditScheduleModal({ schedule, onClose, onSave }: {
               Programs
             </label>
             <div className="flex flex-wrap gap-2">
-              {programs.map((program) => (
+              {programsList.map((program) => (
                 <button
                   key={program}
                   type="button"

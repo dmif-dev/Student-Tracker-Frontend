@@ -21,90 +21,45 @@ import { ProcessSection } from "@/components/display/ProcessSection";
 import { CourseTracks } from "@/components/display/CourseTracks";
 import { MentorshipModel } from "@/components/display/MentorshipModel";
 import { ExecutiveTracks } from "@/components/display/ExecutiveTracks";
-
-// --- Mock Data ---
-const COURSE_CONTENT = {
-    "GGMP": {
-        title: "Global Guided Mentorship Program",
-        description: "A comprehensive journey across school, college, and professional levels to build your foundation as a future founder or global leader.",
-        category: "Mentorship",
-        modules: [
-            { id: 1, title: "Foundations of Global Mentorship", duration: "35:00", status: "completed", videoUrl: "" },
-            { id: 2, title: "Building a Founder's Mindset", duration: "50:00", status: "completed", videoUrl: "" },
-            { id: 3, title: "Ethics in Global Leadership", duration: "45:00", status: "completed", videoUrl: "" }
-        ],
-        assignments: [
-            { id: 1, title: "Vision Statement Draft", status: "Graded", score: 100, dueDate: "Jan 15, 2026" },
-            { id: 2, title: "Leadership Self-Assessment", status: "Graded", score: 98, dueDate: "Jan 30, 2026" }
-        ],
-        overallProgress: 100,
-        totalModules: 3,
-        completedModules: 3
-    },
-    "G-CMP": {
-        title: "Global Coding Mentorship Program",
-        description: "Master industry-standard coding practices, system design, and product development under the guidance of elite software engineers.",
-        category: "Software Engineering",
-        modules: [
-            { id: 1, title: "International Job Market Landscapes", duration: "45:00", status: "completed", videoUrl: "https://vimeo.com/example1" },
-            { id: 2, title: "Universal Professional Ethics", duration: "1:12:00", status: "completed", videoUrl: "https://vimeo.com/example2" },
-            { id: 3, title: "Advanced Personal Branding Strategy", duration: "58:30", status: "current", videoUrl: "https://vimeo.com/example3" },
-            { id: 4, title: "High-Impact Networking for Innovation", duration: "1:05:00", status: "locked", videoUrl: "" },
-            { id: 5, title: "Cross-Cultural Communication", duration: "52:15", status: "locked", videoUrl: "" }
-        ],
-        assignments: [
-            { id: 1, title: "Profile Audit & Refinement", status: "Graded", score: 95, dueDate: "Feb 20, 2026" },
-            { id: 2, title: "Value Proposition Canvas", status: "Submitted", score: null, dueDate: "Mar 05, 2026" },
-            { id: 3, title: "Global Network Expansion Plan", status: "Pending", score: null, dueDate: "Mar 15, 2026" }
-        ],
-        overallProgress: 65,
-        totalModules: 15,
-        completedModules: 9
-    },
-    "E-TIP": {
-        title: "Executive Technology Immersion Program",
-        description: "Designed for mid-to-senior leaders and aspiring CXOs to deeply immerse in emerging technologies and strategic tech integration.",
-        category: "Leadership",
-        modules: [
-            { id: 1, title: "The Foundation of Deep Tech", duration: "1:20:00", status: "completed", videoUrl: "https://vimeo.com/example4" },
-            { id: 2, title: "AI Integration in Modern Enterprise", duration: "1:45:00", status: "current", videoUrl: "https://vimeo.com/example5" },
-            { id: 3, title: "Blockchain Architectures", duration: "1:15:00", status: "locked", videoUrl: "" },
-            { id: 4, title: "Quantum Computing Basics", duration: "2:05:00", status: "locked", videoUrl: "" }
-        ],
-        assignments: [
-            { id: 1, title: "Tech Stack Feasibility Analysis", status: "Submitted", score: null, dueDate: "Mar 10, 2026" },
-            { id: 2, title: "System Design for AI Agent", status: "Pending", score: null, dueDate: "Mar 25, 2026" }
-        ],
-        overallProgress: 35,
-        totalModules: 12,
-        completedModules: 4
-    },
-    "PCP": {
-        title: "Professional Certification Program",
-        description: "A professional-grade certification track for aspiring IT pros and product developers to validate their expertise in modern tech stacks.",
-        category: "Certification",
-        modules: [
-            { id: 1, title: "Foundation of Professional Dev", duration: "1:10:00", status: "locked", videoUrl: "" },
-            { id: 2, title: "Modern Tech Stack Mastery", duration: "2:30:00", status: "locked", videoUrl: "" }
-        ],
-        assignments: [
-            { id: 1, title: "Skill Baseline Test", status: "Pending", score: null, dueDate: "Apr 01, 2026" }
-        ],
-        overallProgress: 0,
-        totalModules: 10,
-        completedModules: 0
-    }
-};
+import { useStudentProfile, useStudentStats } from "@/hooks/api/useStudent";
+import { ApiService } from "@/services/api";
 
 export default function CourseDetailPage() {
     const params = useParams();
     const router = useRouter();
     const courseId = params.courseId as string;
-    const course = COURSE_CONTENT[courseId as keyof typeof COURSE_CONTENT];
+    const [program, setProgram] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const [activeModule, setActiveModule] = useState(course?.modules.find(m => m.status === "current") || course?.modules[0]);
+    const { data: profile } = useStudentProfile();
+    const studentId = profile?.student?.id;
+    const { data: rawStats } = useStudentStats(studentId);
 
-    if (!course) {
+    useEffect(() => {
+        const fetchProgram = async () => {
+            try {
+                const allPrograms = await ApiService.getPrograms();
+                const matched = allPrograms.find(p => p.id.toUpperCase() === courseId.toUpperCase());
+                setProgram(matched);
+            } catch (error) {
+                console.error("Failed to fetch program", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProgram();
+    }, [courseId]);
+
+    // Use actual stats for progress, fallback to 0
+    const progress = rawStats?.currentProgress || 0;
+    const completedModules = Math.floor(progress / 10) || 0;
+    const totalModules = 10; // Assuming 10 total as a placeholder
+
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    }
+
+    if (!program) {
         return (
             <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
                 <AlertCircle className="w-16 h-16 text-gray-300" />
@@ -135,11 +90,11 @@ export default function CourseDetailPage() {
                     </button>
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">{course.category}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">Mentorship</span>
                             <span className="text-gray-300">/</span>
                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{courseId}</span>
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">{course.title}</h1>
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">{program.name}</h1>
                     </div>
                 </div>
 
@@ -149,15 +104,15 @@ export default function CourseDetailPage() {
                             <circle cx="24" cy="24" r="20" fill="transparent" stroke="#f3f4f6" strokeWidth="4" />
                             <circle
                                 cx="24" cy="24" r="20" fill="transparent" stroke="#f97316" strokeWidth="4"
-                                strokeDasharray={126} strokeDashoffset={126 - (126 * course.overallProgress / 100)}
+                                strokeDasharray={126} strokeDashoffset={126 - (126 * progress / 100)}
                                 strokeLinecap="round"
                             />
                         </svg>
-                        <span className="text-xs font-black text-gray-900">{course.overallProgress}%</span>
+                        <span className="text-xs font-black text-gray-900">{progress}%</span>
                     </div>
                     <div className="space-y-0.5">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Overall Completion</p>
-                        <p className="text-sm font-bold text-gray-900">{course.completedModules} of {course.totalModules} modules finished</p>
+                        <p className="text-sm font-bold text-gray-900">{completedModules} of {totalModules} modules finished</p>
                     </div>
                 </div>
             </motion.div>

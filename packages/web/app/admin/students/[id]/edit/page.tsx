@@ -11,13 +11,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAdminStudent, useUpdateStudent } from '@/hooks/api/useAdmin';
 import LoaderOne from "@/components/ui/loader-one";
+import { ApiService } from '@/services/api';
 
 // Form validation schema
 const studentSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   registrationNumber: z.string().min(5, 'Registration number must be at least 5 characters'),
-  program: z.enum(['G-GMP', 'G-CMP', 'E-TIP', 'PCP']),
+  program: z.string().min(1, 'Please select a program'),
   track: z.string().min(1, 'Please select a track'),
   mentor: z.string().optional(),
   status: z.enum(['active', 'inactive', 'pending', 'completed']),
@@ -38,64 +39,7 @@ const studentSchema = z.object({
 
 type StudentFormData = z.infer<typeof studentSchema>;
 
-const programs = [
-  { 
-    id: 'G-GMP' as const, 
-    name: 'G-GMP', 
-    description: 'Global Guided Mentorship Program',
-    hasMentor: true,
-    tracks: [
-      'Patent Track',
-      'Research Paper Track', 
-      'Entrepreneurship Track',
-      'Inventor Foundation Track'
-    ] 
-  },
-  { 
-    id: 'G-CMP' as const, 
-    name: 'G-CMP', 
-    description: 'Global Coding Mentorship Program',
-    hasMentor: true,
-    tracks: [
-      'AI Product Development',
-      'Full Stack Development',
-      'Cloud Development & Deployment',
-      'Agentic AI Development'
-    ] 
-  },
-  { 
-    id: 'E-TIP' as const, 
-    name: 'E-TIP', 
-    description: 'Executive Technology Immersion Program',
-    hasMentor: true,
-    tracks: [
-      'AI Product Development',
-      'Full Stack',
-      'Cloud Development',
-      'Agentic AI',
-      'Custom Track'
-    ] 
-  },
-  { 
-    id: 'PCP' as const, 
-    name: 'PCP', 
-    description: 'Professional Certification Program (Self-Paced)',
-    hasMentor: false,
-    tracks: [
-      'AI Product Development',
-      'Agentic AI Systems',
-      'AI for Finance',
-      'AI Security'
-    ] 
-  },
-];
 
-const mentors = [
-  { id: '1', name: 'Dr. Smith', programs: ['G-GMP', 'G-CMP'] },
-  { id: '2', name: 'Prof. Johnson', programs: ['G-CMP'] },
-  { id: '3', name: 'Dr. Williams', programs: ['E-TIP', 'G-GMP'] },
-  { id: '4', name: 'Dr. Brown', programs: ['E-TIP'] },
-];
 
 export default function EditStudentPage() {
   const router = useRouter();
@@ -104,6 +48,19 @@ export default function EditStudentPage() {
   const [loading, setLoading] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [mentors, setMentors] = useState<any[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      ApiService.getPrograms(),
+      ApiService.getMentors()
+    ]).then(([fetchedPrograms, fetchedMentors]) => {
+      setPrograms(fetchedPrograms);
+      setMentors(fetchedMentors);
+    }).catch(console.error);
+  }, []);
 
   const {
     register,
@@ -355,8 +312,8 @@ export default function EditStudentPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">Select Track</option>
-                {currentProgram?.tracks.map(track => (
-                  <option key={track} value={track}>{track}</option>
+                {currentProgram?.tracks?.map((track: any) => (
+                  <option key={track.id || track.name || track} value={track.name || track}>{track.name || track}</option>
                 ))}
               </select>
               {errors.track && (

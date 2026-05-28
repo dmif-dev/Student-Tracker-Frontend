@@ -105,25 +105,6 @@ const mapBackendActivity = (activity: any): Activity => {
   };
 };
 
-// Helper function to generate monthly outcome data
-const generateMonthlyOutcomeData = (outcomes: Outcome[]) => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  return months.map(month => ({
-    month,
-    patents: Math.floor(Math.random() * 5) + 1,
-    papers: Math.floor(Math.random() * 6) + 2,
-    startups: Math.floor(Math.random() * 3) + 1,
-  }));
-};
-
-// Helper function to generate monthly certification data
-const generateMonthlyCertificationData = (outcomes: Outcome[]) => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  return months.map(month => ({
-    month,
-    certifications: Math.floor(Math.random() * 8) + 3,
-  }));
-};
 
 export class ApiService {
   // Students
@@ -256,14 +237,43 @@ export class ApiService {
     return response.json();
   }
 
+  // Get dynamic report templates
+  static async getReportTemplates() {
+    return await apiClient.get<any>(`reports/templates`);
+  }
+
   // Activities
   static async getRecentActivities(limit: number = 10): Promise<Activity[]> {
     try {
-      const data = await apiClient.get<any>(`activity/me?limit=${limit}`);
-      return Array.isArray(data) ? data.map(mapBackendActivity) : [];
-    } catch {
+      return await apiClient.get<Activity[]>(`activity?limit=${limit}`);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
       return [];
     }
+  }
+
+  // Get Mentor Activities
+  static async getMentorActivity(mentorId?: string) {
+    const url = mentorId ? `mentor/activity?mentorId=${mentorId}` : 'mentor/activity';
+    return await apiClient.get<any>(url);
+  }
+
+  // Personal Events
+  static async getStudentEvents() {
+    return await apiClient.get<any>(`student/events`);
+  }
+
+  // Student Reports
+  static async getStudentWeeklyReports(studentId: string) {
+    return await apiClient.get<any>(`reports/weekly/student/${studentId}`);
+  }
+
+  static async createStudentEvent(eventData: any) {
+    return await apiClient.post<any>(`student/events`, eventData);
+  }
+
+  static async deleteStudentEvent(eventId: string) {
+    return await apiClient.delete<any>(`student/events/${eventId}`);
   }
 
   // Outcomes
@@ -327,12 +337,9 @@ export class ApiService {
     try {
       const data = await apiClient.get<any>('outcomes/analytics/dashboard');
       return data;
-    } catch {
-      // Fallback empty structure in case backend doesn't match
-      return {
-        gGMP: { total: 0, patents: 0, papers: 0, startups: 0, byMonth: [] },
-        pcp: { total: 0, associate: 0, specialist: 0, professional: 0, byMonth: [] }
-      };
+    } catch (error) {
+      console.error('Failed to fetch outcome statistics:', error);
+      throw new Error('Failed to fetch outcome statistics');
     }
   }
 
@@ -437,14 +444,11 @@ export class ApiService {
   }
 
   static async getTodaySessions(): Promise<any[]> {
-    // Assuming backend returns only upcoming/today's sessions for this endpoint
-    // Fallback to filtering all sessions if a specific endpoint doesn't exist
     try {
       return await apiClient.get<any[]>('mentor/sessions/upcoming');
-    } catch {
-      const allSessions = await this.getMentorSchedule();
-      const today = new Date().toISOString().split('T')[0];
-      return allSessions.filter(s => s.date.startsWith(today));
+    } catch (error) {
+      console.error("Failed to fetch today's sessions:", error);
+      return [];
     }
   }
 

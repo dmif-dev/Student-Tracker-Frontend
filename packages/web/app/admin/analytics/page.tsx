@@ -204,12 +204,18 @@ export default function AnalyticsPage() {
   const [showPCPStats, setShowPCPStats] = useState(true);
   const [showOutcomeStats, setShowOutcomeStats] = useState(true);
 
-  const programs = [
+  const [fetchedPrograms, setFetchedPrograms] = useState<any[]>([]);
+
+  useEffect(() => {
+    ApiService.getPrograms().then(setFetchedPrograms).catch(console.error);
+  }, []);
+
+  const programsOptions = [
     { value: 'all', label: 'All Programs' },
-    { value: 'g-gmp', label: 'G-GMP (with outcomes)' },
-    { value: 'g-cmp', label: 'G-CMP (learning)' },
-    { value: 'e-tip', label: 'E-TIP (learning)' },
-    { value: 'pcp', label: 'PCP (self-paced)' }
+    ...fetchedPrograms.map(p => ({
+      value: p.id || p.name.toLowerCase(),
+      label: `${p.name} ${p.hasOutcomes ? '(with outcomes)' : p.hasMentors ? '(learning)' : '(self-paced)'}`
+    }))
   ];
 
   const dateRanges = [
@@ -247,7 +253,7 @@ export default function AnalyticsPage() {
         ['DMIF ANALYTICS REPORT'],
         [`Generated: ${new Date().toLocaleString()}`],
         [`Date Range: ${dateRanges.find(d => d.value === dateRange)?.label}`],
-        [`Program: ${programs.find(p => p.value === selectedProgram)?.label}`],
+        [`Program: ${programsOptions.find(p => p.value === selectedProgram)?.label || 'All'}`],
         [`Track: ${selectedTrack === 'all' ? 'All Tracks' : selectedTrack}`],
         [],
         ['SUMMARY METRICS'],
@@ -364,8 +370,12 @@ export default function AnalyticsPage() {
 
   const getTracksForProgram = () => {
     if (selectedProgram === 'all') return [];
-    const program = PROGRAM_CONFIG[selectedProgram as keyof typeof PROGRAM_CONFIG];
-    return program?.tracks.map(track => ({ value: track.toLowerCase().replace(/\s+/g, '-'), label: track })) || [];
+    const program = fetchedPrograms.find(p => p.id === selectedProgram || p.name.toLowerCase() === selectedProgram);
+    if (!program || !program.tracks) return [];
+    return program.tracks.map((track: any) => ({ 
+      value: track.id || track.name.toLowerCase().replace(/\s+/g, '-'), 
+      label: track.name 
+    }));
   };
 
   if (loading) {
@@ -463,7 +473,7 @@ export default function AnalyticsPage() {
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
-              {programs.map(program => (
+              {programsOptions.map(program => (
                 <option key={program.value} value={program.value}>{program.label}</option>
               ))}
             </select>
@@ -477,7 +487,7 @@ export default function AnalyticsPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="all">All Tracks</option>
-                {tracks.map(track => (
+                {tracks.map((track: any) => (
                   <option key={track.value} value={track.value}>{track.label}</option>
                 ))}
               </select>
@@ -670,7 +680,7 @@ export default function AnalyticsPage() {
       {data.mentorStats.totalMentors > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold mb-4">
-            Mentor Statistics {selectedProgram !== 'all' && `(${programs.find(p => p.value === selectedProgram)?.label})`}
+            Mentor Statistics {selectedProgram !== 'all' && `(${programsOptions.find(p => p.value === selectedProgram)?.label})`}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div className="p-4 bg-orange-50 rounded-lg">
