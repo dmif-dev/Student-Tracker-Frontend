@@ -1,7 +1,9 @@
+// packages/web/services/exportService.ts
+
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
+import { apiClient } from '../utils/apiClient';
 export interface ExportOptions {
   filename: string;
   format: 'pdf' | 'excel' | 'csv';
@@ -19,8 +21,6 @@ export interface ExportTemplate {
   description: string;
   config: ExportOptions;
 }
-
-// packages/web/services/exportService.ts
 
 export const exportTemplates: ExportTemplate[] = [
   {
@@ -213,18 +213,10 @@ export class ExportService {
     schedule: 'daily' | 'weekly' | 'monthly',
     recipients: string[]
   ) {
-    // In real app, this would call an API to schedule recurring exports
-    console.log('Scheduling export:', { templateId, schedule, recipients });
-    
-    // Mock API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return {
-      id: Date.now().toString(),
+    return await apiClient.post<any>('reports/scheduled', {
       templateId,
       schedule,
-      recipients,
-      createdAt: new Date().toISOString()
-    };
+      recipients
+    });
   }
 }

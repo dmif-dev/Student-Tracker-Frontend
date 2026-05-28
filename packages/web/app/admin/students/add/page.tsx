@@ -11,13 +11,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCreateStudent } from '@/hooks/api/useAdmin';
 import LoaderOne from '@/components/ui/loader-one';
+import { ApiService } from '@/services/api';
+import { useEffect } from 'react';
 
 // Form validation schema
 const studentSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   registrationNumber: z.string().min(5, 'Registration number must be at least 5 characters'),
-  program: z.enum(['G-GMP', 'G-CMP', 'E-TIP', 'PCP']),
+  program: z.string().min(1, 'Please select a program'),
   track: z.string().min(1, 'Please select a track'),
   mentor: z.string().optional(),
   status: z.enum(['active', 'inactive', 'pending', 'completed']),
@@ -25,88 +27,41 @@ const studentSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
-}).refine((data) => {
-  // Mentor is required only for non-PCP programs
-  if (data.program !== 'PCP' && !data.mentor) {
-    return false;
-  }
-  return true;
-}, {
-  message: 'Mentor is required for this program',
-  path: ['mentor'],
 });
 
 type StudentFormData = z.infer<typeof studentSchema>;
 
-// Mock data for dropdowns
-const programs = [
-  { 
-    id: 'G-GMP' as const, 
-    name: 'G-GMP', 
-    description: 'Global Guided Mentorship Program',
-    hasMentor: true,
-    tracks: [
-      'Patent Track',
-      'Research Paper Track',
-      'Entrepreneurship Track',
-      'Inventor Foundation Track'
-    ] 
-  },
-  { 
-    id: 'G-CMP' as const, 
-    name: 'G-CMP', 
-    description: 'Global Coding Mentorship Program',
-    hasMentor: true,
-    tracks: [
-      'AI Product Development',
-      'Full Stack Development',
-      'Cloud Development & Deployment',
-      'Agentic AI Development'
-    ] 
-  },
-  { 
-    id: 'E-TIP' as const, 
-    name: 'E-TIP', 
-    description: 'Executive Technology Immersion Program',
-    hasMentor: true,
-    tracks: [
-      'AI Product Development',
-      'Full Stack',
-      'Cloud Development',
-      'Agentic AI',
-      'Custom Track'
-    ] 
-  },
-  { 
-    id: 'PCP' as const, 
-    name: 'PCP', 
-    description: 'Professional Certification Program (Self-Paced, No Mentors)',
-    hasMentor: false,
-    tracks: [
-      'AI Product Development',
-      'Agentic AI Systems',
-      'AI for Finance',
-      'AI Security'
-    ] 
-  },
-];
-
-const mentors = [
-  { id: '1', name: 'Dr. Smith', programs: ['G-GMP', 'G-CMP'] },
-  { id: '2', name: 'Prof. Johnson', programs: ['G-CMP'] },
-  { id: '3', name: 'Dr. Williams', programs: ['E-TIP', 'G-GMP'] },
-  { id: '4', name: 'Dr. Brown', programs: ['E-TIP'] },
-];
-
 export default function AddStudentPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [mentors, setMentors] = useState<any[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(true);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [programsData, mentorsData] = await Promise.all([
+          ApiService.getPrograms(),
+          ApiService.getMentors()
+        ]);
+        setPrograms(programsData);
+        setMentors(mentorsData);
+      } catch (error) {
+        console.error('Error fetching options:', error);
+      } finally {
+        setLoadingOptions(false);
+      }
+    };
+    fetchOptions();
+  }, []);
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    setError,
     formState: { errors },
   } = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
@@ -119,11 +74,17 @@ export default function AddStudentPage() {
   // Watch program to update tracks dropdown and mentor requirements
   const watchProgram = watch('program');
   const selectedProgramData = programs.find(p => p.id === watchProgram);
+  const isPCP = selectedProgramData?.name === 'PCP';
 
   // Filter mentors based on selected program
-  const availableMentors = mentors.filter(mentor => 
-    watchProgram && mentor.programs.includes(watchProgram)
-  );
+  const availableMentors = mentors.filter(mentor => {
+    if (!watchProgram || !mentor.programs) return false;
+    const programName = selectedProgramData?.name;
+    return mentor.programs.some((p: string) => 
+      p.toLowerCase() === watchProgram.toLowerCase() || 
+      (programName && p.toLowerCase() === programName.toLowerCase())
+    );
+  });
 
   const createStudentMutation = useCreateStudent();
 
@@ -131,15 +92,27 @@ export default function AddStudentPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const onSubmit = async (data: StudentFormData) => {
+    if (!isPCP && !data.mentor) {
+      setError('mentor', { type: 'manual', message: 'Mentor is required for this program' });
+      return;
+    }
+
     setIsSubmitting(true);
     setSuccessMessage(null);
     setSubmitError(null);
     try {
-      if (data.program === 'PCP') {
-        data.mentor = undefined;
+      const formattedData: any = {
+        ...data,
+        program: data.program.toUpperCase() as 'G-GMP' | 'G-CMP' | 'E-TIP' | 'PCP', // Ensure frontend typescript is happy
+        programId: data.program, // The exact ID from the backend
+        mentorId: data.mentor, // The exact mentor ID from the dropdown
+      };
+
+      if (formattedData.program === 'PCP') {
+        formattedData.mentor = undefined;
       }
       
-      await createStudentMutation.mutateAsync(data);
+      await createStudentMutation.mutateAsync(formattedData);
       setSuccessMessage('Student added successfully!');
       
       // Delay navigation to let user see the success message
@@ -154,6 +127,14 @@ export default function AddStudentPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (loadingOptions) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoaderOne />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -290,7 +271,7 @@ export default function AddStudentPage() {
                 <option value="">Select Program</option>
                 {programs.map(program => (
                   <option key={program.id} value={program.id}>
-                    {program.name} - {program.description}
+                    {program.name} - {program.description ? program.description.split(' - ')[0] : 'Program'}
                   </option>
                 ))}
               </select>
@@ -309,8 +290,8 @@ export default function AddStudentPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">Select Track</option>
-                {selectedProgramData?.tracks.map(track => (
-                  <option key={track} value={track}>{track}</option>
+                {selectedProgramData?.tracks?.map((track: any) => (
+                  <option key={track.id} value={track.name}>{track.name}</option>
                 ))}
               </select>
               {errors.track && (
@@ -321,7 +302,7 @@ export default function AddStudentPage() {
             {/* Mentor Assignment - Conditional based on program */}
             {watchProgram && (
               <>
-                {watchProgram !== 'PCP' ? (
+                {!isPCP ? (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Assign Mentor *
@@ -332,7 +313,7 @@ export default function AddStudentPage() {
                     >
                       <option value="">Select Mentor</option>
                       {availableMentors.map(mentor => (
-                        <option key={mentor.id} value={mentor.name}>{mentor.name}</option>
+                        <option key={mentor.id} value={mentor.id}>{mentor.name}</option>
                       ))}
                     </select>
                     {errors.mentor && (
@@ -396,16 +377,16 @@ export default function AddStudentPage() {
                 <div>
                   <span className="text-gray-500">Program Type:</span>
                   <span className="ml-2 font-medium">
-                    {selectedProgramData?.hasMentor ? 'Mentor-led' : 'Self-paced'}
+                    {!isPCP ? 'Mentor-led' : 'Self-paced'}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-500">Mentor Required:</span>
                   <span className="ml-2 font-medium">
-                    {selectedProgramData?.hasMentor ? 'Yes' : 'No'}
+                    {!isPCP ? 'Yes' : 'No'}
                   </span>
                 </div>
-                {watchProgram === 'PCP' && (
+                {isPCP && (
                   <>
                     <div>
                       <span className="text-gray-500">Certification Type:</span>

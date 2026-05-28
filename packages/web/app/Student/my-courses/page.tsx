@@ -25,6 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { ApiService } from "@/services/api";
+import { useStudentProfile } from "@/hooks/api/useStudent";
 
 // --- Types and Enums from Inspiration ---
 enum Strength {
@@ -180,35 +182,7 @@ function CourseScoreDisplay({ value, max }: { value: number; max: number }) {
     );
 }
 
-const COURSES: Course[] = [
-    {
-        id: 1,
-        code: "G-CMP",
-        title: "Global Coding Mentorship Program",
-        instructor: "Code Specialists",
-        progress: 85,
-        rating: 4.9,
-        duration: "16 Weeks",
-        category: "Software Engineering",
-        description: "Master industry-standard coding practices, system design, and product development under the guidance of elite software engineers.",
-        status: "In Progress",
-        image: "from-indigo-600 to-blue-500"
-    },
-    {
-        id: 2,
-        code: "E-TIP",
-        title: "Executive Technology Immersion Program",
-        instructor: "Tech Executives",
-        progress: 42,
-        rating: 4.8,
-        duration: "8 Weeks",
-        category: "Leadership",
-        description: "Designed for mid-to-senior leaders and aspiring CXOs to deeply immerse in emerging technologies and strategic tech integration.",
-        status: "Accelerated",
-        image: "from-orange-500 to-rose-500"
-    }
-];
-
+// Removed static COURSES array
 function CourseCard({ course }: { course: Course }) {
     const getNextIndex = useCounter();
     const indexRef = useRef<number | null>(null);
@@ -305,9 +279,47 @@ function CourseCard({ course }: { course: Course }) {
 
 export default function MyCoursesPage() {
     const [searchQuery, setSearchQuery] = useState("");
+    const [programs, setPrograms] = useState<any[]>([]);
+    const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
+    const { data: profile, isLoading: isProfileLoading } = useStudentProfile();
+
+    useEffect(() => {
+        const fetchPrograms = async () => {
+            try {
+                const allPrograms = await ApiService.getPrograms();
+                // Filter if needed, but for now we'll just map them. Ideally, filter to student's enrolled program.
+                const studentProgramId = profile?.student?.program?.toLowerCase();
+                const enrolledPrograms = allPrograms.filter(p => p.id.toLowerCase() === studentProgramId);
+                // If not enrolled in any, maybe show all or just the ones they are in.
+                const programsToShow = enrolledPrograms.length > 0 ? enrolledPrograms : [];
+
+                setPrograms(programsToShow.map((p, i) => ({
+                    id: i + 1,
+                    code: p.id.toUpperCase(),
+                    title: p.name,
+                    instructor: p.hasMentors ? "Program Mentor" : "Self-paced",
+                    progress: 0, // Should be fetched from student progress API
+                    rating: 5.0,
+                    duration: (p as any).duration || "Self-paced",
+                    category: "Technology",
+                    description: p.description,
+                    status: "In Progress",
+                    image: "from-indigo-600 to-blue-500"
+                })));
+            } catch (error) {
+                console.error("Error fetching programs:", error);
+            } finally {
+                setIsLoadingPrograms(false);
+            }
+        };
+
+        if (!isProfileLoading) {
+            fetchPrograms();
+        }
+    }, [profile, isProfileLoading]);
 
     const stats = [
-        { label: "Active Courses", value: "2", icon: BookOpen, color: "text-indigo-500" },
+        { label: "Active Courses", value: programs.length.toString(), icon: BookOpen, color: "text-indigo-500" },
         { label: "Innovation Points", value: "1.8k", icon: Sparkles, color: "text-orange-500" },
         { label: "Learning Hours", value: "142h", icon: Clock, color: "text-blue-500" },
         { label: "Achievements", value: "7", icon: Trophy, color: "text-amber-500" },
@@ -393,9 +405,21 @@ export default function MyCoursesPage() {
 
                 {/* Course Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {COURSES.map((course) => (
-                        <CourseCard key={course.id} course={course} />
-                    ))}
+                    {isLoadingPrograms ? (
+                        <div className="col-span-full flex justify-center p-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                        </div>
+                    ) : programs.length > 0 ? (
+                        programs.map((course) => (
+                            <CourseCard key={course.id} course={course} />
+                        ))
+                    ) : (
+                        <div className="col-span-full flex flex-col items-center justify-center p-12 text-center bg-white/50 rounded-3xl border border-white">
+                            <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">No Active Courses</h3>
+                            <p className="text-gray-500">You are not currently enrolled in any programs.</p>
+                        </div>
+                    )}
                 </div>
             </CounterProvider>
         </div>

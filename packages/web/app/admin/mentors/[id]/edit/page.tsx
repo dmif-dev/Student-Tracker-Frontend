@@ -146,6 +146,18 @@ export default function EditMentorPage() {
         </div>
       </div>
 
+      {/* Messages */}
+      {successMessage && (
+        <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 font-medium">
+          {successMessage}
+        </div>
+      )}
+      {error && (
+        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-medium">
+          {error}
+        </div>
+      )}
+
       {/* Form - similar to add page but with existing data */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Personal Information - same as add page */}

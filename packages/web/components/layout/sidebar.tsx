@@ -187,7 +187,6 @@ export const SidebarLink = ({
 
 // --- Main Sidebar Component ---
 export function Sidebar() {
-  const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
   let navItems: Links[] = [];
@@ -235,47 +234,47 @@ export function Sidebar() {
     ];
   }
 
+  const { open } = useSidebar();
+
   return (
-    <SidebarProvider open={open} setOpen={setOpen}>
-      <SidebarBody className="justify-between gap-10">
-        <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-          {/* Logo / Top Section */}
-          <div className="flex items-center gap-2 px-2 py-4">
-            <div className="h-6 w-6 bg-orange-500 rounded-md flex-shrink-0 flex items-center justify-center text-[10px] text-black overflow-hidden shadow-sm">
-              <LayoutDashboard className="h-4 w-4" />
-            </div>
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: open ? 1 : 0 }}
-              className="font-bold text-gray-900 dark:text-neutral-200 whitespace-nowrap font-montserrat"
-            >
-              {roleTitle}
-            </motion.span>
+    <SidebarBody className="justify-between gap-10">
+      <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+        {/* Logo / Top Section */}
+        <div className="flex items-center gap-2 px-2 py-4">
+          <div className="h-6 w-6 bg-orange-500 rounded-md flex-shrink-0 flex items-center justify-center text-[10px] text-black overflow-hidden shadow-sm">
+            <LayoutDashboard className="h-4 w-4" />
           </div>
-          <div className="mt-8 flex flex-col gap-2">
-            {navItems.map((link, idx) => (
-              <SidebarLink key={idx} link={link} />
-            ))}
-          </div>
-        </div>
-        <div className="pb-4">
-          <button 
-           onClick={(e) => {
-             e.preventDefault();
-             signOut();
-           }} 
-           className="w-full"
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: open ? 1 : 0 }}
+            className="font-bold text-gray-900 dark:text-neutral-200 whitespace-nowrap font-montserrat"
           >
-            <SidebarLink
-              link={{
-                label: "Logout",
-                href: "#",
-                icon: <LogOut className="h-5 w-5 flex-shrink-0" />,
-              }}
-            />
-          </button>
+            {roleTitle}
+          </motion.span>
         </div>
-      </SidebarBody>
-    </SidebarProvider>
+        <div className="mt-8 flex flex-col gap-2">
+          {navItems.map((link, idx) => (
+            <SidebarLink key={idx} link={link} />
+          ))}
+        </div>
+      </div>
+      <div className="pb-4">
+        <button 
+         onClick={(e) => {
+           e.preventDefault();
+           signOut();
+         }} 
+         className="w-full"
+        >
+          <SidebarLink
+            link={{
+              label: "Logout",
+              href: "#",
+              icon: <LogOut className="h-5 w-5 flex-shrink-0" />,
+            }}
+          />
+        </button>
+      </div>
+    </SidebarBody>
   );
 }

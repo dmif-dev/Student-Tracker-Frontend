@@ -1,40 +1,9 @@
 // packages/web/services/sessionService.ts
 
 import { Session, SessionNote } from '@student-tracker/shared/models/Session';
+import { apiClient } from '@/utils/apiClient';
 
 class SessionServiceClass {
-  private sessions: Session[] = [];
-  private notes: SessionNote[] = [];
-
-  constructor() {
-    this.initializeMockData();
-  }
-
-  private initializeMockData() {
-    // Mock sessions will be loaded from API
-    // Notes will be stored separately
-    const now = new Date();
-    this.sessions = [
-      {
-        id: 's1',
-        studentId: '1',
-        studentName: 'John Doe',
-        studentProgram: 'G-GMP',
-        studentTrack: 'Patent Track',
-        date: new Date(now.setDate(now.getDate() + 2)).toISOString().split('T')[0],
-        startTime: '10:00',
-        endTime: '11:00',
-        status: 'scheduled',
-        topic: 'Patent Drafting Review',
-        meetingLink: 'https://meet.google.com/abc-defg-hij',
-        notes: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      // Add more mock sessions as needed
-    ];
-  }
-
   // Add notes to a completed session
   async addSessionNotes(
     sessionId: string,
@@ -48,35 +17,19 @@ class SessionServiceClass {
     },
     mentorId: string
   ): Promise<SessionNote> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const newNote: SessionNote = {
-      id: `note${Date.now()}`,
-      sessionId,
-      ...noteData,
-      createdBy: mentorId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.notes.push(newNote);
-    
-    // Update session status to completed if not already
-    const session = this.sessions.find(s => s.id === sessionId);
-    if (session) {
-      session.status = 'completed';
-      session.updatedAt = new Date().toISOString();
-      if (!session.notes) session.notes = [];
-      session.notes.push(newNote);
-    }
-
-    return newNote;
+    return await apiClient.post<SessionNote>(`sessions/${sessionId}/notes`, noteData);
   }
 
   // Get notes for a session
   async getSessionNotes(sessionId: string): Promise<SessionNote[]> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return this.notes.filter(n => n.sessionId === sessionId);
+    try {
+      const data = await apiClient.get<any>(`sessions/${sessionId}/notes`);
+      // API might return a single note object or array of notes based on backend setup.
+      // Usually it's an array for historical notes.
+      return Array.isArray(data) ? data : [data];
+    } catch {
+      return [];
+    }
   }
 
   // Update notes
@@ -84,42 +37,41 @@ class SessionServiceClass {
     noteId: string,
     updates: Partial<SessionNote>
   ): Promise<SessionNote | undefined> {
-    await new Promise(resolve => setTimeout(resolve, 400));
-
-    const index = this.notes.findIndex(n => n.id === noteId);
-    if (index !== -1) {
-      this.notes[index] = {
-        ...this.notes[index],
-        ...updates,
-        updatedAt: new Date().toISOString(),
-      };
-      return this.notes[index];
+    try {
+      // Assuming there is a notes specific update route or we update the session overall
+      // The backend route is PUT /sessions/:id. If notes are embedded, we might need to hit that.
+      // Or if there's a specific note endpoint. Using a generic put for now if backend supports it.
+      return await apiClient.put<SessionNote>(`sessions/notes/${noteId}`, updates);
+    } catch {
+      return undefined;
     }
-    return undefined;
   }
 
   // Get all sessions for a student
   async getStudentSessions(studentId: string): Promise<Session[]> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return this.sessions.filter(s => s.studentId === studentId);
+    try {
+      return await apiClient.get<Session[]>(`sessions/student/${studentId}`);
+    } catch {
+      return [];
+    }
   }
 
   // Get all sessions for a mentor
   async getMentorSessions(mentorId: string): Promise<Session[]> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    // In a real app, this would filter by mentor ID
-    return this.sessions;
+    try {
+      return await apiClient.get<Session[]>(`sessions/mentor/${mentorId}`);
+    } catch {
+      return [];
+    }
   }
 
   // Mark session as completed
   async completeSession(sessionId: string): Promise<Session | undefined> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const session = this.sessions.find(s => s.id === sessionId);
-    if (session) {
-      session.status = 'completed';
-      session.updatedAt = new Date().toISOString();
+    try {
+      return await apiClient.put<Session>(`sessions/${sessionId}`, { status: 'completed' });
+    } catch {
+      return undefined;
     }
-    return session;
   }
 }
 

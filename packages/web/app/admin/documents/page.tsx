@@ -35,6 +35,7 @@ import LoaderOne from '@/components/ui/loader-one';
 import { DocumentViewerService } from '@/services/documentViewerService';
 import { FileHandlerService } from '@/services/fileHandlerService';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Define types for the component
 interface Mentor {
@@ -117,8 +118,9 @@ export default function DocumentsPage() {
   const [showViewer, setShowViewer] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
 
-  // Mock admin ID - replace with actual auth
-  const ADMIN_ID = 'admin';
+  const { user } = useAuth();
+  // Get admin ID from auth
+  const ADMIN_ID = user?.id || 'admin';
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => ApiService.deleteAdminDocument(id),

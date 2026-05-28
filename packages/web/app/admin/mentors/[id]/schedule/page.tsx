@@ -24,7 +24,7 @@ import {
   GraduationCap,
   Info
 } from 'lucide-react';
-import { useAdminMentor, useAdminMentorSessions, useAdminCreateSession } from '@/hooks/api/useAdmin';
+import { useAdminMentor, useAdminMentorSessions, useAdminCreateSession, useAdminUpdateSession, useAdminDeleteSession } from '@/hooks/api/useAdmin';
 import { type MentorSchedule, type AssignedStudent } from '@/types/models';
 import LoaderOne from '@/components/ui/loader-one';
 
@@ -44,13 +44,20 @@ export default function MentorSchedulePage() {
   const { data: mentorData, isLoading: loading } = useAdminMentor(params.id as string);
   const { data: serverSessions } = useAdminMentorSessions(params.id as string);
   const createSessionMutation = useAdminCreateSession();
+  const updateSessionMutation = useAdminUpdateSession();
+  const deleteSessionMutation = useAdminDeleteSession();
   const mentor = mentorData;
   const [schedules, setSchedules] = useState<MentorSchedule[]>([]);
   const [students, setStudents] = useState<AssignedStudent[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingSession, setEditingSession] = useState<any>(null);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+  const [isDeletingSession, setIsDeletingSession] = useState(false);
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
+  const [activeListTab, setActiveListTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [formData, setFormData] = useState<SessionFormData>({
     studentId: '',
@@ -164,6 +171,37 @@ export default function MentorSchedulePage() {
   const daysInMonth = getDaysInMonth(currentMonth);
   const firstDay = getFirstDayOfMonth(currentMonth);
   const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  const now = new Date();
+  const upcomingSchedules = schedules.filter(s => new Date(`${s.date}T${s.startTime || '00:00'}`) >= now);
+  const pastSchedules = schedules.filter(s => new Date(`${s.date}T${s.startTime || '00:00'}`) < now);
+
+  upcomingSchedules.sort((a, b) => new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime());
+  pastSchedules.sort((a, b) => new Date(`${b.date}T${b.startTime}`).getTime() - new Date(`${a.date}T${a.startTime}`).getTime());
+
+  const displaySchedules = activeListTab === 'upcoming' ? upcomingSchedules : pastSchedules;
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.max(1, Math.ceil(displaySchedules.length / ITEMS_PER_PAGE));
+  const paginatedSchedules = displaySchedules.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handleTabChange = (tab: 'upcoming' | 'past') => {
+    setActiveListTab(tab);
+    setCurrentPage(1);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    setIsDeletingSession(true);
+    try {
+      await deleteSessionMutation.mutateAsync({ sessionId: sessionToDelete, mentorId: params.id as string });
+      setSessionToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+      alert('Failed to delete session. Please try again.');
+    } finally {
+      setIsDeletingSession(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -312,18 +350,35 @@ export default function MentorSchedulePage() {
       {/* List View */}
       {view === 'list' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="font-semibold">Upcoming Sessions</h2>
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center space-x-6">
+            <button
+              onClick={() => handleTabChange('upcoming')}
+              className={`font-semibold pb-4 -mb-4 border-b-2 transition-colors ${
+                activeListTab === 'upcoming' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Upcoming Sessions ({upcomingSchedules.length})
+            </button>
+            <button
+              onClick={() => handleTabChange('past')}
+              className={`font-semibold pb-4 -mb-4 border-b-2 transition-colors ${
+                activeListTab === 'past' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Past Sessions ({pastSchedules.length})
+            </button>
           </div>
           <div className="divide-y divide-gray-200">
-            {schedules.length === 0 ? (
+            {paginatedSchedules.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No sessions scheduled</h3>
-                <p className="text-gray-500">Schedule your first mentoring session.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No {activeListTab} sessions</h3>
+                <p className="text-gray-500">
+                  {activeListTab === 'upcoming' ? 'Schedule your first mentoring session.' : 'No past sessions to display.'}
+                </p>
               </div>
             ) : (
-              schedules.map((session) => (
+              paginatedSchedules.map((session) => (
                 <div key={session.id} className="px-6 py-4 hover:bg-gray-50">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-4">
@@ -351,7 +406,7 @@ export default function MentorSchedulePage() {
                             <Clock size={14} className="mr-1" />
                             {formatTime(session.startTime)} - {formatTime(session.endTime)}
                           </span>
-                          {session.meetingLink && (
+                          {session.meetingLink && activeListTab !== 'past' && (
                             <a
                               href={session.meetingLink}
                               target="_blank"
@@ -376,10 +431,18 @@ export default function MentorSchedulePage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg">
+                      <button 
+                        onClick={() => setEditingSession(session)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Edit Session"
+                      >
                         <Edit size={16} className="text-gray-500" />
                       </button>
-                      <button className="p-2 hover:bg-gray-100 rounded-lg text-red-500">
+                      <button 
+                        onClick={() => setSessionToDelete(session.id)}
+                        className="p-2 hover:bg-gray-100 rounded-lg text-red-500 transition-colors"
+                        title="Cancel Session"
+                      >
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -388,11 +451,34 @@ export default function MentorSchedulePage() {
               ))
             )}
           </div>
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+              <span className="text-sm text-gray-500">
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, displaySchedules.length)} of {displaySchedules.length} entries
+              </span>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Selected Date Details */}
-      {selectedDate && (
+      {view === 'calendar' && selectedDate && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold mb-4">
             Sessions on {new Date(selectedDate).toLocaleDateString()}
@@ -422,17 +508,35 @@ export default function MentorSchedulePage() {
         </div>
       )}
 
-      {/* Schedule Session Modal */}
-      {showAddModal && (
+      {/* Schedule/Edit Session Modal */}
+      {(showAddModal || editingSession) && (
         <ScheduleSessionModal
           mentor={mentor}
           students={students}
-          onClose={() => setShowAddModal(false)}
+          editSession={editingSession}
+          onClose={() => {
+            setShowAddModal(false);
+            setEditingSession(null);
+          }}
           onSchedule={async (sessionData: SessionFormData) => {
             const selectedStudent = students.find(s => s.id === sessionData.studentId);
             if (!selectedStudent) return;
             
-            try {
+            if (editingSession) {
+              await updateSessionMutation.mutateAsync({
+                id: editingSession.id,
+                data: {
+                  mentorId: params.id as string,
+                  studentId: sessionData.studentId,
+                  date: sessionData.date,
+                  startTime: sessionData.startTime,
+                  endTime: sessionData.endTime,
+                  topic: sessionData.topic,
+                  notes: sessionData.notes,
+                  meetingLink: sessionData.meetingLink || undefined,
+                }
+              });
+            } else {
               await createSessionMutation.mutateAsync({
                 mentorId: params.id as string,
                 studentId: sessionData.studentId,
@@ -443,33 +547,103 @@ export default function MentorSchedulePage() {
                 notes: sessionData.notes,
                 meetingLink: sessionData.meetingLink || undefined,
               });
-              setShowAddModal(false);
-            } catch (error) {
-              console.error('Failed to schedule session:', error);
-              alert('Failed to schedule session. Please try again.');
             }
           }}
         />
+      )}
+
+      {/* Delete/Cancel Session Confirmation Modal */}
+      {sessionToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm text-center shadow-xl">
+            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={24} className="text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancel Session</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Are you sure you want to cancel this mentoring session? This action cannot be undone and the student will be notified automatically.
+            </p>
+            <div className="flex justify-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setSessionToDelete(null)}
+                disabled={isDeletingSession}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium text-gray-700 transition-colors disabled:opacity-50"
+              >
+                No, Keep it
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteSession}
+                disabled={isDeletingSession}
+                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeletingSession ? (
+                  <>
+                    <span className="scale-75 mr-2"><LoaderOne /></span>
+                    Canceling...
+                  </>
+                ) : (
+                  'Yes, Cancel Session'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
 // Schedule Session Modal Component
-function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
+function ScheduleSessionModal({ mentor, students, onClose, onSchedule, editSession }: any) {
   const [formData, setFormData] = useState<SessionFormData>({
-    studentId: '',
-    date: '',
-    startTime: '',
-    endTime: '',
-    topic: '',
-    notes: '',
-    meetingLink: ''
+    studentId: editSession?.studentId || '',
+    date: editSession?.date || '',
+    startTime: editSession?.startTime || '',
+    endTime: editSession?.endTime || '',
+    topic: editSession?.topic || '',
+    notes: editSession?.notes || '',
+    meetingLink: editSession?.meetingLink || ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSchedule(formData);
+    setError(null);
+    setSuccess(null);
+
+    // Time validation
+    if (formData.startTime >= formData.endTime) {
+      setError('End time must be strictly after start time.');
+      return;
+    }
+
+    // Past time validation
+    if (formData.date && formData.startTime) {
+      const selectedDateTime = new Date(`${formData.date}T${formData.startTime}`);
+      if (selectedDateTime < new Date()) {
+        setError('Cannot schedule a session in the past. Please select a future date and time.');
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSchedule(formData);
+      setSuccess(editSession ? 'Session updated successfully!' : 'Session scheduled successfully!');
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Failed to schedule session. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getProgramDayHint = (program: string) => {
@@ -484,8 +658,22 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold mb-4">Schedule New Session</h3>
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <h3 className="text-lg font-semibold mb-4">{editSession ? 'Edit Session' : 'Schedule New Session'}</h3>
+        
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-start">
+            <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+        
+        {success && (
+          <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm font-medium flex items-center">
+            <CheckCircle size={16} className="mr-2 flex-shrink-0" />
+            <span>{success}</span>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -518,6 +706,7 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
             </label>
             <input
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -606,9 +795,17 @@ function ScheduleSessionModal({ mentor, students, onClose, onSchedule }: any) {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              disabled={isSubmitting || !!success}
+              className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Schedule Session
+              {isSubmitting ? (
+                <>
+                  <span className="scale-75 mr-2"><LoaderOne /></span>
+                  {editSession ? 'Updating...' : 'Scheduling...'}
+                </>
+              ) : (
+                editSession ? 'Update Session' : 'Schedule Session'
+              )}
             </button>
           </div>
         </form>

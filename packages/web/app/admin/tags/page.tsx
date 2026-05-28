@@ -17,6 +17,7 @@ import {
   Award,
 } from 'lucide-react';
 import { TagCategory } from '@student-tracker/shared/models/Tag';
+import { ApiService } from '@/services/api';
 
 interface TagData {
   id: string;
@@ -50,77 +51,45 @@ export default function TagsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTag, setEditingTag] = useState<TagData | null>(null);
 
-  useEffect(() => {
-    // Mock data - replace with API call
-    const fetchTags = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setTags([
-        {
-          id: '1',
-          name: 'Machine Learning',
-          slug: 'machine-learning',
-          category: 'skill',
-          color: 'blue',
-          description: 'Students interested in ML/AI',
-          usageCount: 45,
-          createdAt: '2024-01-15',
-        },
-        {
-          id: '2',
-          name: 'Patent Filing',
-          slug: 'patent-filing',
-          category: 'achievement',
-          color: 'purple',
-          description: 'Has filed at least one patent',
-          usageCount: 23,
-          createdAt: '2024-01-20',
-        },
-        {
-          id: '3',
-          name: 'Research Paper',
-          slug: 'research-paper',
-          category: 'achievement',
-          color: 'green',
-          description: 'Has published research papers',
-          usageCount: 31,
-          createdAt: '2024-02-01',
-        },
-        {
-          id: '4',
-          name: 'Full Stack',
-          slug: 'full-stack',
-          category: 'skill',
-          color: 'orange',
-          description: 'Full stack development skills',
-          usageCount: 52,
-          createdAt: '2024-02-10',
-        },
-        {
-          id: '5',
-          name: 'AI Product',
-          slug: 'ai-product',
-          category: 'project',
-          color: 'red',
-          description: 'Working on AI product development',
-          usageCount: 28,
-          createdAt: '2024-02-15',
-        },
-        {
-          id: '6',
-          name: 'Entrepreneurship',
-          slug: 'entrepreneurship',
-          category: 'interest',
-          color: 'yellow',
-          description: 'Interested in startups',
-          usageCount: 19,
-          createdAt: '2024-03-01',
-        },
-      ]);
+  const fetchTags = async () => {
+    setLoading(true);
+    try {
+      const data = await ApiService.getTags();
+      setTags(data);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
+  useEffect(() => {
     fetchTags();
   }, []);
+
+  const handleSaveTag = async (tagData: any) => {
+    try {
+      if (editingTag) {
+        await ApiService.updateTag(editingTag.id, tagData);
+      } else {
+        await ApiService.createTag(tagData);
+      }
+      await fetchTags();
+    } catch (error) {
+      console.error('Error saving tag:', error);
+    }
+  };
+
+  const handleDeleteTag = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this tag?')) {
+      try {
+        await ApiService.deleteTag(id);
+        await fetchTags();
+      } catch (error) {
+        console.error('Error deleting tag:', error);
+      }
+    }
+  };
 
   const getCategoryColor = (category: TagCategory) => {
     const colors = {
@@ -293,7 +262,10 @@ export default function TagsPage() {
                 >
                   <Edit size={16} className="text-gray-600" />
                 </button>
-                <button className="p-1 hover:bg-gray-100 rounded text-red-600">
+                <button 
+                  onClick={() => handleDeleteTag(tag.id)}
+                  className="p-1 hover:bg-gray-100 rounded text-red-600"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -318,7 +290,7 @@ export default function TagsPage() {
             setEditingTag(null);
           }}
           onSave={(tagData) => {
-            // Handle save
+            handleSaveTag(tagData);
             setShowAddModal(false);
             setEditingTag(null);
           }}

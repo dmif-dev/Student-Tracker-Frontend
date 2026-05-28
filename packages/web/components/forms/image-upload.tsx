@@ -11,6 +11,8 @@ interface ImageUploadProps {
     error?: boolean;
 }
 
+import { apiClient } from "@/utils/apiClient";
+
 export function ImageUpload({ value, onChange, error }: ImageUploadProps) {
     const [isUploading, setIsUploading] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -22,15 +24,23 @@ export function ImageUpload({ value, onChange, error }: ImageUploadProps) {
         }
     };
 
-    const uploadFile = (file: File) => {
+    const uploadFile = async (file: File) => {
         setIsUploading(true);
-        // Mock upload process
-        setTimeout(() => {
-            // Create a dummy URL
-            const dummyUrl = URL.createObjectURL(file);
-            onChange(dummyUrl);
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            // using the document upload endpoint since it handles files
+            const response = await apiClient.post<any>('documents/upload', formData);
+            if (response && response.fileUrl) {
+                onChange(response.fileUrl);
+            } else if (response && response.url) {
+                onChange(response.url);
+            }
+        } catch (error) {
+            console.error("Upload failed", error);
+        } finally {
             setIsUploading(false);
-        }, 2000);
+        }
     };
 
     const removeImage = () => {

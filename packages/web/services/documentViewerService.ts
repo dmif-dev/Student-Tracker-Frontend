@@ -1,55 +1,44 @@
 // packages/web/services/documentViewerService.ts
 
 import { Document } from '@student-tracker/shared/models/Document';
+import { apiClient } from '../utils/apiClient';
 
 class DocumentViewerServiceClass {
-  // Track document views
+  // Track document views (Now handled backend-side via view endpoint, keeping for compatibility if explicitly needed)
   async trackView(documentId: string, userId: string, userRole: 'admin' | 'mentor' | 'student') {
-    // In a real app, this would call an API to track the view
-    console.log(`Document ${documentId} viewed by ${userRole} ${userId}`);
-    
-    // You could store this in localStorage for demo purposes
-    const viewedDocs = JSON.parse(localStorage.getItem('viewed_documents') || '{}');
-    viewedDocs[documentId] = {
-      viewedAt: new Date().toISOString(),
-      userId,
-      userRole,
-    };
-    localStorage.setItem('viewed_documents', JSON.stringify(viewedDocs));
+    try {
+      // Intentionally calling the view endpoint to register a view
+      await apiClient.getBlob(`documents/${documentId}/view`);
+    } catch {
+      console.warn('Failed to track document view');
+    }
   }
 
   // Track document downloads
   async trackDownload(documentId: string, userId: string, userRole: 'admin' | 'mentor' | 'student') {
-    // In a real app, this would call an API to track the download
-    console.log(`Document ${documentId} downloaded by ${userRole} ${userId}`);
-    
-    // You could store this in localStorage for demo purposes
-    const downloadedDocs = JSON.parse(localStorage.getItem('downloaded_documents') || '{}');
-    downloadedDocs[documentId] = {
-      downloadedAt: new Date().toISOString(),
-      userId,
-      userRole,
-    };
-    localStorage.setItem('downloaded_documents', JSON.stringify(downloadedDocs));
+    try {
+      // Backend should track it upon download
+      // No specific track endpoint, download handled by FileHandlerService
+    } catch {
+      // Silent catch
+    }
   }
 
   // Generate a mock download URL (in real app, this would come from your API)
   getDocumentUrl(document: Document): string {
-    // For demo purposes, return a data URL or mock path
-    // In production, this would be a signed URL from your storage service
+    // In production, the file URL is fetched securely via FileHandlerService / blob download.
+    // Fallback to URL if it exists
     return document.fileUrl || '#';
   }
 
   // Check if document was viewed by user
   wasViewed(documentId: string, userId: string): boolean {
-    const viewedDocs = JSON.parse(localStorage.getItem('viewed_documents') || '{}');
-    return !!viewedDocs[documentId] && viewedDocs[documentId].userId === userId;
+    return false; // Backend should provide this in a real stats endpoint
   }
 
   // Check if document was downloaded by user
   wasDownloaded(documentId: string, userId: string): boolean {
-    const downloadedDocs = JSON.parse(localStorage.getItem('downloaded_documents') || '{}');
-    return !!downloadedDocs[documentId] && downloadedDocs[documentId].userId === userId;
+    return false; // Backend should provide this in a real stats endpoint
   }
 }
 

@@ -11,7 +11,15 @@ export default function TestEmailPage() {
 
       <div className="flex flex-col items-center">
         <h3 className="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wider">Option B: Session Reminder</h3>
-        <SessionReminderButton />
+        <SessionReminderButton 
+          sessionData={{
+            recipientEmail: 'test@example.com',
+            studentName: 'Test Student',
+            mentorName: 'Test Mentor',
+            sessionTopic: 'Test Topic',
+            dateTime: new Date().toISOString()
+          }} 
+        />
       </div>
     </div>
   );

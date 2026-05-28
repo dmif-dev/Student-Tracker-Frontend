@@ -6,7 +6,9 @@ import { useState } from 'react';
 import { Menu, User, LogOut, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import NotificationBell from './NotificationBell';
-import { signOut } from '@/app/auth/actions';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSidebar } from '@/components/layout/sidebar';
+import { useAdminProfile } from '@/hooks/api/useAdmin';
 
 interface AdminHeaderProps {
   toggleSidebar: () => void;
@@ -16,16 +18,18 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const router = useRouter();
 
+  const { user, role, signOut } = useAuth();
+  const { data: userData } = useAdminProfile();
+
   const handleLogout = async () => {
     await signOut();
   };
 
-  // Mock user data - replace with actual auth
-  const user = {
-    name: 'Admin User',
-    email: 'admin@dmif.org',
-    role: 'Administrator',
-  };
+  const displayName = userData?.profile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin User';
+  const displayEmail = user?.email || 'admin@dmif.org';
+  const displayRole = role ? (role.charAt(0).toUpperCase() + role.slice(1)) : 'Administrator';
+  
+  const { open } = useSidebar();
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
@@ -33,14 +37,18 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
         <div className="flex items-center justify-between">
           {/* Left section - Menu toggle and title */}
           <div className="flex items-center">
-            <button
-              onClick={toggleSidebar}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors mr-4 text-gray-900"
-              aria-label="Toggle sidebar"
-            >
-              <Menu size={20} />
-            </button>
-            <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
+            {!open && (
+              <>
+                <button
+                  onClick={toggleSidebar}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors mr-4 text-gray-900 md:hidden"
+                  aria-label="Toggle sidebar"
+                >
+                  <Menu size={20} />
+                </button>
+                <h1 className="text-xl font-semibold text-gray-900 hidden sm:block">Admin Dashboard</h1>
+              </>
+            )}
           </div>
 
           {/* Right section - Notifications and User menu */}
@@ -57,11 +65,11 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
                 aria-expanded={showUserMenu}
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
-                  {user.name.charAt(0)}
+                  {displayName.charAt(0).toUpperCase()}
                 </div>
                 <div className="text-left hidden md:block">
-                  <p className="text-sm font-medium text-gray-700">{user.name}</p>
-                  <p className="text-xs text-gray-500">{user.role}</p>
+                  <p className="text-sm font-medium text-gray-700 capitalize">{displayName}</p>
+                  <p className="text-xs text-gray-500 capitalize">{displayRole}</p>
                 </div>
               </button>
 
@@ -77,8 +85,8 @@ export default function AdminHeader({ toggleSidebar }: AdminHeaderProps) {
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
                     {/* User info header */}
                     <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{user.email}</p>
+                      <p className="text-sm font-medium text-gray-900">{displayName}</p>
+                      <p className="text-xs text-gray-500 mt-1">{displayEmail}</p>
                     </div>
 
                     {/* Menu items */}

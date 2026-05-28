@@ -230,13 +230,23 @@ export default function GenerateReportPage() {
     
     // Generate monthly outcome data
     const generateMonthlyOutcomeData = () => {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-      return months.map(month => ({
-        month,
-        patents: Math.floor(Math.random() * 5) + 1,
-        papers: Math.floor(Math.random() * 6) + 2,
-        startups: Math.floor(Math.random() * 3) + 1,
-      }));
+      // Use real data from outcomes array grouping by month
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const byMonth = months.map(month => ({ month, patents: 0, papers: 0, startups: 0 }));
+      
+      gGMPOutcomes.forEach(o => {
+        if (!o.date) return;
+        const date = new Date(o.date);
+        const monthIndex = date.getMonth();
+        if (o.type === 'patent') byMonth[monthIndex].patents++;
+        if (o.type === 'paper') byMonth[monthIndex].papers++;
+        if (o.type === 'startup') byMonth[monthIndex].startups++;
+      });
+      
+      // Filter to only show months with data or current/past few months
+      return byMonth.filter(m => m.patents > 0 || m.papers > 0 || m.startups > 0).length > 0 
+        ? byMonth.filter(m => m.patents > 0 || m.papers > 0 || m.startups > 0)
+        : byMonth.slice(0, 6);
     };
 
     // Count certifications by level
@@ -256,36 +266,36 @@ export default function GenerateReportPage() {
       students: selectedStudentsList.map(s => ({
         id: s.id,
         name: s.name,
-        email: s.email,
+        email: s.email || '',
         program: s.program,
         track: s.track,
         mentor: s.program === 'PCP' ? 'Self-paced' : (s.mentor || 'Not assigned'),
-        progress: Math.floor(Math.random() * 30) + 60,
-        attendance: Math.floor(Math.random() * 20) + 75,
-        activities: Math.floor(Math.random() * 10) + 5,
-        assignments: Math.floor(Math.random() * 8) + 2,
+        progress: (s as any).progress || 0,
+        attendance: (s as any).attendance || 0,
+        activities: (s as any).activities || 0,
+        assignments: (s as any).assignments || 0,
         // Program-specific metrics
         ...(s.program === 'G-GMP' && {
-          patents: Math.floor(Math.random() * 3),
-          papers: Math.floor(Math.random() * 4),
-          startups: Math.floor(Math.random() * 2),
+          patents: outcomes.filter(o => o.studentId === s.id && o.type === 'patent').length,
+          papers: outcomes.filter(o => o.studentId === s.id && o.type === 'paper').length,
+          startups: outcomes.filter(o => o.studentId === s.id && o.type === 'startup').length,
         }),
         ...(s.program === 'PCP' && {
-          certifications: Math.floor(Math.random() * 3),
-          modulesCompleted: Math.floor(Math.random() * 8) + 2,
+          certifications: outcomes.filter(o => o.studentId === s.id && o.type === 'certification').length,
+          modulesCompleted: (s as any).modulesCompleted || 0,
         }),
         ...(s.program === 'G-CMP' && {
-          projectsCompleted: Math.floor(Math.random() * 5),
+          projectsCompleted: (s as any).projectsCompleted || 0,
         }),
       })),
       mentors: selectedMentorsList.map(m => ({
         id: m.id,
         name: m.name,
-        email: m.email,
+        email: (m as any).email || '',
         programs: m.programs,
-        expertise: m.expertise,
-        students: m.students || Math.floor(Math.random() * 10) + 5,
-        sessions: Math.floor(Math.random() * 15) + 5,
+        expertise: m.expertise || [],
+        students: m.students || 0,
+        sessions: (m as any).sessions || 0,
       })),
       outcomes: {
         gGMP: config.includeOutcomes ? {
@@ -307,10 +317,14 @@ export default function GenerateReportPage() {
         eTIPStudents: selectedStudentsList.filter(s => s.program === 'E-TIP').length,
         pcpStudents: selectedStudentsList.filter(s => s.program === 'PCP').length,
         totalOutcomes: (config.includeOutcomes ? gGMPOutcomes.length + pcpCertifications.length : 0),
-        averageProgress: Math.floor(Math.random() * 15) + 70,
-        averageAttendance: Math.floor(Math.random() * 10) + 80,
-        totalActivities: Math.floor(Math.random() * 100) + 50,
-        completedAssignments: Math.floor(Math.random() * 80) + 20,
+        averageProgress: selectedStudentsList.length > 0 
+          ? Math.round(selectedStudentsList.reduce((acc, s) => acc + ((s as any).progress || 0), 0) / selectedStudentsList.length) 
+          : 0,
+        averageAttendance: selectedStudentsList.length > 0 
+          ? Math.round(selectedStudentsList.reduce((acc, s) => acc + ((s as any).attendance || 0), 0) / selectedStudentsList.length) 
+          : 0,
+        totalActivities: selectedStudentsList.reduce((acc, s) => acc + ((s as any).activities || 0), 0),
+        completedAssignments: selectedStudentsList.reduce((acc, s) => acc + ((s as any).assignments || 0), 0),
       },
     };
   };

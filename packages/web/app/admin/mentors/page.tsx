@@ -37,8 +37,8 @@ export default function MentorsPage() {
   );
 
   const getTodaySessions = (mentor: Mentor) => {
-    // Mock function to get today's session count
-    return Math.floor(Math.random() * 3) + 1;
+    // Rely on actual session counts provided by backend or default to 0
+    return (mentor as any).stats?.todaySessions || (mentor as any).todaySessions || 0;
   };
 
   if (loading) {

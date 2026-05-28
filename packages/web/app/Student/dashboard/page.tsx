@@ -69,6 +69,12 @@ import {
 } from "@/components/ui/dialog";
 import { toast, Toaster } from "sonner";
 import { cn } from "@/lib/utils";
+import { 
+  useStudentProfile, 
+  useStudentStats, 
+  useStudentProgressHistory, 
+  useStudentSessionsHistory 
+} from "@/hooks/api/useStudent";
 
 // --- Calendar Setup ---
 const locales = {
@@ -109,39 +115,20 @@ interface ProgressEntry {
     date: Date;
     status: "completed" | "pending";
 }
-
-const MOCK_ENTRIES: ProgressEntry[] = [
-    { id: "1", title: "Configuring BGP for Enterprise", studentId: "MY-STUDY", subject: "Networking", topic: "BGP", score: 92, date: new Date(), status: "completed" },
-    { id: "2", title: "Ansible Playbook Automation", studentId: "MY-STUDY", subject: "Automation", topic: "Ansible", score: 85, date: subDays(new Date(), 1), status: "completed" },
-    { id: "3", title: "Securing JWT Auth in Node.js", studentId: "MY-STUDY", subject: "Security", topic: "Web Security", score: 78, date: subDays(new Date(), 2), status: "pending" },
-    { id: "4", title: "Kubernetes Cluster Setup", studentId: "MY-STUDY", subject: "Cloud Computing", topic: "K8s", score: 88, date: subDays(new Date(), 3), status: "completed" },
-    { id: "5", title: "DB Indexing Optimization", studentId: "MY-STUDY", subject: "Databases", topic: "PostgreSQL", score: 95, date: subDays(new Date(), 4), status: "completed" },
-    { id: "6", title: "React Performance Tuning", studentId: "MY-STUDY", subject: "Frontend", topic: "React", score: 65, date: subDays(new Date(), 5), status: "pending" },
-];
-
-const MOCK_ACTIVITIES: ActivityItem[] = [
-    { id: "a1", type: "status", user: "You", description: "Marked 'Networking Lab 4' as completed. High proficiency achieved.", timestamp: new Date() },
-    { id: "a2", type: "report", user: "System", description: "Weekly skill breakdown for 'Cloud Computing' is ready for review.", timestamp: subDays(new Date(), 1) },
-    { id: "a3", type: "upload", user: "You", description: "Uploaded project documentation for 'Security Audit' (Draft 1).", timestamp: subDays(new Date(), 1) },
-    { id: "a4", type: "alert", user: "Coach", description: "Your average score in 'Frontend' dropped. Recommendation: Review Redux state management.", timestamp: subDays(new Date(), 2) },
-];
-
-// --- Mock Data moved to state inside component ---
-
-const INITIAL_MOCK_EVENTS = [
-    { id: 1, title: "React Performance Class", start: new Date(2026, 2, 3, 10, 0), end: new Date(2026, 2, 3, 11, 30), link: "https://zoom.it/react-class" },
-    { id: 2, title: "Database Schema Design Quiz", start: new Date(2026, 2, 4, 14, 0), end: new Date(2026, 2, 4, 15, 0), link: "#" },
-    { id: 3, title: "Submit Final Capstone Draft", start: new Date(2026, 2, 6, 9, 0), end: new Date(2026, 2, 6, 17, 0), link: "#" },
-    { id: 4, title: "Mentorship Live Session", start: new Date(2026, 2, 5, 16, 0), end: new Date(2026, 2, 5, 17, 30), link: "https://meet.google.com/abc-defg-hij" },
-    { id: 5, title: "Cloud Architecture Test", start: new Date(2026, 2, 10, 11, 0), end: new Date(2026, 2, 10, 12, 30), link: "#" },
-    { id: 6, title: "System Design Workshop", start: new Date(2026, 2, 8, 13, 0), end: new Date(2026, 2, 8, 15, 0), link: "https://teams.microsoft.com/l/meetup-join" },
-];
+// Removed static mock arrays
 
 
 
 
 export default function DashboardPage() {
-    const [isLoading, setIsLoading] = useState(true);
+    // Data Hooks
+    const { data: profile, isLoading: isProfileLoading } = useStudentProfile();
+    const studentId = profile?.student?.id;
+    const { data: rawStats, isLoading: isStatsLoading } = useStudentStats(studentId);
+    const { data: progressHistory, isLoading: isProgressLoading } = useStudentProgressHistory(studentId);
+    const { data: sessions, isLoading: isSessionsLoading } = useStudentSessionsHistory();
+
+    // UI States
     const [viewType, setViewType] = useState<"grid" | "list">("grid");
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "topic">("newest");
@@ -150,8 +137,24 @@ export default function DashboardPage() {
         to: new Date(),
     });
 
+    const isLoading = isProfileLoading || isStatsLoading || isProgressLoading || isSessionsLoading;
+
     // Calendar States
-    const [events, setEvents] = useState(INITIAL_MOCK_EVENTS);
+    const [events, setEvents] = useState<any[]>([]);
+    
+    useEffect(() => {
+        if (sessions && Array.isArray(sessions)) {
+            const formattedSessions = sessions.map((s: any) => ({
+                id: s.id,
+                title: s.topic || "Mentorship Session",
+                start: new Date(s.date),
+                end: new Date(new Date(s.date).getTime() + 60 * 60 * 1000), // Assuming 1 hr duration
+                link: s.meetingLink || "#"
+            }));
+            setEvents(formattedSessions);
+        }
+    }, [sessions]);
+
     const [isAddEventOpen, setIsAddEventOpen] = useState(false);
     const [newEvent, setNewEvent] = useState({
         title: "",
@@ -161,14 +164,19 @@ export default function DashboardPage() {
         link: ""
     });
 
-    useEffect(() => {
-        const timer = setTimeout(() => setIsLoading(false), 1500);
-        return () => clearTimeout(timer);
-    }, []);
-
     // Filtered and Sorted Data
     const filteredEntries = useMemo(() => {
-        let result = MOCK_ENTRIES.filter(entry =>
+        if (!progressHistory || !Array.isArray(progressHistory)) return [];
+        let result = progressHistory.map((entry: any) => ({
+            id: entry.id,
+            title: entry.notes || "Progress Entry",
+            studentId: entry.studentId,
+            subject: entry.topicsCovered?.[0] || "General",
+            topic: entry.topicsCovered?.join(', ') || "",
+            score: (entry.performanceRating || 0) * 10,
+            date: new Date(entry.date),
+            status: entry.attendanceStatus === "PRESENT" ? "completed" : "pending"
+        })).filter(entry =>
             (entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 entry.studentId.toLowerCase().includes(searchQuery.toLowerCase())) &&
             (!dateRange.from || !dateRange.to || isWithinInterval(entry.date, { start: dateRange.from, end: dateRange.to }))
@@ -179,13 +187,14 @@ export default function DashboardPage() {
         else if (sortOrder === "topic") result.sort((a, b) => a.topic.localeCompare(b.topic));
 
         return result;
-    }, [searchQuery, sortOrder, dateRange]);
+    }, [searchQuery, sortOrder, dateRange, progressHistory]);
 
+    const statsData = rawStats || { totalSessions: 0, totalProgress: 0, currentStreak: 0, maxStreak: 0 };
     const stats: StatCard[] = [
-        { title: "Skills Gained", value: "32", trend: 12.5, icon: <Activity className="h-5 w-5 text-primary" /> },
-        { title: "Learning Hours", value: "245h", trend: 8.2, icon: <Clock className="h-5 w-5 text-primary" /> },
-        { title: "Completed Projects", value: "18", trend: 4.1, icon: <FileText className="h-5 w-5 text-primary" /> },
-        { title: "Average Proficiency", value: "88%", trend: 2.0, icon: <BarChart3 className="h-5 w-5 text-primary" /> },
+        { title: "Current Streak", value: `${statsData.currentStreak || 0} days`, trend: 12.5, icon: <Activity className="h-5 w-5 text-primary" /> },
+        { title: "Total Sessions", value: `${statsData.totalSessions || 0}`, trend: 8.2, icon: <Clock className="h-5 w-5 text-primary" /> },
+        { title: "Total Progress", value: `${statsData.totalProgress || 0}`, trend: 4.1, icon: <FileText className="h-5 w-5 text-primary" /> },
+        { title: "Max Streak", value: `${statsData.maxStreak || 0} days`, trend: 2.0, icon: <BarChart3 className="h-5 w-5 text-primary" /> },
     ];
 
     const handleAddEvent = () => {

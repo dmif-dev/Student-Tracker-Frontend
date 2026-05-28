@@ -279,8 +279,8 @@ export default function StudentTable({ students }: StudentTableProps) {
   });
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-200/50">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-3xl shadow-sm border border-slate-200/50">
+      <div className="overflow-visible">
         <table className="w-full border-collapse">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (

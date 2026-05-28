@@ -43,110 +43,22 @@ interface OutcomeDetail {
     url: string;
     size: string;
   }>;
-  metadata?: Record<string, any>;  // Add metadata
+  metadata?: Record<string, any>;
 }
 
 export default function OutcomeDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [outcome, setOutcome] = useState<OutcomeDetail | null>(null);
+  const [outcome, setOutcome] = useState<OutcomeDetail | any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOutcome = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Mock data based on ID
-        const mockOutcome: OutcomeDetail = {
-          id: params.id as string,
-          type: params.id?.toString().startsWith('1') ? 'patent' :
-                params.id?.toString().startsWith('2') ? 'paper' :
-                params.id?.toString().startsWith('8') ? 'startup' : 'certification',
-          title: params.id === '1' ? 'AI-based Patent Search System' :
-                 params.id === '2' ? 'Advances in Agentic AI Systems' :
-                 params.id === '5' ? 'Blockchain-based Identity System' :
-                 params.id === '7' ? 'Ethical Considerations in AI' :
-                 params.id === '8' ? 'AI-powered Education Platform' :
-                 params.id === '4' ? 'Agentic AI Specialist' :
-                 params.id === '6' ? 'AI Product Development Professional' :
-                 'AI Security Fundamentals',
-          description: params.id === '1' ? 'A novel system for searching and analyzing patents using artificial intelligence and machine learning algorithms.' :
-                      params.id === '2' ? 'Research paper on advances in autonomous AI systems and their applications.' :
-                      params.id === '5' ? 'Blockchain-based identity verification system for secure authentication.' :
-                      params.id === '7' ? 'Research on ethical considerations in AI development and deployment.' :
-                      params.id === '8' ? 'Educational platform powered by AI for personalized learning.' :
-                      params.id === '4' ? 'Professional certification in Agentic AI Systems.' :
-                      params.id === '6' ? 'Comprehensive certification in AI Product Development.' :
-                      'Certification in AI Security fundamentals.',
-          student: params.id === '1' ? 'John Doe' :
-                   params.id === '2' ? 'Jane Smith' :
-                   params.id === '5' ? 'Alex Chen' :
-                   params.id === '7' ? 'Maria Garcia' :
-                   params.id === '8' ? 'John Doe' :
-                   params.id === '4' ? 'Sarah Wilson' :
-                   params.id === '6' ? 'Emily Brown' :
-                   'Robert Kim',
-          studentId: params.id === '1' ? '1' :
-                    params.id === '2' ? '2' :
-                    params.id === '5' ? '5' :
-                    params.id === '7' ? '10' :
-                    params.id === '8' ? '1' :
-                    params.id === '4' ? '4' :
-                    params.id === '6' ? '6' :
-                    '9',
-          mentor: params.id === '1' ? 'Dr. Smith' :
-                  params.id === '2' ? 'Prof. Johnson' :
-                  params.id === '5' ? 'Dr. Smith' :
-                  params.id === '7' ? 'Dr. Smith' :
-                  params.id === '8' ? 'Dr. Smith' :
-                  undefined,
-          status: params.id === '1' ? 'filed' :
-                  params.id === '2' ? 'published' :
-                  params.id === '5' ? 'filed' :
-                  params.id === '7' ? 'published' :
-                  params.id === '8' ? 'pending' :
-                  'completed',
-          date: params.id === '1' ? '2024-03-20' :
-                params.id === '2' ? '2024-03-15' :
-                params.id === '5' ? '2024-03-01' :
-                params.id === '7' ? '2024-02-25' :
-                params.id === '8' ? '2024-03-18' :
-                params.id === '4' ? '2024-03-05' :
-                params.id === '6' ? '2024-02-28' :
-                '2024-03-10',
-          program: params.id === '1' ? 'G-GMP' :
-                   params.id === '2' ? 'G-GMP' :
-                   params.id === '5' ? 'G-GMP' :
-                   params.id === '7' ? 'G-GMP' :
-                   params.id === '8' ? 'G-GMP' :
-                   'PCP',
-          files: [
-            { name: 'document.pdf', url: '#', size: '2.4 MB' },
-            { name: 'supporting_docs.pdf', url: '#', size: '1.1 MB' },
-          ],
-          metadata: params.id === '1' ? {
-            applicationNumber: 'US2024/123456',
-            filingDate: '2024-03-20',
-            jurisdiction: 'United States',
-            inventors: ['John Doe', 'Dr. Smith'],
-          } : params.id === '2' ? {
-            journal: 'Springer Nature',
-            volume: 'Vol 45',
-            pages: '123-145',
-            doi: '10.1007/s12345-024-001',
-          } : params.id === '8' ? {
-            conceptStage: 'Idea Validation',
-            targetMarket: 'Education Technology',
-            teamSize: 2,
-          } : params.id === '4' ? {
-            certificationLevel: 'Specialist',
-            issuedBy: 'DMIF',
-            validUntil: '2026-03-05',
-          } : undefined,
-        };
-        
-        setOutcome(mockOutcome);
+        const fetchedOutcome = await ApiService.getOutcomeById(params.id as string);
+        if (fetchedOutcome) {
+          setOutcome(fetchedOutcome);
+        }
       } catch (error) {
         console.error('Error fetching outcome:', error);
       } finally {
@@ -281,7 +193,7 @@ export default function OutcomeDetailPage() {
              outcome.type === 'paper' ? 'Published on: ' : 
              'Created on: ') : 
             'Completed on: '}
-          {new Date(outcome.date).toLocaleDateString()}
+          {outcome.date ? new Date(outcome.date).toLocaleDateString() : 'N/A'}
         </span>
       </div>
 
@@ -318,7 +230,7 @@ export default function OutcomeDetailPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold mb-4">Attached Files</h3>
               <div className="space-y-3">
-                {outcome.files.map((file, index) => (
+                {outcome.files.map((file: any, index: number) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -434,7 +346,7 @@ export default function OutcomeDetailPage() {
                        'Created') : 
                       'Completed'}
                   </p>
-                  <p className="text-xs text-gray-500">{new Date(outcome.date).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500">{outcome.date ? new Date(outcome.date).toLocaleDateString() : 'N/A'}</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">

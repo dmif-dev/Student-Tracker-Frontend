@@ -61,6 +61,7 @@ export default function MentorDetailPage() {
   const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -74,10 +75,7 @@ export default function MentorDetailPage() {
     }
   };
 
-  // Get current tab from URL
-  const currentTab = pathname.split('/').pop() || 'overview';
-  const validTabs = ['overview', 'students', 'schedule', 'performance'];
-  const activeTab = validTabs.includes(currentTab) ? currentTab : 'overview';
+
 
   useEffect(() => {
     if (mentor?.assignedStudents) {
@@ -226,46 +224,46 @@ export default function MentorDetailPage() {
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8">
-          <Link
-            href={`/admin/mentors/${params.id}`}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors ${
               activeTab === 'overview'
                 ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
             Overview
-          </Link>
-          <Link
-            href={`/admin/mentors/${params.id}/students`}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+          </button>
+          <button
+            onClick={() => setActiveTab('students')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors ${
               activeTab === 'students'
                 ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
             Students
-          </Link>
-          <Link
-            href={`/admin/mentors/${params.id}/schedule`}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+          </button>
+          <button
+            onClick={() => setActiveTab('schedule')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors ${
               activeTab === 'schedule'
                 ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
             Schedule
-          </Link>
-          <Link
-            href={`/admin/mentors/${params.id}/performance`}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+          </button>
+          <button
+            onClick={() => setActiveTab('performance')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors ${
               activeTab === 'performance'
                 ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
             Performance
-          </Link>
+          </button>
         </nav>
       </div>
 

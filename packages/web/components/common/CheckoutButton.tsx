@@ -3,8 +3,18 @@
 import React, { useState } from 'react';
 import { ShoppingCart, CheckCircle, AlertCircle } from 'lucide-react';
 import LoaderOne from '@/components/ui/loader-one';
+import { apiClient } from '@/utils/apiClient';
 
-export default function CheckoutButton() {
+interface CheckoutButtonProps {
+  orderData: {
+    recipientEmail: string;
+    customerName: string;
+    orderId: string;
+    totalAmount: string;
+  };
+}
+
+export default function CheckoutButton({ orderData }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusType, setStatusType] = useState<'success' | 'error' | ''>('');
@@ -14,23 +24,8 @@ export default function CheckoutButton() {
     setStatusMessage('Processing your order...');
     setStatusType('');
 
-    // Mock order data
-    const orderData = {
-      recipientEmail: 'sanganisathwik26@gmail.com', // Replace with your target address if testing
-      customerName: 'Sathwik',
-      orderId: `KK-${Math.floor(Math.random() * 10000)}`,
-      totalAmount: '₹1,450'
-    };
-
     try {
-      // Points to backend express server port (4000 based on previous checks)
-      const response = await fetch('http://localhost:4000/api/email/confirm-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
-      });
-
-      const result = await response.json();
+      const result = await apiClient.post<any>('email/confirm-order', orderData);
 
       if (result.success) {
         setStatusType('success');
@@ -52,7 +47,7 @@ export default function CheckoutButton() {
     <div className="max-w-md mx-auto my-8 bg-white dark:bg-neutral-900 rounded-3xl shadow-xl border border-gray-100 dark:border-neutral-800 p-6 flex flex-col items-center">
       <div className="text-center mb-6">
         <p className="text-xs font-bold text-gray-500 dark:text-neutral-400 uppercase tracking-widest mb-1">Items in Cart</p>
-        <h2 className="text-3xl font-bold font-montserrat text-gray-900 dark:text-white">₹1,450</h2>
+        <h2 className="text-3xl font-bold font-montserrat text-gray-900 dark:text-white">{orderData.totalAmount}</h2>
       </div>
 
       <button 

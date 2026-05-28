@@ -325,12 +325,12 @@ export default function StudentsPage() {
       </div>
 
       {/* Advanced Filters Panel */}
-      <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm border border-slate-200/60 p-6">
+      <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm border border-slate-200/60 p-6 relative z-20">
         <AdvancedFilters context="students" />
       </div>
 
       {/* Custom Students Data Table */}
-      <div className="rounded-3xl border border-slate-200/60 overflow-hidden bg-white/70 backdrop-blur-md shadow-sm">
+      <div className="rounded-3xl border border-slate-200/60 bg-white/70 backdrop-blur-md shadow-sm relative z-10">
         <StudentTable students={filteredStudents} />
       </div>
     </div>

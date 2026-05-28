@@ -3,8 +3,19 @@
 import React, { useState } from 'react';
 import { Calendar, CheckCircle, AlertCircle } from 'lucide-react';
 import LoaderOne from '@/components/ui/loader-one';
+import { apiClient } from '@/utils/apiClient';
 
-export default function SessionReminderButton() {
+interface SessionReminderButtonProps {
+  sessionData: {
+    recipientEmail: string;
+    studentName: string;
+    mentorName: string;
+    sessionTopic: string;
+    dateTime: string;
+  };
+}
+
+export default function SessionReminderButton({ sessionData }: SessionReminderButtonProps) {
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusType, setStatusType] = useState<'success' | 'error' | ''>('');
@@ -14,23 +25,8 @@ export default function SessionReminderButton() {
     setStatusMessage('Sending session confirmation...');
     setStatusType('');
 
-    // Mock session data
-    const sessionData = {
-      recipientEmail: 'sanganisathwik26@gmail.com', // Target address for tests
-      studentName: 'Sathwik',
-      mentorName: 'Dr. Smith',
-      sessionTopic: 'React & Node.js Advanced Architecture',
-      dateTime: 'Oct 24, 2026 at 04:00 PM'
-    };
-
     try {
-      const response = await fetch('http://localhost:4000/api/email/notify-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sessionData),
-      });
-
-      const result = await response.json();
+      const result = await apiClient.post<any>('email/notify-session', sessionData);
 
       if (result.success) {
         setStatusType('success');
@@ -52,7 +48,7 @@ export default function SessionReminderButton() {
     <div className="max-w-md mx-auto my-8 bg-white dark:bg-neutral-900 rounded-3xl shadow-xl border border-gray-100 dark:border-neutral-800 p-6 flex flex-col items-center">
       <div className="text-center mb-6">
         <p className="text-xs font-bold text-gray-400 dark:text-neutral-500 uppercase tracking-widest mb-1">Upcoming Session Booking</p>
-        <h2 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">React & Node.js</h2>
+        <h2 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">{sessionData.sessionTopic}</h2>
       </div>
 
       <button 

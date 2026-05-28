@@ -1,7 +1,5 @@
 // packages/web/services/api.ts
 
-// Mock API service - Replace with actual API calls when backend is ready
-import { mockStudents, mockMentors, mockPrograms, mockActivities, mockOutcomes, mockAnalytics, mockDashboardStats } from './mockData';
 import { type Student, type Mentor, type Program, type Track, type Activity, type Outcome } from '../types/models';
 
 import { DocumentService } from './documentService';
@@ -140,65 +138,36 @@ export class ApiService {
   }
 
   static async getStudentById(id: string): Promise<Student | undefined> {
-    await delay(500);
-    return mockStudents.find(s => s.id === id);
+    try {
+      return await apiClient.get<Student>(`students/${id}`);
+    } catch {
+      return undefined;
+    }
   }
 
   static async createStudent(student: Partial<Student>): Promise<Student> {
-    await delay(1000);
-    const newStudent = {
-      id: String(mockStudents.length + 1),
-      ...student,
-      joinDate: new Date().toISOString().split('T')[0],
-      lastActive: new Date().toISOString().split('T')[0],
-      progress: 0,
-    } as Student;
-    mockStudents.push(newStudent);
-    return newStudent;
+    return await apiClient.post<Student>('students', student);
   }
 
   static async updateStudent(id: string, updates: Partial<Student>): Promise<Student | undefined> {
-    await delay(800);
-    const index = mockStudents.findIndex(s => s.id === id);
-    if (index !== -1) {
-      mockStudents[index] = { ...mockStudents[index], ...updates };
-      return mockStudents[index];
+    try {
+      return await apiClient.put<Student>(`students/${id}`, updates);
+    } catch {
+      return undefined;
     }
-    return undefined;
   }
 
   static async deleteStudent(id: string): Promise<boolean> {
-    await delay(600);
-    const index = mockStudents.findIndex(s => s.id === id);
-    if (index !== -1) {
-      mockStudents.splice(index, 1);
+    try {
+      await apiClient.delete(`students/${id}`);
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }
 
   static async importStudents(students: Partial<Student>[]): Promise<{ success: number; errors: string[] }> {
-    await delay(2000);
-    const errors: string[] = [];
-    let success = 0;
-    
-    students.forEach((student, index) => {
-      if (!student.email || !student.name) {
-        errors.push(`Row ${index + 2}: Missing required fields`);
-      } else {
-        const newStudent = {
-          id: String(mockStudents.length + success + 1),
-          ...student,
-          joinDate: new Date().toISOString().split('T')[0],
-          lastActive: new Date().toISOString().split('T')[0],
-          progress: 0,
-        } as Student;
-        mockStudents.push(newStudent);
-        success++;
-      }
-    });
-    
-    return { success, errors };
+    return await apiClient.post<{ success: number; errors: string[] }>('students/import', { students });
   }
 
   // Mentors
@@ -289,8 +258,12 @@ export class ApiService {
 
   // Activities
   static async getRecentActivities(limit: number = 10): Promise<Activity[]> {
-    await delay(500);
-    return mockActivities.slice(0, limit);
+    try {
+      const data = await apiClient.get<any>(`activity/me?limit=${limit}`);
+      return Array.isArray(data) ? data.map(mapBackendActivity) : [];
+    } catch {
+      return [];
+    }
   }
 
   // Outcomes
@@ -300,43 +273,39 @@ export class ApiService {
     program?: string;
     status?: string;
   }): Promise<Outcome[]> {
-    await delay(600);
-    let filtered = [...mockOutcomes];
-    
-    if (filters?.studentId) {
-      filtered = filtered.filter(o => o.studentId === filters.studentId);
+    try {
+      const params = new URLSearchParams();
+      if (filters?.studentId) params.append('studentId', filters.studentId);
+      if (filters?.type) params.append('type', filters.type);
+      if (filters?.program) params.append('program', filters.program);
+      if (filters?.status) params.append('status', filters.status);
+      
+      const data = await apiClient.get<any[]>(`outcomes?${params.toString()}`);
+      return data.map(mapBackendOutcome);
+    } catch {
+      return [];
     }
-    if (filters?.type) {
-      filtered = filtered.filter(o => o.type === filters.type);
-    }
-    if (filters?.program) {
-      filtered = filtered.filter(o => o.program === filters.program);
-    }
-    if (filters?.status) {
-      filtered = filtered.filter(o => o.status === filters.status);
-    }
-    
-    return filtered;
   }
 
   static async getOutcomeById(id: string): Promise<Outcome | undefined> {
-    await delay(400);
-    return mockOutcomes.find(o => o.id === id);
+    try {
+      const data = await apiClient.get<any>(`outcomes/${id}`);
+      return mapBackendOutcome(data);
+    } catch {
+      return undefined;
+    }
   }
 
   static async getOutcomesByProgram(program: string): Promise<Outcome[]> {
-    await delay(400);
-    return mockOutcomes.filter(o => o.program === program);
+    return this.getOutcomes({ program });
   }
 
   static async getGGMPOutcomes(): Promise<Outcome[]> {
-    await delay(400);
-    return mockOutcomes.filter(o => o.program === 'G-GMP');
+    return this.getOutcomes({ program: 'G-GMP' });
   }
 
   static async getPCPCertifications(): Promise<Outcome[]> {
-    await delay(400);
-    return mockOutcomes.filter(o => o.program === 'PCP');
+    return this.getOutcomes({ program: 'PCP' });
   }
 
   static async getOutcomeStatistics(): Promise<{
@@ -355,70 +324,49 @@ export class ApiService {
       byMonth: Array<{ month: string; certifications: number }>;
     };
   }> {
-    await delay(600);
-    
-    const gGMPOutcomes = mockOutcomes.filter(o => o.program === 'G-GMP');
-    const pcpOutcomes = mockOutcomes.filter(o => o.program === 'PCP');
-    
-    return {
-      gGMP: {
-        total: gGMPOutcomes.length,
-        patents: gGMPOutcomes.filter(o => o.type === 'patent').length,
-        papers: gGMPOutcomes.filter(o => o.type === 'paper').length,
-        startups: gGMPOutcomes.filter(o => o.type === 'startup').length,
-        byMonth: generateMonthlyOutcomeData(gGMPOutcomes),
-      },
-      pcp: {
-        total: pcpOutcomes.length,
-        associate: pcpOutcomes.filter(o => o.title?.includes('Associate')).length,
-        specialist: pcpOutcomes.filter(o => o.title?.includes('Specialist')).length,
-        professional: pcpOutcomes.filter(o => o.title?.includes('Professional')).length,
-        byMonth: generateMonthlyCertificationData(pcpOutcomes),
-      },
-    };
+    try {
+      const data = await apiClient.get<any>('outcomes/analytics/dashboard');
+      return data;
+    } catch {
+      // Fallback empty structure in case backend doesn't match
+      return {
+        gGMP: { total: 0, patents: 0, papers: 0, startups: 0, byMonth: [] },
+        pcp: { total: 0, associate: 0, specialist: 0, professional: 0, byMonth: [] }
+      };
+    }
   }
 
   static async createOutcome(outcome: Partial<Outcome>): Promise<Outcome> {
-    await delay(800);
-    const newOutcome: Outcome = {
-      id: String(mockOutcomes.length + 1),
-      type: outcome.type || 'patent',
-      title: outcome.title || 'New Outcome',
-      student: outcome.student || '',
-      studentId: outcome.studentId || '',
-      status: outcome.status || 'pending',
-      date: new Date().toISOString().split('T')[0],
-      mentor: outcome.mentor,
-      program: outcome.program || 'G-GMP',
-    };
-    mockOutcomes.push(newOutcome);
-    return newOutcome;
+    const data = await apiClient.post<any>('outcomes', outcome);
+    return mapBackendOutcome(data);
   }
 
   static async updateOutcome(id: string, updates: Partial<Outcome>): Promise<Outcome | undefined> {
-    await delay(600);
-    const index = mockOutcomes.findIndex(o => o.id === id);
-    if (index !== -1) {
-      mockOutcomes[index] = { ...mockOutcomes[index], ...updates };
-      return mockOutcomes[index];
+    try {
+      const data = await apiClient.put<any>(`outcomes/${id}`, updates);
+      return mapBackendOutcome(data);
+    } catch {
+      return undefined;
     }
-    return undefined;
   }
 
   static async deleteOutcome(id: string): Promise<boolean> {
-    await delay(500);
-    const index = mockOutcomes.findIndex(o => o.id === id);
-    if (index !== -1) {
-      mockOutcomes.splice(index, 1);
+    try {
+      await apiClient.delete(`outcomes/${id}`);
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }
 
   // Analytics
-  static async getDashboardStats(): Promise<typeof mockDashboardStats> {
-    await delay(800);
-    return mockDashboardStats;
+  static async getDashboardStats(): Promise<any> {
+    try {
+      // Trying admin dashboard stats by default, assuming generic dashboard usage
+      return await apiClient.get<any>('dashboard/admin');
+    } catch {
+      return {};
+    }
   }
 
   static async getAnalytics(dateRange: string = '6m', program?: string, track?: string): Promise<any> {
@@ -444,54 +392,34 @@ export class ApiService {
 
   // Get program comparison data
   static async getProgramComparison(): Promise<any[]> {
-    await delay(700);
-    
-    return mockPrograms.map(program => ({
-      program: program.name,
-      type: program.hasOutcomes ? 
-        (program.id === 'g-gmp' ? 'Innovation Program' : 'Certification Program') : 
-        'Learning Program',
-      totalStudents: program.totalStudents,
-      activeStudents: program.activeStudents,
-      completionRate: program.completionRate,
-      hasMentors: program.hasMentors,
-      hasOutcomes: program.hasOutcomes,
-      outcomeCount: program.hasOutcomes ? 
-        (program.id === 'g-gmp' ? 35 : 42) : 
-        undefined,
-    }));
+    try {
+      const programs = await this.getPrograms();
+      return programs.map(program => ({
+        program: program.name,
+        type: program.hasOutcomes ? 
+          (program.id === 'g-gmp' ? 'Innovation Program' : 'Certification Program') : 
+          'Learning Program',
+        totalStudents: program.totalStudents,
+        activeStudents: program.activeStudents,
+        completionRate: program.completionRate,
+        hasMentors: program.hasMentors,
+        hasOutcomes: program.hasOutcomes,
+        outcomeCount: program.outcomeCount,
+      }));
+    } catch {
+      return [];
+    }
   }
 
   // Search
   static async search(query: string, type?: 'student' | 'mentor' | 'outcome' | 'all'): Promise<any> {
-    await delay(300);
-    const results: any = {};
-    
-    if (type === 'all' || type === 'student') {
-      results.students = mockStudents.filter(s => 
-        s.name.toLowerCase().includes(query.toLowerCase()) ||
-        s.email.toLowerCase().includes(query.toLowerCase()) ||
-        s.registrationNumber.toLowerCase().includes(query.toLowerCase())
-      );
+    try {
+      const params = new URLSearchParams({ q: query });
+      if (type && type !== 'all') params.append('type', type);
+      return await apiClient.get<any>(`search?${params.toString()}`);
+    } catch {
+      return { students: [], mentors: [], outcomes: [] };
     }
-    
-    if (type === 'all' || type === 'mentor') {
-      results.mentors = mockMentors.filter(m =>
-        m.name.toLowerCase().includes(query.toLowerCase()) ||
-        m.email.toLowerCase().includes(query.toLowerCase()) ||
-        m.expertise.some(e => e.toLowerCase().includes(query.toLowerCase()))
-      );
-    }
-    
-    if (type === 'all' || type === 'outcome') {
-      results.outcomes = mockOutcomes.filter(o =>
-        o.title.toLowerCase().includes(query.toLowerCase()) ||
-        o.student.toLowerCase().includes(query.toLowerCase()) ||
-        o.type.toLowerCase().includes(query.toLowerCase())
-      );
-    }
-    
-    return results;
   }
 
   static async getMentorSchedule(mentorId?: string): Promise<any[]> {
@@ -541,53 +469,11 @@ export class ApiService {
 
   // Reports
   static async generateReport(config: any): Promise<any> {
-    await delay(1500);
-    
-    // Generate report based on configuration
-    const reportData: any = {
-      id: Date.now().toString(),
-      name: config.name,
-      generatedAt: new Date().toISOString(),
-      format: config.format,
-      programs: config.programs,
-    };
-
-    // Add program-specific data
-    if (config.programs.includes('G-GMP') || config.programs.length === 0) {
-      reportData.gGMP = {
-        students: mockStudents.filter(s => s.program === 'G-GMP').length,
-        outcomes: mockOutcomes.filter(o => o.program === 'G-GMP').length,
-        patents: mockOutcomes.filter(o => o.program === 'G-GMP' && o.type === 'patent').length,
-        papers: mockOutcomes.filter(o => o.program === 'G-GMP' && o.type === 'paper').length,
-        startups: mockOutcomes.filter(o => o.program === 'G-GMP' && o.type === 'startup').length,
-      };
+    try {
+      return await apiClient.post<any>('reports/generate', config);
+    } catch {
+      throw new Error('Failed to generate report');
     }
-
-    if (config.programs.includes('PCP') || config.programs.length === 0) {
-      reportData.pcp = {
-        students: mockStudents.filter(s => s.program === 'PCP').length,
-        certifications: mockOutcomes.filter(o => o.program === 'PCP').length,
-        associate: mockOutcomes.filter(o => o.program === 'PCP' && o.title?.includes('Associate')).length,
-        specialist: mockOutcomes.filter(o => o.program === 'PCP' && o.title?.includes('Specialist')).length,
-        professional: mockOutcomes.filter(o => o.program === 'PCP' && o.title?.includes('Professional')).length,
-      };
-    }
-
-    if (config.programs.includes('G-CMP') || config.programs.length === 0) {
-      reportData.gCMP = {
-        students: mockStudents.filter(s => s.program === 'G-CMP').length,
-        projects: Math.floor(Math.random() * 50) + 30,
-      };
-    }
-
-    if (config.programs.includes('E-TIP') || config.programs.length === 0) {
-      reportData.eTIP = {
-        students: mockStudents.filter(s => s.program === 'E-TIP').length,
-        sessions: Math.floor(Math.random() * 40) + 20,
-      };
-    }
-
-    return reportData;
   }
 
   static async getSavedReports(): Promise<any[]> {
@@ -1310,5 +1196,27 @@ export class ApiService {
     });
     if (!response.ok) throw new Error('Failed to delete notification');
     return response.json();
+  }
+
+  // --- Tags ---
+  static async getTags(): Promise<any[]> {
+    try {
+      const data = await apiClient.get<any[]>('tags');
+      return data;
+    } catch {
+      return [];
+    }
+  }
+
+  static async createTag(tagData: any): Promise<any> {
+    return await apiClient.post<any>('tags', tagData);
+  }
+
+  static async updateTag(id: string, tagData: any): Promise<any> {
+    return await apiClient.put<any>(`tags/${id}`, tagData);
+  }
+
+  static async deleteTag(id: string): Promise<any> {
+    return await apiClient.delete<any>(`tags/${id}`);
   }
 }

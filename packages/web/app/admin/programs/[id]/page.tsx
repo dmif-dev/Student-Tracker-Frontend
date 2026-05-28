@@ -109,21 +109,21 @@ export default function ProgramDetailPage() {
               time: a.time,
             }));
           
-          // Mock recent outcomes for G-GMP and PCP
+          // Fetch real outcomes from backend
           let outcomes: Outcome[] = [];
           if (data.hasOutcomes) {
-            if (data.id === 'g-gmp') {
-              outcomes = [
-                { id: '1', type: 'patent', title: 'AI-based Patent Search System', student: 'John Doe', date: '2024-03-20', status: 'filed' },
-                { id: '2', type: 'paper', title: 'Advances in Agentic AI Systems', student: 'Jane Smith', date: '2024-03-15', status: 'published' },
-                { id: '3', type: 'startup', title: 'AI-powered Education Platform', student: 'John Doe', date: '2024-03-18', status: 'pending' },
-              ];
-            } else if (data.id === 'pcp') {
-              outcomes = [
-                { id: '4', type: 'certification', title: 'Agentic AI Specialist', student: 'Sarah Wilson', date: '2024-03-05', status: 'completed' },
-                { id: '5', type: 'certification', title: 'AI Product Development Professional', student: 'Emily Brown', date: '2024-02-28', status: 'completed' },
-              ];
-            }
+            const allOutcomes = await ApiService.getOutcomes();
+            outcomes = allOutcomes
+              .filter(o => o.program.toLowerCase() === data.id.toLowerCase())
+              .slice(0, 5)
+              .map(o => ({
+                id: o.id,
+                type: o.type.toLowerCase(),
+                title: o.title,
+                student: o.student || 'Unknown Student',
+                date: o.date,
+                status: o.status.toLowerCase(),
+              }));
           }
           
           setProgram({

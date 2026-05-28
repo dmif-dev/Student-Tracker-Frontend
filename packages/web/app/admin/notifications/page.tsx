@@ -117,16 +117,21 @@ export default function NotificationsPage() {
     setCurrentPage(1);
   }, [filter, categoryFilter, dateFilter, activeTab]);
 
-  const totalNotificationPages = Math.max(1, Math.ceil(filteredNotifications.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil((activeTab === 'notifications' ? filteredNotifications.length : filteredAlerts.length) / itemsPerPage));
 
   useEffect(() => {
-    setCurrentPage((page) => Math.min(page, totalNotificationPages));
-  }, [totalNotificationPages]);
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   const paginatedNotifications = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredNotifications.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredNotifications, currentPage]);
+
+  const paginatedAlerts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAlerts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAlerts, currentPage]);
 
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
@@ -334,67 +339,99 @@ export default function NotificationsPage() {
 
       {/* Alerts Section */}
       {activeTab === 'alerts' && (
-        <div className="space-y-3 max-h-[calc(100vh-320px)] overflow-y-auto pr-2 custom-scrollbar">
-          {filteredAlerts.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <AlertTriangle size={48} className="mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No active alerts</h3>
-              <p className="text-gray-500">
-                You're all caught up! There are no system alerts at the moment.
-              </p>
-            </div>
-          ) : (
-            filteredAlerts.map(alert => (
-              <div
-              key={alert.id}
-              className={`p-4 rounded-lg border ${
-                alert.type === 'error' ? 'bg-red-50 border-red-200' :
-                alert.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
-                alert.type === 'success' ? 'bg-green-50 border-green-200' :
-                'bg-orange-50 border-orange-200'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3">
-                  {alert.type === 'error' && <AlertTriangle size={20} className="text-red-500" />}
-                  {alert.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500" />}
-                  {alert.type === 'success' && <CheckCircle size={20} className="text-green-500" />}
-                  {alert.type === 'info' && <Info size={20} className="text-orange-500" />}
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-medium text-gray-900">{alert.title}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${getCategoryColor(alert.category)}`}>
-                        {getCategoryLabel(alert.category)}
-                      </span>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col max-h-[calc(100vh-320px)]">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0">
+            <h2 className="font-semibold text-gray-900">All Alerts</h2>
+          </div>
+          
+          <div className="overflow-y-auto custom-scrollbar flex-1 p-6">
+            <div className="space-y-3">
+              {filteredAlerts.length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+                  <AlertTriangle size={48} className="mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No active alerts</h3>
+                  <p className="text-gray-500">
+                    You're all caught up! There are no system alerts at the moment.
+                  </p>
+                </div>
+              ) : (
+                paginatedAlerts.map(alert => (
+                  <div
+                  key={alert.id}
+                  className={`p-4 rounded-lg border ${
+                    alert.type === 'error' ? 'bg-red-50 border-red-200' :
+                    alert.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
+                    alert.type === 'success' ? 'bg-green-50 border-green-200' :
+                    'bg-orange-50 border-orange-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      {alert.type === 'error' && <AlertTriangle size={20} className="text-red-500" />}
+                      {alert.type === 'warning' && <AlertTriangle size={20} className="text-yellow-500" />}
+                      {alert.type === 'success' && <CheckCircle size={20} className="text-green-500" />}
+                      {alert.type === 'info' && <Info size={20} className="text-orange-500" />}
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="font-medium text-gray-900">{alert.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${getCategoryColor(alert.category)}`}>
+                            {getCategoryLabel(alert.category)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                        {alert.action && (
+                          <button
+                            onClick={() => router.push(alert.action!.url)}
+                            className="mt-2 text-sm text-orange-600 hover:text-orange-700 flex items-center"
+                          >
+                            {alert.action.text}
+                            <ExternalLink size={14} className="ml-1" />
+                          </button>
+                        )}
+                        {alert.expiresAt && (
+                          <p className="text-xs text-gray-400 mt-2 flex items-center">
+                            <Calendar size={12} className="mr-1" />
+                            Expires: {new Date(alert.expiresAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
-                    {alert.action && (
-                      <button
-                        onClick={() => router.push(alert.action!.url)}
-                        className="mt-2 text-sm text-orange-600 hover:text-orange-700 flex items-center"
-                      >
-                        {alert.action.text}
-                        <ExternalLink size={14} className="ml-1" />
-                      </button>
-                    )}
-                    {alert.expiresAt && (
-                      <p className="text-xs text-gray-400 mt-2 flex items-center">
-                        <Calendar size={12} className="mr-1" />
-                        Expires: {new Date(alert.expiresAt).toLocaleDateString()}
-                      </p>
-                    )}
+                    <button
+                      onClick={() => dismissAlert(alert.id)}
+                      className="text-gray-400 hover:text-gray-600"
+                      title="Dismiss"
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
                 </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {filteredAlerts.length > itemsPerPage && (
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0">
+              <p className="text-sm text-gray-500">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => dismissAlert(alert.id)}
-                  className="text-gray-400 hover:text-gray-600"
-                  title="Dismiss"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <X size={18} />
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
                 </button>
               </div>
             </div>
-            ))
           )}
         </div>
       )}
@@ -508,33 +545,33 @@ export default function NotificationsPage() {
                     </div>
                   ))}
                 </div>
-
-                {filteredNotifications.length > itemsPerPage && (
-                  <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0">
-                    <p className="text-sm text-gray-500">
-                      Page {currentPage} of {totalNotificationPages}
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      <button
-                        onClick={() => setCurrentPage((page) => Math.min(totalNotificationPages, page + 1))}
-                        disabled={currentPage === totalNotificationPages}
-                        className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </div>
+
+          {filteredNotifications.length > itemsPerPage && (
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0">
+              <p className="text-sm text-gray-500">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
