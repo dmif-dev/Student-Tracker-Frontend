@@ -121,7 +121,7 @@ export default function MentorDetailsPage() {
             await apiClient.post('notifications', {
                 targetUserId: mentor?.userId, // Mentor's underlying User ID
                 type: 'MESSAGE',
-                category: 'SYSTEM',
+                category: 'student',
                 title: `Message from ${profile?.firstName} ${profile?.lastName}`,
                 message: messageContent,
                 studentId: profile?.studentId
