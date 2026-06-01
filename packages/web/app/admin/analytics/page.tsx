@@ -894,7 +894,7 @@ export default function AnalyticsPage() {
                   <div className="w-full bg-gray-200 rounded-full h-1.5">
                     <div 
                       className={`rounded-full h-1.5 ${program.hasOutcomes ? 'bg-purple-500' : program.hasMentors ? 'bg-orange-600' : 'bg-orange-500'}`} 
-                      style={{ width: `${program.stats.completionRate}%` }}
+                      style={{ width: `${program.stats.averageProgress || 0}%` }}
                     />
                   </div>
                 </div>
