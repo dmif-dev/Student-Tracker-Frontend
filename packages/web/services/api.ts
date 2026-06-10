@@ -45,7 +45,21 @@ const sumRecordValues = (value: Record<string, number> | undefined) => {
 
 const mapBackendProgram = (program: any): Program => {
   const metrics = program.metrics || {};
-  const tracks = Array.isArray(program.tracks) ? program.tracks.map(mapBackendTrack) : [];
+  const tracks = Array.isArray(program.tracks) ? program.tracks.map((t: any) => {
+    const trackMetric = Array.isArray(metrics.tracks)
+      ? metrics.tracks.find((tm: any) => tm.trackId === t.id)
+      : null;
+    
+    const mapped = mapBackendTrack(t);
+    if (trackMetric) {
+      mapped.students = trackMetric.studentCount ?? mapped.students;
+      mapped.progress = typeof trackMetric.averageProgress === 'number'
+        ? Math.round(trackMetric.averageProgress)
+        : mapped.progress;
+      mapped.outcomes = trackMetric.outcomesCount ?? mapped.outcomes;
+    }
+    return mapped;
+  }) : [];
   const totalStudents = metrics.totalStudents ?? program._count?.students ?? program.totalStudents ?? 0;
   const activeStudents = metrics.activeStudents ?? program.activeStudents ?? 0;
   const completionRate = metrics.completionRate ?? program.completionRate ?? 0;
