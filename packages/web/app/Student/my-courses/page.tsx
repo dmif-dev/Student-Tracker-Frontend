@@ -1,430 +1,610 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {
+    useEffect,
+    useRef,
+    useState,
+    useMemo,
+    createContext,
+} from "react";
 import {
     BookOpen,
     Clock,
-    Star,
-    ArrowUpRight,
-    Plus,
-    Search,
-    Filter,
-    PlayCircle,
-    CheckCircle2,
     Trophy,
-    Target,
+    TrendingUp,
+    Search,
+    PlayCircle,
+    FileText,
+    Eye,
+    Download,
+    CheckCircle,
+    GraduationCap,
     UserCircle,
-    LayoutGrid,
+    Target,
+    BookMarked,
     ChevronRight,
-    Sparkles
+    BarChart3,
+    Activity,
+    Star,
+    Layers,
+    Sparkles,
+    ArrowUpRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LiquidCard, CardContent as LiquidCardContent, CardHeader as LiquidCardHeader } from "@/components/ui/liquid-glass-card";
-import { LiquidButton } from "@/components/ui/liquid-glass-button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
+import { format } from "date-fns";
+import LoaderOne from "@/components/ui/loader-one";
+
+import {
+    useStudentProfile,
+    useStudentStats,
+    useStudentDocuments,
+    useStudentOutcomes,
+    useStudentProgressHistory,
+} from "@/hooks/api/useStudent";
 import { ApiService } from "@/services/api";
-import { useStudentProfile, useStudentStats, useStudentOutcomes } from "@/hooks/api/useStudent";
+import { DocumentService } from "@/services/documentService";
+import { toast } from "sonner";
 
-// --- Types and Enums from Inspiration ---
-enum Strength {
-    None = "none",
-    Weak = "weak",
-    Moderate = "moderate",
-    Strong = "strong",
-}
-
-type Score = number | null;
+// ─── Types ────────────────────────────────────────────────────────────────────
+enum Strength { None = "none", Weak = "weak", Moderate = "moderate", Strong = "strong" }
 type StrengthColors = Record<Strength, string[]>;
 
-interface Course {
-    id: number;
-    title: string;
-    code: string;
-    instructor: string;
-    progress: number;
-    rating: number;
-    duration: string;
-    category: string;
-    description: string;
-    status: string;
-    image: string;
-}
-
-// --- Utils Class from Inspiration ---
-class Utils {
-    static LOCALE = "en-US";
-    static easings = {
-        easeInOut: "cubic-bezier(0.65, 0, 0.35, 1)",
-        easeOut: "cubic-bezier(0.33, 1, 0.68, 1)",
-    };
-
-    static circumference(r: number): number {
-        return 2 * Math.PI * r;
-    }
-
-    static formatNumber(n: number) {
-        return new Intl.NumberFormat(this.LOCALE).format(n);
-    }
-
-    static getStrength(score: number | null, maxScore: number): Strength {
-        if (score === null) return Strength.None;
-        const percent = score / maxScore;
-        if (percent >= 0.8) return Strength.Strong;
-        if (percent >= 0.4) return Strength.Moderate;
-        return Strength.Weak;
-    }
-
-    static randomHash(length = 4): string {
-        const chars = "abcdef0123456789";
-        const bytes = crypto.getRandomValues(new Uint8Array(length));
-        return [...bytes].map((b) => chars[b % chars.length]).join("");
-    }
-}
-
-// --- Context for Staggered Animations ---
-type CounterContextType = {
-    getNextIndex: () => number;
-};
-const CounterContext = createContext<CounterContextType | undefined>(undefined);
-
-const CounterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const counterRef = useRef(0);
-    const getNextIndex = useCallback(() => {
-        return counterRef.current++;
-    }, []);
-    return <CounterContext.Provider value={{ getNextIndex }}>{children}</CounterContext.Provider>;
+const getStrength = (s: number, max: number): Strength => {
+    const p = s / max;
+    if (p >= 0.8) return Strength.Strong;
+    if (p >= 0.4) return Strength.Moderate;
+    if (p > 0)    return Strength.Weak;
+    return Strength.None;
 };
 
-const useCounter = () => {
-    const context = useContext(CounterContext);
-    if (!context) throw new Error("useCounter must be used within a CounterProvider");
-    return context.getNextIndex;
+const rHash = (n = 4) => {
+    const b = crypto.getRandomValues(new Uint8Array(n));
+    return [...b].map(x => "abcdef0123456789"[x % 16]).join("");
 };
 
-// --- Sub-components for Course Card (Inspired by FinancialScore) ---
-
-function CourseScoreHalfCircle({ value, max, colorStops }: { value: number; max: number; colorStops: string[] }) {
-    const strokeRef = useRef<SVGCircleElement>(null);
-    const gradIdRef = useRef(`grad-${Utils.randomHash()}`);
-    const gradId = gradIdRef.current;
-    const gradStroke = `url(#${gradId})`;
-    const radius = 45;
-    const dist = Utils.circumference(radius);
-    const distHalf = dist / 2;
-    const strokeDasharray = `${distHalf} ${distHalf}`;
-    const distForValue = (value / max) * -distHalf;
-    const strokeDashoffset = distForValue;
+// ─── Animated Ring ────────────────────────────────────────────────────────────
+function Ring({ value, max, size = 130, sw = 9, stops, children }: {
+    value: number; max: number; size?: number; sw?: number;
+    stops: string[]; children?: React.ReactNode;
+}) {
+    const id  = useRef(`r-${rHash()}`).current;
+    const ref = useRef<SVGCircleElement>(null);
+    const r   = (size - sw) / 2;
+    const c   = 2 * Math.PI * r;
+    const off = c - (value / max) * c;
 
     useEffect(() => {
-        const strokeStart = 400;
-        const duration = 1400;
-
-        strokeRef.current?.animate(
-            [
-                { strokeDashoffset: "0", offset: 0 },
-                { strokeDashoffset: "0", offset: strokeStart / duration },
-                { strokeDashoffset: strokeDashoffset.toString() },
-            ],
-            {
-                duration,
-                easing: Utils.easings.easeInOut,
-                fill: "forwards",
-            },
+        ref.current?.animate(
+            [{ strokeDashoffset: String(c) }, { strokeDashoffset: String(off) }],
+            { duration: 1200, easing: "cubic-bezier(0.65,0,0.35,1)", fill: "forwards" }
         );
-    }, [value, max, strokeDashoffset]);
+    }, [value, c, off]);
 
     return (
-        <svg className="block mx-auto w-auto max-w-full h-32" viewBox="0 0 100 50" aria-hidden="true">
-            <defs>
-                <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
-                    {colorStops.map((stop, i) => {
-                        const offset = `${(100 / (colorStops.length - 1)) * i}%`;
-                        return <stop key={i} offset={offset} stopColor={stop} />;
-                    })}
-                </linearGradient>
-            </defs>
-            <g fill="none" strokeWidth="10" transform="translate(50, 50.5)">
-                <circle stroke="currentColor" className="text-gray-100" r={radius} />
-                <circle ref={strokeRef} stroke={gradStroke} strokeDasharray={strokeDasharray} r={radius} strokeLinecap="round" />
-            </g>
-        </svg>
-    );
-}
-
-function CourseScoreDisplay({ value, max }: { value: number; max: number }) {
-    const digits = String(Math.floor(value)).split("");
-    const maxFormatted = Utils.formatNumber(max);
-
-    return (
-        <div className="absolute bottom-0 w-full text-center">
-            <div className="text-3xl font-black h-10 overflow-hidden relative">
-                <div className="absolute inset-0">
-                    {digits.map((digit, i) => (
-                        <span
-                            key={i}
-                            className="inline-block animate-in slide-in-from-bottom-full duration-800 fill-mode-both"
-                            style={{
-                                animationDelay: `${400 + i * 100}ms`,
-                                animationDuration: `${800 + i * 300}ms`,
-                            }}
-                        >
-                            {digit}
-                        </span>
-                    ))}
-                    <span className="text-xl ml-0.5 opacity-60">%</span>
-                </div>
-            </div>
-            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Progress</div>
+        <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+            <svg width={size} height={size} className="-rotate-90">
+                <defs>
+                    <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="0%">
+                        {stops.map((col, i) => (
+                            <stop key={i} offset={`${(100 / (stops.length - 1)) * i}%`} stopColor={col} />
+                        ))}
+                    </linearGradient>
+                </defs>
+                <circle cx={size/2} cy={size/2} r={r} fill="none" strokeWidth={sw} className="stroke-white/30" />
+                <circle ref={ref} cx={size/2} cy={size/2} r={r} fill="none"
+                    stroke={`url(#${id})`} strokeWidth={sw} strokeLinecap="round"
+                    strokeDasharray={c} strokeDashoffset={c} />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>
         </div>
     );
 }
 
-// Removed static COURSES array
-function CourseCard({ course }: { course: Course }) {
-    const getNextIndex = useCounter();
-    const indexRef = useRef<number | null>(null);
-    const [appearing, setAppearing] = useState(false);
-
-    if (indexRef.current === null) {
-        indexRef.current = getNextIndex();
-    }
-
-    useEffect(() => {
-        const delay = 300 + indexRef.current! * 150;
-        const timer = setTimeout(() => setAppearing(true), delay);
-        return () => clearTimeout(timer);
-    }, []);
-
-    const strengthColors: StrengthColors = {
-        none: ["hsl(220, 13%, 69%)", "hsl(220, 9%, 46%)"],
-        weak: ["#fee2e2", "#ef4444", "#991b1b"],
-        moderate: ["#fef3c7", "#f59e0b", "#92400e"],
-        strong: ["#dcfce7", "#22c55e", "#166534"],
-    };
-
-    const strength = Utils.getStrength(course.progress, 100);
-    const colorStops = strengthColors[strength];
-
-    if (!appearing) return <div className="h-[450px] w-full bg-gray-50/50 rounded-[2.5rem] animate-pulse" />;
-
+// ─── Stat Card — Glass ─────────────────────────────────────────────────────────
+function GlassStat({ icon: Icon, label, value, sub, accent, delay = 0 }: {
+    icon: React.ElementType; label: string; value: string; sub?: string;
+    accent: string; delay?: number;
+}) {
     return (
-        <LiquidCard className="h-full flex flex-col group animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both border-white/40 shadow-2xl hover:shadow-orange-100/50 transition-all">
-            <LiquidCardHeader className="pb-6 pt-8 px-8">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="space-y-1 overflow-hidden">
-                        <div className="flex items-center gap-2">
-                            <span className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-gray-900 text-white", course.code === "G-CMP" ? "bg-indigo-600" : course.code === "E-TIP" ? "bg-orange-600" : "bg-gray-900")}>
-                                {course.code}
-                            </span>
-                            <Badge variant="outline" className="border-gray-200 text-[9px] font-black uppercase tracking-widest py-0.5">
-                                {course.category}
-                            </Badge>
-                        </div>
-                        <h3 className="text-xl font-black text-gray-900 truncate tracking-tight group-hover:text-orange-600 transition-colors">
-                            {course.title}
-                        </h3>
-                    </div>
-                </div>
-            </LiquidCardHeader>
-            <LiquidCardContent className="px-8 pb-8 flex-1 flex flex-col space-y-6">
-                {/* Half Circle Progress (Inspired by FinancialScore) */}
-                <div className="relative pt-6">
-                    <CourseScoreHalfCircle value={course.progress} max={100} colorStops={colorStops} />
-                    <CourseScoreDisplay value={course.progress} max={100} />
-                </div>
+        <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay, duration: 0.45, ease: [0.33, 1, 0.68, 1] }}
+            className="group relative flex items-center gap-4 p-5 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/70 shadow-sm hover:shadow-md hover:bg-white/80 transition-all duration-300 overflow-hidden"
+        >
+            {/* Subtle accent glow */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${accent} rounded-2xl`} style={{ opacity: 0 }} />
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500 ${accent} rounded-2xl`} />
 
-                <p className="text-gray-500 text-sm font-medium leading-relaxed line-clamp-3 min-h-[4.5rem]">
-                    {course.description}
-                </p>
-
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100/50">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                            <UserCircle className="w-4 h-4 text-gray-400" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{course.instructor}</span>
-                            <div className="flex items-center gap-1">
-                                <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
-                                <span className="text-[10px] font-bold text-gray-400">{course.rating}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Duration</span>
-                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{course.duration}</span>
-                    </div>
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${accent.replace("bg-gradient-to-br", "bg-gradient-to-br")} shadow-sm`}
+                style={{ background: "" }}>
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${accent}`}>
+                    <Icon className="w-5 h-5 text-white" />
                 </div>
+            </div>
 
-                <Link href={`/Student/my-courses/${course.code}`} className="block mt-4">
-                    <LiquidButton
-                        className={cn(
-                            "w-full h-14 rounded-2xl group/btn",
-                            course.status === "Completed" ? "bg-green-50 text-green-700 border-green-100 hover:bg-green-100" : "bg-white/50 text-gray-900 hover:bg-white"
-                        )}
-                    >
-                        <span className="relative z-10 uppercase tracking-widest text-[11px] font-black flex items-center gap-2">
-                            {course.status === "Completed" ? "View Certificate" : "Continue Learning"}
-                            <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                        </span>
-                    </LiquidButton>
-                </Link>
-            </LiquidCardContent>
-        </LiquidCard>
+            <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">{label}</p>
+                <p className="text-2xl font-black text-gray-900 tracking-tight leading-none mt-0.5">{value}</p>
+                {sub && <p className="text-[11px] text-gray-400 mt-0.5 truncate">{sub}</p>}
+            </div>
+        </motion.div>
     );
 }
 
-export default function MyCoursesPage() {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [programs, setPrograms] = useState<any[]>([]);
-    const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
-    const { data: profile, isLoading: isProfileLoading } = useStudentProfile();
-    const studentId = profile?.student?.id;
-    const { data: rawStats } = useStudentStats(studentId);
-    const { data: outcomesSummary } = useStudentOutcomes(studentId);
-
-    useEffect(() => {
-        const fetchPrograms = async () => {
-            try {
-                const allPrograms = await ApiService.getPrograms();
-                // Filter if needed, but for now we'll just map them. Ideally, filter to student's enrolled program.
-                const studentProgramId = profile?.student?.program?.toLowerCase();
-                const enrolledPrograms = allPrograms.filter(p => p.id.toLowerCase() === studentProgramId);
-                // If not enrolled in any, maybe show all or just the ones they are in.
-                const programsToShow = enrolledPrograms.length > 0 ? enrolledPrograms : [];
-
-                setPrograms(programsToShow.map((p, i) => ({
-                    id: i + 1,
-                    code: p.id.toUpperCase(),
-                    title: p.name,
-                    instructor: p.hasMentors ? "Program Mentor" : "Self-paced",
-                    progress: 0, // Should be fetched from student progress API
-                    rating: 5.0,
-                    duration: (p as any).duration || "Self-paced",
-                    category: "Technology",
-                    description: p.description,
-                    status: "In Progress",
-                    image: "from-indigo-600 to-blue-500"
-                })));
-            } catch (error) {
-                console.error("Error fetching programs:", error);
-            } finally {
-                setIsLoadingPrograms(false);
-            }
-        };
-
-        if (!isProfileLoading) {
-            fetchPrograms();
-        }
-    }, [profile, isProfileLoading]);
-
-    const stats = [
-        { label: "Active Courses", value: programs.length.toString(), icon: BookOpen, color: "text-indigo-500" },
-        { label: "Innovation Points", value: ((rawStats?.totalEntries || 0) * 10).toString(), icon: Sparkles, color: "text-orange-500" },
-        { label: "Learning Hours", value: `${Math.round((rawStats?.totalSessions || 0) * 1.5)}h`, icon: Clock, color: "text-blue-500" },
-        { label: "Achievements", value: (outcomesSummary?.total || 0).toString(), icon: Trophy, color: "text-amber-500" },
-    ];
+// ─── Document Row ─────────────────────────────────────────────────────────────
+function DocRow({ doc, idx, onView, onDownload }: {
+    doc: any; idx: number;
+    onView: (id: string) => void;
+    onDownload: (id: string, name: string) => void;
+}) {
+    const isVideo = doc.fileType?.includes("video");
+    const isPdf   = doc.fileType?.includes("pdf");
 
     return (
-        <div className="space-y-10 p-6 pb-20 bg-gradient-to-br from-white via-orange-50/10 to-white min-h-screen">
-            <CounterProvider>
-                {/* Header Section */}
-                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 animate-in fade-in duration-1000">
-                    <div className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white shadow-sm border border-orange-100/50">
-                            <Sparkles className="w-4 h-4 text-orange-500 animate-pulse" />
-                            <span className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em]">Curriculum Dashboard</span>
+        <motion.div
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: idx * 0.035, duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
+            className="group flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-white/80 hover:shadow-sm transition-all duration-200 cursor-default border border-transparent hover:border-white/60"
+        >
+            {/* Icon */}
+            <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200",
+                isVideo
+                    ? "bg-blue-100/80 text-blue-500 group-hover:bg-blue-200/80"
+                    : "bg-orange-100/80 text-orange-500 group-hover:bg-orange-200/80"
+            )}>
+                {isVideo ? <PlayCircle className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 truncate">{doc.title}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                    {doc.type || (isVideo ? "Video Lesson" : "Document")}
+                    {doc.createdAt ? ` · ${format(new Date(doc.createdAt), "MMM d, yyyy")}` : ""}
+                </p>
+            </div>
+
+            {/* Type chip */}
+            <span className={cn(
+                "hidden sm:block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex-shrink-0",
+                isVideo ? "bg-blue-50 text-blue-500"
+                : isPdf  ? "bg-orange-50 text-orange-500"
+                         : "bg-gray-100 text-gray-500"
+            )}>
+                {isVideo ? "Video" : isPdf ? "PDF" : "Doc"}
+            </span>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <button onClick={() => onView(doc.id)} title="View"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50/80 transition-all">
+                    <Eye size={13} />
+                </button>
+                <button onClick={() => onDownload(doc.id, doc.fileName || doc.title || "document")} title="Download"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-orange-500 hover:bg-orange-50/80 transition-all">
+                    <Download size={13} />
+                </button>
+            </div>
+        </motion.div>
+    );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Main Page
+// ═════════════════════════════════════════════════════════════════════════════
+export default function MyCoursesPage() {
+    const [search,    setSearch]    = useState("");
+    const [activeTab, setActiveTab] = useState<"all" | "video" | "docs">("all");
+    const [programs,  setPrograms]  = useState<any[]>([]);
+    const [loadingPg, setLoadingPg] = useState(true);
+
+    const { data: profile,   isLoading: lProfile } = useStudentProfile();
+    const sid = profile?.studentId ?? profile?.id;
+
+    const { data: rawStats,  isLoading: lStats } = useStudentStats(sid);
+    const { data: outcomes }                      = useStudentOutcomes(sid);
+    const { data: documents, isLoading: lDocs }  = useStudentDocuments();
+    const { data: history }                       = useStudentProgressHistory(sid);
+
+    const recentTopics = useMemo(() => {
+        const historyData = Array.isArray(history) ? history : (history?.data || []);
+        if (!Array.isArray(historyData)) return [];
+        const t: { label: string }[] = [];
+        for (const e of historyData)
+            if (Array.isArray(e.topicsCovered))
+                e.topicsCovered.forEach((s: string) => t.push({ label: s }));
+        return t.slice(0, 6);
+    }, [history]);
+
+    const handleView = async (id: string) => {
+        const tid = toast.loading("Opening…");
+        try {
+            const url = await DocumentService.getFileContent(id);
+            toast.dismiss(tid);
+            url ? window.open(url, "_blank") : toast.error("Could not open document");
+        } catch { toast.dismiss(tid); toast.error("Error"); }
+    };
+
+    const handleDownload = async (id: string, name: string) => {
+        const tid = toast.loading("Downloading…");
+        try {
+            const url = await DocumentService.getFileContent(id);
+            toast.dismiss(tid);
+            if (url) { const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+            else toast.error("Could not download");
+        } catch { toast.dismiss(tid); toast.error("Error"); }
+    };
+
+    useEffect(() => {
+        ApiService.getPrograms().then(setPrograms).catch(console.error).finally(() => setLoadingPg(false));
+    }, []);
+
+    const enrolled = useMemo(() => {
+        if (!profile?.programName || !programs.length) return null;
+        return programs.find(p =>
+            p.name.toLowerCase() === profile.programName.toLowerCase() ||
+            p.id.toLowerCase()   === profile.programName.toLowerCase()
+        ) || programs[0];
+    }, [profile, programs]);
+
+    const progress      = profile?.stats?.brainScore || rawStats?.progress || 0;
+    const totalSessions = rawStats?.totalSessions ?? 0;
+    const avgRating     = rawStats?.performance?._avg?.performanceRating ?? 0;
+    const achievements  = outcomes?.total ?? 0;
+
+    const docCount   = documents?.filter(d => !d.fileType?.includes("video")).length ?? 0;
+    const videoCount = documents?.filter(d =>  d.fileType?.includes("video")).length ?? 0;
+
+    const filtered = useMemo(() => {
+        if (!documents) return [];
+        let list = documents.filter(d =>
+            d.title?.toLowerCase().includes(search.toLowerCase()) ||
+            d.description?.toLowerCase().includes(search.toLowerCase())
+        );
+        if (activeTab === "video") list = list.filter(d =>  d.fileType?.includes("video"));
+        if (activeTab === "docs")  list = list.filter(d => !d.fileType?.includes("video"));
+        return list;
+    }, [documents, search, activeTab]);
+
+    const sColors: StrengthColors = {
+        none:     ["#e5e7eb","#d1d5db"],
+        weak:     ["#fca5a5","#ef4444"],
+        moderate: ["#fcd34d","#f59e0b"],
+        strong:   ["#6ee7b7","#10b981"],
+    };
+    const strength = getStrength(progress, 100);
+
+    if (lProfile || loadingPg || lStats || lDocs) {
+        return <div className="min-h-screen flex items-center justify-center"><LoaderOne /></div>;
+    }
+
+    return (
+        <div className="min-h-screen relative overflow-hidden" style={{ background: "linear-gradient(135deg, #fafafa 0%, #fff7ed 50%, #f0f9ff 100%)" }}>
+
+            {/* ── Ambient blobs ── */}
+            <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+                <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-orange-200/30 blur-[100px]" />
+                <div className="absolute top-1/2 -left-48 w-[400px] h-[400px] rounded-full bg-blue-200/20 blur-[100px]" />
+                <div className="absolute -bottom-32 right-1/3 w-[350px] h-[350px] rounded-full bg-amber-200/20 blur-[80px]" />
+            </div>
+
+            <div className="w-full px-6 py-8 space-y-7">
+
+                {/* ════ HEADER ════ */}
+                <motion.div
+                    initial={{ opacity: 0, y: -12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45 }}
+                    className="flex items-end justify-between gap-4"
+                >
+                    <div>
+                        <div className="inline-flex items-center gap-1.5 mb-2">
+                            <Sparkles className="w-3.5 h-3.5 text-orange-500" />
+                            <span className="text-[11px] font-bold text-orange-500 uppercase tracking-[0.2em]">Curriculum</span>
                         </div>
-                        <h1 className="text-5xl lg:text-7xl font-black text-gray-900 tracking-tighter leading-[0.8] py-2">
-                            My Future <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-600 to-orange-400">Pathways</span>
-                        </h1>
-                        <p className="text-gray-500 font-medium tracking-tight text-xl max-w-xl leading-relaxed">
-                            A highly curated selection of innovation tracks designed to accelerate your technical and global career growth.
-                        </p>
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">My Courses</h1>
+                        <p className="text-sm text-gray-500 mt-1">Track progress and access all your learning materials.</p>
                     </div>
-                    <div className="flex gap-4">
-                        <LiquidButton variant="default" className="h-16 px-8 rounded-3xl bg-gray-900 text-white hover:bg-orange-600 border-none transition-all">
-                            <Plus className="mr-3 h-5 w-5" />
-                            <span className="uppercase font-black tracking-widest text-xs">Enroll Course</span>
-                        </LiquidButton>
+                    {/* Active badge */}
+                    <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-xs font-semibold text-gray-700">Enrolled &amp; Active</span>
                     </div>
+                </motion.div>
+
+                {/* ════ STATS STRIP ════ */}
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                    {[
+                        { icon: BookOpen,  label: "Active Courses", value: enrolled ? "1" : "0",               sub: enrolled?.name || "—",                        accent: "bg-gradient-to-br from-orange-500 to-amber-500", delay: 0 },
+                        { icon: Clock,     label: "Learning Hours",  value: `${Math.round(totalSessions*1.5)}h`, sub: `${totalSessions} sessions completed`,         accent: "bg-gradient-to-br from-blue-500 to-indigo-500",  delay: 0.07 },
+                        { icon: TrendingUp,label: "Performance",     value: avgRating ? avgRating.toFixed(1):"—",sub: "average session rating",                      accent: "bg-gradient-to-br from-emerald-500 to-teal-500", delay: 0.14 },
+                        { icon: Trophy,    label: "Achievements",    value: String(achievements),               sub: "milestones earned",                           accent: "bg-gradient-to-br from-amber-500 to-yellow-500", delay: 0.21 },
+                    ].map(s => (
+                        <GlassStat key={s.label} icon={s.icon} label={s.label} value={s.value} sub={s.sub} accent={s.accent} delay={s.delay} />
+                    ))}
                 </div>
 
-                {/* Stats Section */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {stats.map((stat, i) => {
-                        const Icon = stat.icon;
-                        return (
+                {/* ════ MAIN GRID ════ */}
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+                    {/* ── LEFT COLUMN ── */}
+                    <div className="xl:col-span-3 flex flex-col gap-5">
+
+                        {/* Program Card */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2, duration: 0.5, ease: [0.33, 1, 0.68, 1] }}
+                            className="relative rounded-2xl bg-white/55 backdrop-blur-xl border border-white/70 shadow-lg overflow-hidden"
+                        >
+                            {/* Top accent line */}
+                            <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-400 to-orange-300" />
+
+                            <div className="p-5 space-y-4">
+                                {/* Program label */}
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="space-y-1">
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest">
+                                            <GraduationCap className="w-2.5 h-2.5" />
+                                            {enrolled?.id?.toUpperCase() || profile?.programName || "Program"}
+                                        </span>
+                                        {profile?.trackName && (
+                                            <span className="block text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{profile.trackName}</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="text-[10px] font-bold text-emerald-600">Active</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h2 className="text-base font-black text-gray-900 leading-tight">{enrolled?.name || "Innovation Track"}</h2>
+                                    <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{enrolled?.description || "Curated learning modules to elevate your capabilities."}</p>
+                                </div>
+
+                                {/* Ring */}
+                                <div className="flex items-center justify-center py-2">
+                                    <Ring value={progress} max={100} size={120} sw={8} stops={sColors[strength]}>
+                                        <span className="text-3xl font-black text-gray-900 tracking-tighter leading-none">{Math.round(progress)}</span>
+                                        <span className="text-[10px] text-gray-400 font-semibold">% done</span>
+                                    </Ring>
+                                </div>
+
+                                {/* Strength pill */}
+                                <div className="flex justify-center">
+                                    <span className={cn(
+                                        "text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full",
+                                        strength === Strength.Strong   && "bg-emerald-50 text-emerald-700 border border-emerald-200",
+                                        strength === Strength.Moderate && "bg-amber-50   text-amber-700   border border-amber-200",
+                                        strength === Strength.Weak     && "bg-red-50     text-red-600     border border-red-200",
+                                        strength === Strength.None     && "bg-gray-100   text-gray-500    border border-gray-200",
+                                    )}>
+                                        {strength === Strength.Strong   ? "🔥 Strong Performer"
+                                         : strength === Strength.Moderate ? "⚡ On Track"
+                                         : strength === Strength.Weak     ? "🎯 Keep Going"
+                                         : "Not Started"}
+                                    </span>
+                                </div>
+
+                                <div className="h-px bg-gray-100" />
+
+                                {/* Mentor */}
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center">
+                                        <UserCircle className="w-4 h-4 text-orange-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] text-gray-400 font-semibold uppercase tracking-widest">Assigned Mentor</p>
+                                        <p className="text-xs font-bold text-gray-800">{profile?.mentor || "Self-Paced"}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Recent Topics */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.3, duration: 0.5, ease: [0.33, 1, 0.68, 1] }}
+                            className="flex-1 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/70 shadow-lg p-5"
+                        >
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center">
+                                    <BookMarked className="w-3 h-3 text-white" />
+                                </div>
+                                <h3 className="text-sm font-black text-gray-900">Recent Topics</h3>
+                                <span className="ml-auto text-[10px] text-gray-400 font-semibold">{recentTopics.length}</span>
+                            </div>
+
+                            {recentTopics.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
+                                    <Target className="w-7 h-7 text-gray-200" />
+                                    <p className="text-xs text-gray-400">No topics covered yet</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-1.5">
+                                    {recentTopics.map((t, i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0, x: -6 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.35 + i * 0.05 }}
+                                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/80 transition-all duration-200 group cursor-default border border-transparent hover:border-white/60"
+                                        >
+                                            <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                                            <span className="text-xs font-medium text-gray-700 truncate flex-1">{t.label}</span>
+                                            <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-gray-500 transition-colors flex-shrink-0" />
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            )}
+                        </motion.div>
+                    </div>
+
+                    {/* ── RIGHT COLUMN (Materials) ── */}
+                    <div className="xl:col-span-9 flex flex-col gap-5">
+
+                        {/* Search + tabs */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.22, duration: 0.4 }}
+                            className="flex flex-col sm:flex-row gap-3"
+                        >
+                            {/* Search */}
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                <input
+                                    type="text"
+                                    placeholder="Search materials…"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    className="w-full h-11 pl-10 pr-4 rounded-xl bg-white/60 backdrop-blur-xl border border-white/70 shadow-sm text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none focus:border-orange-300/80 focus:ring-2 focus:ring-orange-100/80 transition-all duration-200"
+                                />
+                            </div>
+
+                            {/* Tab pills */}
+                            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/60 backdrop-blur-xl border border-white/70 shadow-sm h-11 self-start">
+                                {([
+                                    { key: "all",   label: "All",   count: documents?.length ?? 0 },
+                                    { key: "video", label: "Video", count: videoCount },
+                                    { key: "docs",  label: "Docs",  count: docCount },
+                                ] as const).map(tab => (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => setActiveTab(tab.key)}
+                                        className={cn(
+                                            "h-9 px-4 rounded-lg text-xs font-bold transition-all duration-200",
+                                            activeTab === tab.key
+                                                ? "bg-gray-900 text-white shadow-sm"
+                                                : "text-gray-500 hover:text-gray-800 hover:bg-white/60"
+                                        )}
+                                    >
+                                        {tab.label}
+                                        {tab.count > 0 && (
+                                            <span className={cn("ml-1 text-[10px]", activeTab === tab.key ? "text-gray-400" : "text-gray-400")}>
+                                                {tab.count}
+                                            </span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+
+                        {/* Materials Panel */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.28, duration: 0.45 }}
+                            className="flex-1 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/70 shadow-lg overflow-hidden"
+                        >
+                            {/* Panel header */}
+                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/60 bg-white/40">
+                                <div className="flex items-center gap-2">
+                                    <Layers className="w-4 h-4 text-orange-500" />
+                                    <span className="text-sm font-black text-gray-800">Course Materials</span>
+                                </div>
+                                <span className="text-xs text-gray-400 font-medium">{filtered.length} {filtered.length === 1 ? "item" : "items"}</span>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-3">
+                                <AnimatePresence mode="wait">
+                                    {filtered.length === 0 ? (
+                                        <motion.div
+                                            key="empty"
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="flex flex-col items-center justify-center py-20 text-center gap-3"
+                                        >
+                                            <div className="w-12 h-12 rounded-2xl bg-white/80 border border-gray-100 flex items-center justify-center shadow-sm">
+                                                <FileText className="w-5 h-5 text-gray-300" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-500">
+                                                    {search ? `No results for "${search}"` : "No materials available"}
+                                                </p>
+                                                {search && (
+                                                    <button onClick={() => setSearch("")}
+                                                        className="mt-2 text-xs text-orange-500 font-semibold hover:underline">
+                                                        Clear search
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="list"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                        >
+                                            {/* Column headings */}
+                                            <div className="flex items-center gap-3.5 px-4 py-2 mb-1">
+                                                <div className="w-8 shrink-0" />
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex-1">Name</p>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hidden sm:block w-16 text-right">Type</p>
+                                                <div className="w-16 shrink-0" />
+                                            </div>
+
+                                            <div className="space-y-0.5">
+                                                {filtered.map((doc, i) => (
+                                                    <DocRow key={doc.id} doc={doc} idx={i} onView={handleView} onDownload={handleDownload} />
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </motion.div>
+
+                        {/* Performance Card */}
+                        {rawStats && (
                             <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 12 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 + i * 0.1 }}
+                                transition={{ delay: 0.38, duration: 0.45 }}
+                                className="rounded-2xl bg-white/55 backdrop-blur-xl border border-white/70 shadow-lg overflow-hidden"
                             >
-                                <LiquidCard className="border-none bg-white shadow-xl shadow-gray-100/50 group overflow-hidden">
-                                    <LiquidCardContent className="p-8">
-                                        <div className="flex justify-between items-start">
-                                            <div className="space-y-2">
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{stat.label}</p>
-                                                <p className="text-4xl font-black text-gray-900 tracking-tighter">{stat.value}</p>
-                                            </div>
-                                            <div className="p-4 rounded-2xl bg-gray-50 group-hover:bg-orange-50 transition-all duration-500 transform group-hover:rotate-6">
-                                                <Icon className={cn("w-6 h-6 transition-colors", stat.color)} />
-                                            </div>
+                                {/* Dark header */}
+                                <div className="flex items-center gap-3 px-5 py-4 bg-gray-900/90 backdrop-blur-sm">
+                                    <div className="w-7 h-7 rounded-lg bg-orange-500 flex items-center justify-center shrink-0">
+                                        <BarChart3 className="w-3.5 h-3.5 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-black text-white">Performance Overview</p>
+                                        <p className="text-[11px] text-gray-400">Based on your session data</p>
+                                    </div>
+                                </div>
+
+                                {/* 3-col stats */}
+                                <div className="grid grid-cols-3 divide-x divide-white/30">
+                                    {[
+                                        { label: "Total Sessions", value: rawStats?.totalSessions ?? 0,   icon: Activity, suffix: "",   color: "text-blue-500" },
+                                        { label: "Entries Logged", value: rawStats?.totalEntries ?? 0,    icon: BookOpen, suffix: "",   color: "text-indigo-500" },
+                                        { label: "Avg Rating",     value: rawStats?.performance?._avg?.performanceRating?.toFixed(1) ?? "0.0", icon: Star, suffix: "/5", color: "text-amber-500" },
+                                    ].map(item => (
+                                        <div key={item.label} className="flex flex-col items-center justify-center py-5 gap-1 hover:bg-white/20 transition-colors duration-200">
+                                            <item.icon className={`w-4 h-4 ${item.color} mb-1`} />
+                                            <p className="text-2xl font-black text-gray-900 tracking-tight leading-none">
+                                                {item.value}
+                                                <span className="text-sm font-medium text-gray-400">{item.suffix}</span>
+                                            </p>
+                                            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{item.label}</p>
                                         </div>
-                                    </LiquidCardContent>
-                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-amber-500 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                                </LiquidCard>
+                                    ))}
+                                </div>
                             </motion.div>
-                        );
-                    })}
-                </div>
-
-                {/* Search & Selection */}
-                <div className="flex flex-col md:flex-row gap-4 bg-white/40 p-3 rounded-[2rem] border border-white/60 backdrop-blur-xl shadow-xl shadow-orange-100/20">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                            placeholder="Search curriculum, modules, or tracks..."
-                            className="h-14 pl-16 pr-6 border-none bg-transparent focus-visible:ring-0 text-lg font-bold text-gray-900 placeholder:text-gray-300"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex items-center gap-3 px-4">
-                        <div className="h-8 w-[1px] bg-gray-200 hidden md:block" />
-                        <LiquidButton variant="ghost" className="h-12 w-12 p-0 rounded-2xl bg-gray-50 flex items-center justify-center">
-                            <LayoutGrid className="w-5 h-5 text-gray-400" />
-                        </LiquidButton>
-                        <LiquidButton className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-orange-500 text-white border-none hover:bg-orange-600">
-                            Apply Filters
-                        </LiquidButton>
+                        )}
                     </div>
                 </div>
-
-                {/* Course Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {isLoadingPrograms ? (
-                        <div className="col-span-full flex justify-center p-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
-                        </div>
-                    ) : programs.length > 0 ? (
-                        programs.map((course) => (
-                            <CourseCard key={course.id} course={course} />
-                        ))
-                    ) : (
-                        <div className="col-span-full flex flex-col items-center justify-center p-12 text-center bg-white/50 rounded-3xl border border-white">
-                            <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">No Active Courses</h3>
-                            <p className="text-gray-500">You are not currently enrolled in any programs.</p>
-                        </div>
-                    )}
-                </div>
-            </CounterProvider>
+            </div>
         </div>
     );
 }

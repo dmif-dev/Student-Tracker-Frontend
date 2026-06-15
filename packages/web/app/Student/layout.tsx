@@ -12,7 +12,9 @@ export default function AppLayout({
 }) {
     return (
         <StudentNotificationProvider>
-            <DashboardLayout header={<StudentHeader />}>{children}</DashboardLayout>
+            <DashboardLayout header={<StudentHeader />}>
+                {children}
+            </DashboardLayout>
         </StudentNotificationProvider>
     );
 }

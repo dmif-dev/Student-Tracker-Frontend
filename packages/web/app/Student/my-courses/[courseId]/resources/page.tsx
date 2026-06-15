@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     FileText,
@@ -93,7 +93,7 @@ const ResourceCard = ({ resource, index }: { resource: any; index: number }) => 
     );
 };
 
-export default function TrackResourcesPage() {
+function TrackResourcesPageContent() {
     const params = useParams();
     const searchParams = useSearchParams();
     const trackName = searchParams.get("track") || "AI Product Development";
@@ -253,3 +253,16 @@ export default function TrackResourcesPage() {
         </div>
     );
 }
+
+export default function TrackResourcesPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
+            </div>
+        }>
+            <TrackResourcesPageContent />
+        </Suspense>
+    );
+}
+

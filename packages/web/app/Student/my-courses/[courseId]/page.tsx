@@ -32,7 +32,7 @@ export default function CourseDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     const { data: profile } = useStudentProfile();
-    const studentId = profile?.student?.id;
+    const studentId = profile?.studentId;
     const { data: rawStats } = useStudentStats(studentId);
 
     useEffect(() => {
