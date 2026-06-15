@@ -919,18 +919,17 @@ export default function ProgramsPage() {
                             <div className="text-xs text-gray-500">
                               {Math.round((track.students / program.totalStudents) * 100)}% of total
                             </div>
-                          </td>
-                          <td className="px-4 py-3">
+                          </td>                           <td className="px-4 py-3">
                             <div className="flex items-center">
                               <span className={`text-sm font-medium ${
                                 program.id === 'g-gmp' ? 'text-purple-600' :
                                 program.id === 'pcp' ? 'text-orange-600' :
                                 'text-green-600'
                               }`}>
-                                {track.outcomes}
+                                {program.id === 'g-gmp' || program.id === 'pcp' ? track.outcomes : track.progress}
                                 {program.id !== 'g-gmp' && program.id !== 'pcp' && '%'}
                               </span>
-                              {program.id !== 'g-gmp' && program.id !== 'pcp' && track.progress && (
+                              {program.id !== 'g-gmp' && program.id !== 'pcp' && typeof track.progress === 'number' && (
                                 <div className="ml-3 w-16 bg-gray-200 rounded-full h-1.5">
                                   <div
                                     className="bg-green-500 rounded-full h-1.5"
