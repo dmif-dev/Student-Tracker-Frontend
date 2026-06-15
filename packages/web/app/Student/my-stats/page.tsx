@@ -70,31 +70,22 @@ function ContributionGraph({ studentId }: { studentId?: string }) {
 
     const baseDate = useMemo(() => subDays(new Date(), pageOffset), [pageOffset]);
 
-    // Generate data dynamically based on the available history rather than assuming 364 days
+    // Generate data dynamically based on the available history
     const streakData = useMemo(() => {
         const data = [];
         
         // Create a map of dates to progress counts
         const progressMap = new Map();
-        let earliestDate = baseDate;
         
         if (progressHistory?.data && progressHistory.data.length > 0) {
             progressHistory.data.forEach((p: any) => {
-                const pDate = new Date(p.date);
-                if (pDate < earliestDate) earliestDate = pDate;
-                const dateKey = pDate.toISOString().split('T')[0];
+                const dateKey = new Date(p.date).toISOString().split('T')[0];
                 progressMap.set(dateKey, (progressMap.get(dateKey) || 0) + 1);
             });
-        } else {
-            // Default to past 90 days if no history exists
-            earliestDate = subDays(baseDate, 90);
         }
         
-        // Ensure we show at least 90 days, or go back to the earliest record
-        const daysDiff = Math.max(90, Math.floor((baseDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24)));
-        
-        // Cap to 365 days max for UI performance
-        const renderDays = Math.min(365, daysDiff);
+        // Force exactly 52 weeks (364 days) for a complete UI grid and accurate filter slices
+        const renderDays = 364;
 
         for (let i = 0; i < renderDays; i++) {
             const date = subDays(baseDate, i);
@@ -283,7 +274,7 @@ function ContributionGraph({ studentId }: { studentId?: string }) {
                             viewMode === "month" && "justify-center py-6"
                         )}>
                         {filteredWeeks.map((week, weekIndex) => (
-                            <div key={weekIndex} className="flex flex-col gap-1.5">
+                            <div key={weekIndex} className="flex flex-col gap-1.5 items-center">
                                 {week.map((day, dayIndex) => {
                                     const count = day.count;
                                     const color = getIntensityColor(count);
@@ -317,6 +308,11 @@ function ContributionGraph({ studentId }: { studentId?: string }) {
                                         </Popover>
                                     );
                                 })}
+                                {viewMode === "month" && (
+                                    <span className="mt-4 text-[9px] text-gray-400 font-black uppercase tracking-tighter whitespace-nowrap">
+                                        {format(week[0].date, "MMM dd")}
+                                    </span>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -325,13 +321,6 @@ function ContributionGraph({ studentId }: { studentId?: string }) {
                             <div className="flex justify-between mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase w-full">
                                 {Array.from({ length: 12 }).map((_, i) => (
                                     <span key={i}>{format(subMonths(baseDate, 11 - i), "MMM")}</span>
-                                ))}
-                            </div>
-                        )}
-                        {viewMode === "month" && filteredWeeks.length > 0 && (
-                            <div className="flex justify-between mt-6 text-[10px] text-gray-400 font-black px-1 tracking-widest uppercase w-full">
-                                {filteredWeeks.map((w, i) => (
-                                    <span key={i}>{format(w[0].date, "MMM dd")}</span>
                                 ))}
                             </div>
                         )}

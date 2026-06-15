@@ -24,7 +24,7 @@ import {
 
 type FilterType = "all" | "unread" | "read";
 type DateFilterType = "all" | "today" | "week" | "month";
-type CategoryFilterType = "all" | "session" | "report" | "outcome" | "progress" | "achievement" | "system" | "assignment";
+type CategoryFilterType = "all" | "session" | "notes" | "report" | "outcome" | "progress" | "achievement" | "system" | "assignment";
 
 export default function StudentNotificationsPage() {
     const router = useRouter();
@@ -112,6 +112,7 @@ export default function StudentNotificationsPage() {
     const getCategoryLabel = (category: string) => {
         const labels: Record<string, string> = {
             session: "Sessions",
+            notes: "Session Notes",
             report: "Reports",
             outcome: "Outcomes",
             progress: "Progress",
@@ -125,6 +126,7 @@ export default function StudentNotificationsPage() {
     const getCategoryColor = (category: string) => {
         const colors: Record<string, string> = {
             session: "bg-purple-100 text-purple-700",
+            notes: "bg-amber-100 text-amber-700",
             report: "bg-yellow-100 text-yellow-700",
             outcome: "bg-indigo-100 text-indigo-700",
             progress: "bg-orange-100 text-orange-700",
@@ -240,6 +242,7 @@ export default function StudentNotificationsPage() {
                                 >
                                     <option value="all">All Categories</option>
                                     <option value="session">Sessions & Meetings</option>
+                                    <option value="notes">Session Notes</option>
                                     <option value="report">Weekly Reports</option>
                                     <option value="outcome">Innovation Outcomes</option>
                                     <option value="progress">Daily Logs & Progress</option>

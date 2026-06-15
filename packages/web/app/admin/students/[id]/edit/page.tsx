@@ -51,6 +51,7 @@ export default function EditStudentPage() {
   
   const [programs, setPrograms] = useState<any[]>([]);
   const [mentors, setMentors] = useState<any[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -59,7 +60,7 @@ export default function EditStudentPage() {
     ]).then(([fetchedPrograms, fetchedMentors]) => {
       setPrograms(fetchedPrograms);
       setMentors(fetchedMentors);
-    }).catch(console.error);
+    }).catch(console.error).finally(() => setLoadingOptions(false));
   }, []);
 
   const {
@@ -74,7 +75,7 @@ export default function EditStudentPage() {
 
   // Watch program to update tracks dropdown and mentor requirements
   const watchProgram = watch('program');
-  const currentProgram = programs.find(p => p.id === watchProgram);
+  const currentProgram = programs.find(p => p.name === watchProgram || p.id === watchProgram);
 
   // Filter mentors based on selected program
   const availableMentors = mentors.filter(mentor => 
@@ -89,27 +90,27 @@ export default function EditStudentPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (student) {
+    if (student && !loadingOptions) {
       setValue('name', student.name);
       setValue('email', student.email);
       setValue('registrationNumber', student.registrationNumber);
-      setValue('program', student.program as any);
-      setValue('track', student.track);
-      setValue('mentor', student.mentor || '');
+      setValue('program', (student.program as any)?.name || student.program as any);
+      setValue('track', (student.track as any)?.name || student.track);
+      setValue('mentor', (student.mentor as any)?.name || student.mentor || '');
       setValue('status', student.status as any);
       setValue('joinDate', student.joinDate);
       setValue('phone', student.phone || '');
       setValue('address', student.address || '');
       setValue('notes', student.notes || '');
       
-      setSelectedProgram(student.program);
+      setSelectedProgram((student.program as any)?.name || student.program as any);
       setLoading(false);
     }
     if (studentError) {
       setError('Failed to load student data');
       setLoading(false);
     }
-  }, [student, studentError, setValue]);
+  }, [student, studentError, setValue, loadingOptions]);
 
   const onSubmit = async (data: StudentFormData) => {
     setIsSubmitting(true);
@@ -284,17 +285,18 @@ export default function EditStudentPage() {
                 Program *
               </label>
               <select
-                {...register('program')}
-                onChange={(e) => {
-                  setSelectedProgram(e.target.value);
-                  setValue('track', '');
-                  setValue('mentor', '');
-                }}
+                {...register('program', {
+                  onChange: (e) => {
+                    setSelectedProgram(e.target.value);
+                    setValue('track', '');
+                    setValue('mentor', '');
+                  }
+                })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 {programs.map(program => (
-                  <option key={program.id} value={program.id}>
-                    {program.name} - {program.description}
+                  <option key={program.id} value={program.name}>
+                    {program.name} - {program.description ? program.description.split(' - ')[0] : 'Program'}
                   </option>
                 ))}
               </select>

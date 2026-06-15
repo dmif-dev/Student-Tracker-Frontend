@@ -418,7 +418,7 @@ export default function ProgressPage() {
                                                         <>
                                                             <UploadCloud className="h-8 w-8 text-gray-400 mb-2" />
                                                             <p className="text-sm font-bold text-gray-600">Click to upload file</p>
-                                                            <p className="text-[10px] text-gray-400 uppercase font-bold mt-1">PDF, ZIP, JPG, PNG</p>
+                                                            <p className="text-[10px] text-gray-400 uppercase font-bold mt-1">PDF, ZIP, JPG, PNG (Max 50MB)</p>
                                                         </>
                                                     )}
                                                 </div>

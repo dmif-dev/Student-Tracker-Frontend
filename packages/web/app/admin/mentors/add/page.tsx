@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { useCreateMentor } from '@/hooks/api/useAdmin';
 import LoaderOne from '@/components/ui/loader-one';
 import { ApiService } from '@/services/api';
+import { toast, Toaster } from 'sonner';
 
 interface MentorFormData {
   name: string;
@@ -64,13 +65,8 @@ export default function AddMentorPage() {
 
   const createMentorMutation = useCreateMentor();
 
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const onSubmit = async (data: MentorFormData) => {
     setIsSubmitting(true);
-    setSuccessMessage(null);
-    setErrorMessage(null);
     try {
       const payload = {
         ...data,
@@ -79,13 +75,13 @@ export default function AddMentorPage() {
         programs: selectedPrograms.map(p => p.replace('-', '_')),
       };
       await createMentorMutation.mutateAsync(payload as any);
-      setSuccessMessage('Mentor added successfully!');
+      toast.success('Mentor added successfully!');
       setTimeout(() => {
         router.push('/admin/mentors');
       }, 1500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding mentor:', error);
-      setErrorMessage('Failed to add mentor. Please try again.');
+      toast.error(error.message || 'Failed to add mentor. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -93,6 +89,7 @@ export default function AddMentorPage() {
 
   return (
     <div className="space-y-6">
+      <Toaster position="top-right" richColors />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -105,19 +102,6 @@ export default function AddMentorPage() {
           <h1 className="text-2xl font-bold text-gray-900">Add New Mentor</h1>
         </div>
       </div>
-
-      {successMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center">
-          <CheckCircle size={20} className="mr-2" />
-          {successMessage}
-        </div>
-      )}
-      {errorMessage && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center">
-          <AlertCircle size={20} className="mr-2" />
-          {errorMessage}
-        </div>
-      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -234,24 +218,29 @@ export default function AddMentorPage() {
               Select Programs
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {programs.map((program) => (
+              {programs.map((program) => {
+                const isDisabled = program === 'PCP';
+                return (
                 <label
                   key={program}
-                  className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
-                    selectedPrograms.includes(program)
-                      ? 'bg-orange-50 border-orange-300'
-                      : 'border-gray-200 hover:bg-gray-50'
+                  className={`flex items-center p-4 border rounded-lg transition-colors ${
+                    isDisabled
+                      ? 'bg-gray-50 border-gray-100 opacity-50 cursor-not-allowed'
+                      : selectedPrograms.includes(program)
+                      ? 'bg-orange-50 border-orange-300 cursor-pointer'
+                      : 'border-gray-200 hover:bg-gray-50 cursor-pointer'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={selectedPrograms.includes(program)}
-                    onChange={() => toggleProgram(program)}
+                    onChange={() => !isDisabled && toggleProgram(program)}
+                    disabled={isDisabled}
                     className="sr-only"
                   />
-                  <span className="text-sm font-medium">{program}</span>
+                  <span className="text-sm font-medium">{program} {isDisabled && <span className="text-[10px] text-gray-400 ml-1">(Self-Paced)</span>}</span>
                 </label>
-              ))}
+              )})}
             </div>
           </div>
         </div>

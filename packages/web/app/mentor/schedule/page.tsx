@@ -88,8 +88,8 @@ export default function MentorSchedulePage() {
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-
-
+  const [acceptingSessionId, setAcceptingSessionId] = useState<string | null>(null);
+  const [meetingLinkInput, setMeetingLinkInput] = useState('');
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -199,6 +199,21 @@ export default function MentorSchedulePage() {
     }
   };
 
+  const handleRespondToRequest = async (sessionId: string, action: 'ACCEPT' | 'DENY', meetingLink?: string) => {
+    try {
+      await apiClient.put(`sessions/${sessionId}/respond`, { action, meetingLink });
+      toast.success(`Session request ${action === 'ACCEPT' ? 'accepted' : 'denied'}!`);
+      if (action === 'ACCEPT') {
+        setAcceptingSessionId(null);
+        setMeetingLinkInput('');
+      }
+      refetchSessions();
+    } catch (error: any) {
+      console.error('Error responding to request:', error);
+      toast.error(error.response?.data?.error || 'Failed to update session status.');
+    }
+  };
+
   const handleAddNotes = async (sessionId: string, noteData: any, noteId?: string) => {
     try {
       if (noteId) {
@@ -230,12 +245,16 @@ export default function MentorSchedulePage() {
   };
 
   // Filter sessions
+  const pendingSessions = sessions
+    .filter(s => s.status.toLowerCase() === 'pending')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
   const upcomingSessions = sessions
-    .filter(s => new Date(s.date) >= new Date() && s.status === 'scheduled')
+    .filter(s => new Date(s.date) >= new Date() && s.status.toLowerCase() === 'scheduled')
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const pastSessions = sessions
-    .filter(s => new Date(s.date) < new Date() || s.status !== 'scheduled')
+    .filter(s => new Date(s.date) < new Date() || (s.status.toLowerCase() !== 'scheduled' && s.status.toLowerCase() !== 'pending'))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   // Pagination calculations
@@ -300,18 +319,24 @@ export default function MentorSchedulePage() {
         </div>
       </div>
 
-      {/* Upcoming Sessions Summary */}
+            {/* Upcoming Sessions Summary */}
       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-orange-600 mb-1">Upcoming Sessions</p>
             <p className="text-2xl font-bold text-orange-700">{upcomingSessions.length}</p>
           </div>
+          {pendingSessions.length > 0 && (
+            <div className="text-center px-6 border-l border-r border-orange-200/50">
+              <p className="text-sm text-orange-600 mb-1">Pending Requests</p>
+              <p className="text-2xl font-bold text-yellow-600">{pendingSessions.length}</p>
+            </div>
+          )}
           <div className="text-right">
             <p className="text-sm text-orange-600 mb-1">Next Session</p>
             {upcomingSessions.length > 0 ? (
               <p className="text-sm font-medium text-orange-700">
-                {upcomingSessions[0].studentName} • {new Date(upcomingSessions[0].date).toLocaleDateString()}
+                {upcomingSessions[0].studentName} - {new Date(upcomingSessions[0].date).toLocaleDateString()}
               </p>
             ) : (
               <p className="text-sm text-orange-500">No upcoming sessions</p>
@@ -319,6 +344,69 @@ export default function MentorSchedulePage() {
           </div>
         </div>
       </div>
+
+      {/* Pending Requests Section */}
+      {pendingSessions.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-yellow-200 overflow-hidden mt-6 mb-6">
+          <div className="px-6 py-4 border-b border-yellow-200 bg-yellow-50">
+            <h2 className="font-semibold text-yellow-800 flex items-center gap-2">
+              <AlertCircle size={18} /> Pending Session Requests ({pendingSessions.length})
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {pendingSessions.map(session => (
+              <div key={session.id} className="px-6 py-4 hover:bg-yellow-50/30">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-start space-x-4">
+                    <div className={`w-10 h-10 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center flex-shrink-0`}>
+                      <Users size={18} />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-3 gap-y-2">
+                        <h3 className="font-medium text-gray-900">{session.studentName}</h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700`}>
+                          {session.studentProgram}
+                        </span>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                          PENDING
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500 flex-wrap gap-y-2">
+                        <span className="flex items-center">
+                          <Calendar size={14} className="mr-1" />
+                          {new Date(session.date).toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock size={14} className="mr-1" />
+                          {session.startTime} - {session.endTime}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">
+                        <span className="font-medium">Topic:</span> {session.topic}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-auto">
+                    <Button 
+                      onClick={() => handleRespondToRequest(session.id, 'DENY')}
+                      variant="outline" 
+                      className="border-red-200 text-red-600 hover:bg-red-50 font-bold"
+                    >
+                      Decline
+                    </Button>
+                    <Button 
+                      onClick={() => setAcceptingSessionId(session.id)}
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                    >
+                      Accept
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Calendar View */}
       {view === 'calendar' && (
@@ -813,6 +901,43 @@ export default function MentorSchedulePage() {
           }}
           onSave={handleAddNotes}
         />
+      )}
+
+      {/* Accept Session Modal */}
+      {acceptingSessionId && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Accept Session Request</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Meeting Link
+              </label>
+              <input 
+                type="url"
+                placeholder="e.g. https://meet.google.com/xyz"
+                className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                value={meetingLinkInput}
+                onChange={(e) => setMeetingLinkInput(e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">Please provide a meeting link for the student to join.</p>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <Button variant="outline" onClick={() => {
+                setAcceptingSessionId(null);
+                setMeetingLinkInput('');
+              }}>
+                Cancel
+              </Button>
+              <Button 
+                className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                onClick={() => handleRespondToRequest(acceptingSessionId, 'ACCEPT', meetingLinkInput)}
+                disabled={!meetingLinkInput.trim()}
+              >
+                Confirm Accept
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

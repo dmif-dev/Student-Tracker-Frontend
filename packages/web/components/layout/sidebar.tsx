@@ -7,6 +7,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, LayoutDashboard, Users, FileText, Settings, LogOut, TrendingUp, Home, User, UserCircle, BookOpen, GraduationCap, UserCog, BarChart3, Bell, Calendar } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
+import { useQuery } from "@tanstack/react-query";
+import { ApiService } from "@/services/api";
 
 // --- Types & Context ---
 interface Links {
@@ -189,6 +191,19 @@ export const SidebarLink = ({
 export function Sidebar() {
   const pathname = usePathname();
 
+  // Fetch student profile to determine track for Sidebar filtering
+  const { data: profile } = useQuery({
+    queryKey: ["studentProfile"],
+    queryFn: async () => {
+      try {
+        return await ApiService.getStudentProfile();
+      } catch (e) {
+        return null;
+      }
+    },
+    enabled: pathname.startsWith("/Student"),
+  });
+
   let navItems: Links[] = [];
   let roleTitle = "Student Tracker";
   let letter = "S";
@@ -228,7 +243,7 @@ export function Sidebar() {
       { label: "Progress", href: "/Student/progress/new", icon: <TrendingUp className="h-5 w-5 flex-shrink-0" /> },
       { label: "My Stats", href: "/Student/my-stats", icon: <FileText className="h-5 w-5 flex-shrink-0" /> },
       { label: "Notifications", href: "/Student/notifications", icon: <Bell className="h-5 w-5 flex-shrink-0" /> },
-      { label: "Mentor Details", href: "/Student/mentor-details", icon: <UserCircle className="h-5 w-5 flex-shrink-0" /> },
+      ...(profile?.programTrack !== 'PCP' ? [{ label: "Mentor Details", href: "/Student/mentor-details", icon: <UserCircle className="h-5 w-5 flex-shrink-0" /> }] : []),
       { label: "My Profile", href: "/Student/my-profile", icon: <User className="h-5 w-5 flex-shrink-0" /> },
       { label: "Settings", href: "/Student/settings", icon: <Settings className="h-5 w-5 flex-shrink-0" /> },
     ];

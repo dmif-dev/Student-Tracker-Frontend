@@ -235,6 +235,7 @@ export default function MentorSettingsPage() {
 
   const handleLogout = async () => {
     await signOut();
+    toast.success('Logged out successfully.');
   };
 
   const getProgramColor = (program: string) => {

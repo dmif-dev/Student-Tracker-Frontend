@@ -259,8 +259,8 @@ export default function StudentsPage() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center justify-center px-6 py-3 border rounded-2xl transition-all font-bold text-sm shadow-sm w-full md:w-auto ${showFilters
-              ? 'bg-slate-900 border-slate-900 text-white hover:bg-slate-800'
-              : 'bg-white border-slate-200 text-slate-600 hover:border-orange-200 hover:text-orange-600 hover:bg-orange-50/30'
+              ? 'bg-orange-100 text-orange-500 border-orange-500 hover:bg-white'
+              : 'bg-white border-slate-200 text-slate-600 hover:border-orange-200 hover:text-orange-500 hover:bg-orange-50/30'
               }`}
           >
             <Filter size={16} className="mr-2" />

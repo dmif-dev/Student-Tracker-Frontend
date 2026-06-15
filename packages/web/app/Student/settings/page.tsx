@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiService } from "@/services/api";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,7 +53,7 @@ const defaultSettings: StudentSettings = {
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<"preferences" | "notifications" | "security">("preferences");
     const [settingsState, setSettingsState] = useState<StudentSettings>(defaultSettings);
-    const { toast } = useToast();
+
     const queryClient = useQueryClient();
 
     // Password State
@@ -103,17 +103,14 @@ export default function SettingsPage() {
         mutationFn: (updated: StudentSettings) => ApiService.updateUserPreferences(updated),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
-            toast({
-                title: "Settings Saved",
+            toast.success("Settings Saved", {
                 description: "Your settings preferences have been updated successfully.",
             });
         },
         onError: (error) => {
             console.error("Failed to save settings:", error);
-            toast({
-                title: "Error",
+            toast.error("Error", {
                 description: "Failed to save settings. Please try again later.",
-                variant: "destructive",
             });
         }
     });
@@ -125,28 +122,22 @@ export default function SettingsPage() {
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!currentPassword || !newPassword || !confirmPassword) {
-            toast({
-                title: "Required Fields",
+            toast.error("Required Fields", {
                 description: "Please fill out all password fields.",
-                variant: "destructive",
             });
             return;
         }
 
         if (newPassword.length < 8) {
-            toast({
-                title: "Weak Password",
+            toast.error("Weak Password", {
                 description: "New password must be at least 8 characters long.",
-                variant: "destructive",
             });
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            toast({
-                title: "Passwords Mismatch",
+            toast.error("Passwords Mismatch", {
                 description: "Your new password and confirmation password do not match.",
-                variant: "destructive",
             });
             return;
         }
@@ -154,8 +145,7 @@ export default function SettingsPage() {
         try {
             setIsPasswordLoading(true);
             await ApiService.changePassword(currentPassword, newPassword);
-            toast({
-                title: "Password Updated",
+            toast.success("Password Updated", {
                 description: "Your account password has been updated successfully.",
             });
             // Clear password fields
@@ -164,10 +154,8 @@ export default function SettingsPage() {
             setConfirmPassword("");
         } catch (error: any) {
             console.error("Failed to update password:", error);
-            toast({
-                title: "Error Changing Password",
+            toast.error("Error Changing Password", {
                 description: error.message || "Failed to update password. Verify current password.",
-                variant: "destructive",
             });
         } finally {
             setIsPasswordLoading(false);

@@ -167,15 +167,6 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-        {unreadCount > 0 && (
-          <button
-            onClick={markAllAsRead}
-            className="flex items-center px-4 py-2 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors"
-          >
-            <Check size={18} className="mr-2" />
-            Mark all as read
-          </button>
-        )}
       </div>
 
       {/* Tabs */}

@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { useAdminMentor, useDeleteMentor, useAdminMentorSessions, useAdminMentorPerformance } from '@/hooks/api/useAdmin';
 import LoaderOne from '@/components/ui/loader-one';
+import { Progress } from "@/components/ui/progress";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid } from 'recharts';
 
 interface MentorDetails {
   id: string;
@@ -441,39 +443,83 @@ export default function MentorDetailPage() {
 
       {/* Schedule Tab */}
       {activeTab === 'schedule' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Weekly Schedule</h3>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Weekly Schedule Overview</h3>
+              <p className="text-sm text-gray-500">Manage all mentoring sessions and track upcoming meetings.</p>
+            </div>
             <Link
               href={`/admin/mentors/${mentor.id}/schedule`}
-              className="text-orange-600 hover:text-orange-700 flex items-center"
+              className="text-sm font-semibold text-orange-600 hover:text-orange-700 flex items-center bg-orange-50 px-4 py-2 rounded-lg transition-colors border border-orange-100 hover:bg-orange-100"
             >
               View Full Calendar
               <ChevronRight size={16} className="ml-1" />
             </Link>
           </div>
-          <p className="text-gray-500">View and manage all mentoring sessions in the detailed schedule view.</p>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <h4 className="font-medium text-purple-700 mb-2">G-GMP Sessions</h4>
-              <p className="text-2xl font-bold text-purple-700">
-                {sessions.filter((s: any) => s.student?.program?.name === 'G-GMP' || s.student?.program === 'G-GMP').length}
-              </p>
-              <p className="text-sm text-purple-600">Total Scheduled</p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h4 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">Sessions by Program</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-5 bg-purple-50 rounded-xl border border-purple-100 relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="absolute right-0 top-0 w-16 h-16 bg-purple-100 rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+                    <h4 className="font-semibold text-purple-800 mb-1">G-GMP</h4>
+                    <p className="text-3xl font-black text-purple-900">
+                      {sessions.filter((s: any) => s.student?.program?.name === 'G-GMP' || s.student?.program === 'G-GMP').length}
+                    </p>
+                    <p className="text-xs text-purple-600 font-medium mt-1">Total Scheduled</p>
+                  </div>
+                  <div className="p-5 bg-green-50 rounded-xl border border-green-100 relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="absolute right-0 top-0 w-16 h-16 bg-green-100 rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+                    <h4 className="font-semibold text-green-800 mb-1">G-CMP</h4>
+                    <p className="text-3xl font-black text-green-900">
+                      {sessions.filter((s: any) => s.student?.program?.name === 'G-CMP' || s.student?.program === 'G-CMP').length}
+                    </p>
+                    <p className="text-xs text-green-600 font-medium mt-1">Total Scheduled</p>
+                  </div>
+                  <div className="p-5 bg-blue-50 rounded-xl border border-blue-100 relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="absolute right-0 top-0 w-16 h-16 bg-blue-100 rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+                    <h4 className="font-semibold text-blue-800 mb-1">E-TIP</h4>
+                    <p className="text-3xl font-black text-blue-900">
+                      {sessions.filter((s: any) => s.student?.program?.name === 'E-TIP' || s.student?.program === 'E-TIP').length}
+                    </p>
+                    <p className="text-xs text-blue-600 font-medium mt-1">Total Scheduled</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-medium text-green-700 mb-2">G-CMP Sessions</h4>
-              <p className="text-2xl font-bold text-green-700">
-                {sessions.filter((s: any) => s.student?.program?.name === 'G-CMP' || s.student?.program === 'G-CMP').length}
-              </p>
-              <p className="text-sm text-green-600">Total Scheduled</p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-medium text-blue-700 mb-2">E-TIP Sessions</h4>
-              <p className="text-2xl font-bold text-blue-700">
-                {sessions.filter((s: any) => s.student?.program?.name === 'E-TIP' || s.student?.program === 'E-TIP').length}
-              </p>
-              <p className="text-sm text-blue-600">Total Scheduled</p>
+
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-full">
+                <h4 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">Next Upcoming</h4>
+                {upcomingSessions.length > 0 ? (
+                  <div className="space-y-4">
+                    {upcomingSessions.map((session, index) => (
+                      <div key={session.id} className="relative pl-4 border-l-2 border-orange-200">
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full -left-[5px] top-1.5 ring-4 ring-white"></div>
+                        <p className="text-xs font-bold text-orange-600 mb-1">{session.date} &bull; {session.time}</p>
+                        <p className="text-sm font-semibold text-gray-900">{session.studentName}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${getProgramColor(session.studentProgram)}`}>
+                            {session.studentProgram}
+                          </span>
+                          <span className="text-[10px] text-gray-500 font-medium">{session.studentTrack}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                      <Calendar className="text-gray-400" size={20} />
+                    </div>
+                    <p className="text-sm font-medium text-gray-600">No upcoming sessions</p>
+                    <p className="text-xs text-gray-400 mt-1">The schedule is clear.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -481,20 +527,141 @@ export default function MentorDetailPage() {
 
       {/* Performance Tab */}
       {activeTab === 'performance' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-600 mb-1">Session Completion</p>
-              <p className="text-2xl font-bold text-blue-700">{performance?.completionRate || 0}%</p>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Completion Rate */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative overflow-hidden group hover:border-orange-300 transition-colors">
+              <div className="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                    <Award size={20} />
+                  </div>
+                  <h4 className="text-sm font-semibold text-gray-600">Completion Rate</h4>
+                </div>
+                <div className="flex items-end gap-2 mb-4">
+                  <p className="text-3xl font-black text-gray-900">{performance?.completionRate || 0}%</p>
+                </div>
+                {/* Notice the custom indicator classes applied inline using style if the component supports it, otherwise generic styling */}
+                <Progress value={performance?.completionRate || 0} className="h-2 bg-blue-100" />
+              </div>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-green-600 mb-1">Student Satisfaction</p>
-              <p className="text-2xl font-bold text-green-700">{performance?.rating ? performance.rating.toFixed(1) : 'N/A'}/5</p>
+
+            {/* Student Satisfaction */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative overflow-hidden group hover:border-orange-300 transition-colors">
+              <div className="absolute right-0 top-0 w-24 h-24 bg-green-50 rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-green-100 text-green-600 rounded-lg">
+                    <Star size={20} />
+                  </div>
+                  <h4 className="text-sm font-semibold text-gray-600">Satisfaction</h4>
+                </div>
+                <div className="flex items-end gap-2 mb-4">
+                  <p className="text-3xl font-black text-gray-900">{performance?.rating ? performance.rating.toFixed(1) : 'N/A'}</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">/ 5.0</p>
+                </div>
+                <div className="flex gap-1">
+                  {[1,2,3,4,5].map(star => (
+                    <Star key={star} size={16} className={star <= (performance?.rating || 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-200"} />
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <p className="text-sm text-purple-600 mb-1">Total Sessions</p>
-              <p className="text-2xl font-bold text-purple-700">{performance?.totalSessions || 0}</p>
+
+            {/* Total Sessions */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative overflow-hidden group hover:border-orange-300 transition-colors">
+              <div className="absolute right-0 top-0 w-24 h-24 bg-purple-50 rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                    <Calendar size={20} />
+                  </div>
+                  <h4 className="text-sm font-semibold text-gray-600">Total Sessions</h4>
+                </div>
+                <div className="flex items-end gap-2 mb-2">
+                  <p className="text-3xl font-black text-gray-900">{performance?.totalSessions || 0}</p>
+                </div>
+                <p className="text-sm text-gray-500 font-medium">Lifetime mentoring sessions</p>
+              </div>
+            </div>
+
+            {/* Average Session Duration */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative overflow-hidden group hover:border-orange-300 transition-colors">
+              <div className="absolute right-0 top-0 w-24 h-24 bg-orange-50 rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
+                    <Clock size={20} />
+                  </div>
+                  <h4 className="text-sm font-semibold text-gray-600">Avg Duration</h4>
+                </div>
+                <div className="flex items-end gap-2 mb-2">
+                  <p className="text-3xl font-black text-gray-900">{performance?.averageSessionDuration || 0}</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">mins</p>
+                </div>
+                <p className="text-sm text-gray-500 font-medium">Average time per session</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Trend Chart */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900">Session Activity Trend</h3>
+              </div>
+              <div className="h-[250px] w-full">
+                {performance?.trend && performance.trend.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={performance.trend}>
+                      <defs>
+                        <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} 
+                        tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dx={-10} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                        labelFormatter={(val) => new Date(val).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                      />
+                      <Area type="monotone" dataKey="sessions" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorSessions)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-400 text-sm font-medium">Not enough data to display trend</div>
+                )}
+              </div>
+            </div>
+
+            {/* Distribution Chart */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900">Assigned Student Progress</h3>
+              </div>
+              <div className="h-[250px] w-full">
+                {performance?.progressDistribution && performance.progressDistribution.some((d: any) => d.value > 0) ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={performance.progressDistribution} layout="vertical" margin={{ left: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                      <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+                      <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#374151', fontWeight: 600 }} width={60} />
+                      <Tooltip 
+                        cursor={{ fill: '#f3f4f6' }}
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      />
+                      <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-400 text-sm font-medium">No students assigned yet</div>
+                )}
+              </div>
             </div>
           </div>
         </div>

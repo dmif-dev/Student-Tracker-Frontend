@@ -13,6 +13,7 @@ import { useCreateStudent } from '@/hooks/api/useAdmin';
 import LoaderOne from '@/components/ui/loader-one';
 import { ApiService } from '@/services/api';
 import { useEffect } from 'react';
+import { toast, Toaster } from 'sonner';
 
 // Form validation schema
 const studentSchema = z.object({
@@ -88,9 +89,6 @@ export default function AddStudentPage() {
 
   const createStudentMutation = useCreateStudent();
 
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
   const onSubmit = async (data: StudentFormData) => {
     if (!isPCP && !data.mentor) {
       setError('mentor', { type: 'manual', message: 'Mentor is required for this program' });
@@ -98,8 +96,6 @@ export default function AddStudentPage() {
     }
 
     setIsSubmitting(true);
-    setSuccessMessage(null);
-    setSubmitError(null);
     try {
       const formattedData: any = {
         ...data,
@@ -113,16 +109,16 @@ export default function AddStudentPage() {
       }
       
       await createStudentMutation.mutateAsync(formattedData);
-      setSuccessMessage('Student added successfully!');
+      toast.success('Student added successfully!');
       
       // Delay navigation to let user see the success message
       setTimeout(() => {
         router.push('/admin/students');
       }, 1500);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding student:', error);
-      setSubmitError('Failed to add student. Please try again.');
+      toast.error(error.message || 'Failed to add student. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -138,6 +134,7 @@ export default function AddStudentPage() {
 
   return (
     <div className="space-y-6">
+      <Toaster position="top-right" richColors />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -150,18 +147,6 @@ export default function AddStudentPage() {
           <h1 className="text-2xl font-bold text-gray-900">Add New Student</h1>
         </div>
       </div>
-
-      {/* Messages */}
-      {successMessage && (
-        <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 font-medium">
-          {successMessage}
-        </div>
-      )}
-      {submitError && (
-        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-medium">
-          {submitError}
-        </div>
-      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

@@ -18,9 +18,9 @@ export const apiClient = {
   async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = await getAuthToken();
     
-    const isFormData = options.body instanceof FormData;
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData || (options.body && typeof options.body === 'object' && typeof (options.body as any).append === 'function');
     const headers = new Headers(options.headers || {});
-    if (!isFormData) {
+    if (!isFormData && options.body) {
       headers.set('Content-Type', 'application/json');
     }
     if (token) {
@@ -87,7 +87,7 @@ export const apiClient = {
   },
 
   post<T>(endpoint: string, body: any, options?: RequestInit) {
-    const isFormData = body instanceof FormData;
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData || (body && typeof body === 'object' && typeof body.append === 'function');
     return this.fetch<T>(endpoint, {
       ...options,
       method: 'POST',

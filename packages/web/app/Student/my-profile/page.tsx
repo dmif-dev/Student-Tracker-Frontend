@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiService } from "@/services/api";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,10 @@ import {
     Clock,
     FileText,
     Zap,
-    ArrowRight
+    ArrowRight,
+    Camera,
+    Loader2,
+    Trash2
 } from "lucide-react";
 
 interface UserProfile {
@@ -47,10 +50,13 @@ interface UserProfile {
     location: string;
     bio: string;
     avatar: string;
+    removeAvatar?: boolean;
+    studentId: string;
     joinDate: string;
     programTrack: "G-GMP" | "G-CMP" | "E-TIP" | "PCP";
     mentor: string;
     mentorEmail: string;
+    mentorDetails?: any;
     website?: string;
     linkedin?: string;
     github?: string;
@@ -66,6 +72,7 @@ interface UserProfile {
 
 const defaultProfile: UserProfile = {
     id: "STU-2024-042",
+    studentId: "cuid-placeholder",
     firstName: "Priya",
     lastName: "Sharma",
     email: "priya.sharma@dmifstudent.org",
@@ -93,7 +100,11 @@ const defaultProfile: UserProfile = {
 export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<UserProfile>(defaultProfile);
-    const { toast } = useToast();
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
+    const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
+    
     const queryClient = useQueryClient();
 
     const { data: profile = defaultProfile, isLoading } = useQuery<UserProfile>({
@@ -104,11 +115,7 @@ export default function ProfilePage() {
                 return data || defaultProfile;
             } catch (error) {
                 console.error("Failed to load profile:", error);
-                toast({
-                    title: "Error",
-                    description: "Failed to load profile data. Using default data for now.",
-                    variant: "destructive",
-                });
+                toast.error("Failed to load profile data. Using default data for now.");
                 return defaultProfile;
             }
         }
@@ -119,18 +126,11 @@ export default function ProfilePage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['studentProfile'] });
             setIsEditing(false);
-            toast({
-                title: "Success",
-                description: "Profile updated successfully.",
-            });
+            toast.success("Profile updated successfully.");
         },
         onError: (error) => {
             console.error("Failed to update profile:", error);
-            toast({
-                title: "Error",
-                description: "Failed to update profile. Please try again later.",
-                variant: "destructive",
-            });
+            toast.error("Failed to update profile. Please try again later.");
         }
     });
 
@@ -144,10 +144,29 @@ export default function ProfilePage() {
 
     const handleEditClick = () => {
         setFormData(profile);
+        setSelectedAvatarFile(null);
+        setPreviewAvatar(null);
         setIsEditing(true);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        if (selectedAvatarFile) {
+            setUploadingAvatar(true);
+            const data = new FormData();
+            data.append('avatar', selectedAvatarFile);
+            try {
+                const response = await ApiService.uploadStudentAvatar(data);
+                if (response.avatar) {
+                    setFormData(prev => ({ ...prev, avatar: response.avatar }));
+                }
+            } catch (err) {
+                console.error("Avatar upload failed", err);
+                toast.error("Failed to upload avatar");
+            } finally {
+                setUploadingAvatar(false);
+            }
+        }
+
         updateMutation.mutate({
             firstName: formData.firstName,
             lastName: formData.lastName,
@@ -157,12 +176,46 @@ export default function ProfilePage() {
             website: formData.website,
             linkedin: formData.linkedin,
             github: formData.github,
+            removeAvatar: formData.removeAvatar
         });
     };
 
     const handleCancel = () => {
         setFormData(profile);
+        setSelectedAvatarFile(null);
+        setPreviewAvatar(null);
         setIsEditing(false);
+    };
+
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setSelectedAvatarFile(file);
+        setPreviewAvatar(URL.createObjectURL(file));
+        setFormData(prev => ({ ...prev, removeAvatar: false }));
+    };
+
+    const handleRemoveAvatar = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setFormData(prev => ({ ...prev, removeAvatar: true }));
+        setSelectedAvatarFile(null);
+        setPreviewAvatar(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const getAvatarUrl = (path: string | undefined | null) => {
+        if (!path) return null;
+        if (path.startsWith('http') || path.startsWith('data:')) return path;
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim()?.replace(/\/api\/?$/, '') || 'http://localhost:4000';
+        return `${apiUrl}/api/student/${profile?.studentId}/avatar?v=${encodeURIComponent(path)}`;
+    };
+
+    const getMentorAvatarUrl = (path: string | undefined | null, mentorId: string | undefined | null) => {
+        if (!path || !mentorId) return null;
+        if (path.startsWith('http') || path.startsWith('data:')) return path;
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim()?.replace(/\/api\/?$/, '') || 'http://localhost:4000';
+        return `${apiUrl}/api/mentor/${mentorId}/avatar?v=${encodeURIComponent(path)}`;
     };
 
     const PROGRAM_TRACKS = {
@@ -173,6 +226,15 @@ export default function ProfilePage() {
     };
 
     const displayProfile = isEditing ? formData : profile;
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="w-10 h-10 animate-spin text-orange-500" />
+                <p className="text-gray-500 font-medium">Loading profile...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-white">
@@ -186,18 +248,58 @@ export default function ProfilePage() {
                 <div className="relative max-w-6xl mx-auto px-6 py-12">
                     <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
                         {/* Avatar Section */}
-                        <div className="relative group">
-                            <Avatar className="h-32 w-32 border-4 border-orange-200 shadow-xl">
-                                <AvatarImage src={displayProfile.avatar} alt={displayProfile.firstName} />
-                                <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-600 text-white text-2xl font-bold">
-                                    {displayProfile.firstName.charAt(0)}{displayProfile.lastName.charAt(0)}
-                                </AvatarFallback>
-                            </Avatar>
-                            {isEditing && (
-                                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="text-white text-xs font-bold">Change</span>
-                                </div>
+                        <div className={`relative w-32 h-32 ${isEditing ? 'group' : ''}`}>
+                            <div 
+                                className={`w-full h-full relative ${isEditing ? 'cursor-pointer' : ''}`}
+                                onClick={() => isEditing && fileInputRef.current?.click()}
+                            >
+                                <Avatar className="h-32 w-32 border-4 border-orange-200 shadow-xl">
+                                    <AvatarImage 
+                                        src={
+                                            formData.removeAvatar ? undefined : 
+                                            previewAvatar ? previewAvatar : 
+                                            getAvatarUrl(displayProfile.avatar) || undefined
+                                        } 
+                                        alt={displayProfile.firstName} 
+                                        className="object-cover"
+                                    />
+                                    <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-600 text-white text-2xl font-bold">
+                                        {displayProfile.firstName.charAt(0)}{displayProfile.lastName.charAt(0)}
+                                    </AvatarFallback>
+                                </Avatar>
+
+                                {isEditing && (
+                                    <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                                        {uploadingAvatar ? (
+                                            <Loader2 className="w-8 h-8 animate-spin" />
+                                        ) : (
+                                            <>
+                                                <Camera className="w-8 h-8 mb-1" />
+                                                <span className="text-xs font-bold uppercase tracking-widest">Upload</span>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {isEditing && !formData.removeAvatar && (previewAvatar || displayProfile.avatar) && (
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveAvatar}
+                                    className="absolute bottom-0 right-0 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-transform hover:scale-110"
+                                    title="Remove avatar"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
                             )}
+
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                onChange={handleAvatarChange}
+                                accept="image/*"
+                                className="hidden" 
+                            />
                         </div>
 
                         {/* Profile Header Info */}
@@ -499,34 +601,40 @@ export default function ProfilePage() {
                         </Card>
 
                         {/* Mentor Card */}
-                        <Card className="rounded-2xl border-orange-200 bg-gradient-to-br from-orange-50 to-white shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
-                            <div className="absolute top-0 left-0 h-1 w-0 bg-gradient-to-r from-orange-500 to-orange-600 group-hover:w-full transition-all duration-300"></div>
+                        {displayProfile.programTrack !== 'PCP' && (
+                            <Card className="rounded-2xl border-orange-200 bg-gradient-to-br from-orange-50 to-white shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
+                                <div className="absolute top-0 left-0 h-1 w-0 bg-gradient-to-r from-orange-500 to-orange-600 group-hover:w-full transition-all duration-300"></div>
 
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Users className="w-5 h-5 text-orange-600" />
-                                    Your Mentor
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-12 w-12 border-2 border-orange-200">
-                                        <AvatarImage src="/assets/mentor-profile.jpg" />
-                                        <AvatarFallback className="bg-orange-500 text-white font-bold">
-                                            MX
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-bold text-gray-900">{displayProfile.mentor}</p>
-                                        <p className="text-xs text-gray-600">{displayProfile.mentorEmail}</p>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-orange-600" />
+                                        Your Mentor
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-12 w-12 border-2 border-orange-200">
+                                            <AvatarImage src={getMentorAvatarUrl(displayProfile.mentorDetails?.avatar, displayProfile.mentorDetails?.id) || undefined} />
+                                            <AvatarFallback className="flex h-full w-full items-center justify-center bg-orange-500 text-white font-bold">
+                                                {displayProfile.mentor && displayProfile.mentor !== 'Unassigned' ? displayProfile.mentor.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'M'}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-bold text-gray-900">{displayProfile.mentor}</p>
+                                            <p className="text-xs text-gray-600">{displayProfile.mentorEmail}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <Button variant="outline" className="w-full border-orange-300 text-orange-600 hover:bg-orange-50 font-bold gap-2">
-                                    <Mail className="w-4 h-4" />
-                                    Contact Mentor
-                                </Button>
-                            </CardContent>
-                        </Card>
+                                    <Button 
+                                        onClick={() => window.location.href = `mailto:${displayProfile.mentorEmail}`}
+                                        variant="outline" 
+                                        className="w-full border-orange-300 text-orange-600 hover:bg-orange-50 font-bold gap-2"
+                                    >
+                                        <Mail className="w-4 h-4" />
+                                        Contact Mentor
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Quick Links */}
                         <Card className="rounded-2xl border-orange-200 bg-gradient-to-br from-orange-50 to-white shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
@@ -539,17 +647,21 @@ export default function ProfilePage() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2">
-                                <Button variant="outline" className="w-full justify-start border-orange-200 text-orange-600 hover:bg-orange-50 font-bold gap-2">
+                                <Button 
+                                    onClick={() => toast.info("Coming Soon", { description: "CV download will be available soon." })}
+                                    variant="outline" 
+                                    className="w-full justify-start border-orange-200 text-orange-600 hover:bg-orange-50 font-bold gap-2"
+                                >
                                     <FileText className="w-4 h-4" />
                                     Download CV
                                 </Button>
-                                <Button variant="outline" className="w-full justify-start border-orange-200 text-orange-600 hover:bg-orange-50 font-bold gap-2">
+                                <Button 
+                                    onClick={() => toast.info("Coming Soon", { description: "Portfolio viewer will be available soon." })}
+                                    variant="outline" 
+                                    className="w-full justify-start border-orange-200 text-orange-600 hover:bg-orange-50 font-bold gap-2"
+                                >
                                     <BookOpen className="w-4 h-4" />
                                     View Portfolio
-                                </Button>
-                                <Button variant="outline" className="w-full justify-start border-orange-200 text-orange-600 hover:bg-orange-50 font-bold gap-2">
-                                    <Calendar className="w-4 h-4" />
-                                    Book Session
                                 </Button>
                             </CardContent>
                         </Card>

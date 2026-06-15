@@ -429,6 +429,10 @@ export class ApiService {
     }
   }
 
+  static async getSessionById(sessionId: string): Promise<any> {
+    return await apiClient.get<any>(`sessions/${sessionId}`);
+  }
+
   static async getMentorSchedule(mentorId?: string): Promise<any[]> {
     const url = mentorId ? `mentor/sessions?mentorId=${mentorId}` : 'mentor/sessions';
     return await apiClient.get<any[]>(url);
@@ -721,6 +725,25 @@ export class ApiService {
       throw new Error('Failed to update profile');
     }
 
+    return response.json();
+  }
+
+  static async uploadStudentAvatar(formData: FormData): Promise<any> {
+    const token = await getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/student/profile/avatar`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload avatar');
+    }
+    
     return response.json();
   }
 

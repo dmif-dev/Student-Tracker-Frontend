@@ -44,8 +44,10 @@ export function StudentNotificationProvider({ children }: { children: ReactNode 
         queryFn: async () => {
             try {
                 return await ApiService.getStudentNotifications();
-            } catch (error) {
-                console.error("Failed to load student notifications:", error);
+            } catch (error: any) {
+                if (error.message !== 'Not authenticated') {
+                    console.warn("Notice: Could not fetch student notifications:", error.message);
+                }
                 return [];
             }
         },
@@ -92,7 +94,10 @@ export function StudentNotificationProvider({ children }: { children: ReactNode 
             let finalUrl = notification.actionUrl;
 
             // Map generic entity URLs to corresponding student dashboard paths
-            if (finalUrl.startsWith("/sessions")) {
+            if (finalUrl.match(/^\/sessions\/([a-zA-Z0-9-]+)$/)) {
+                const match = finalUrl.match(/^\/sessions\/([a-zA-Z0-9-]+)$/);
+                finalUrl = `/Student/sessions/${match![1]}`;
+            } else if (finalUrl.startsWith("/sessions")) {
                 finalUrl = "/Student/dashboard";
             } else if (finalUrl.startsWith("/documents")) {
                 finalUrl = "/Student/my-courses";

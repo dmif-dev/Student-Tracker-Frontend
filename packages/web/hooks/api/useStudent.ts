@@ -37,13 +37,9 @@ export const useUploadEvidence = () => {
       formData.append('file', file);
       
       // We must use fetch or axios with proper headers for multipart/form-data.
-      // apiClient.post might assume JSON if not handled properly. Let's use the underlying fetch if possible, 
-      // or we can just try passing formData.
-      const response = await apiClient.post<any>('progress/upload', formData, {
-          headers: {
-              'Content-Type': 'multipart/form-data'
-          }
-      });
+      // apiClient.post already handles skipping 'application/json' for FormData.
+      // Do NOT set 'Content-Type' explicitly, as it removes the boundary.
+      const response = await apiClient.post<any>('progress/upload', formData);
       return response;
     },
   });

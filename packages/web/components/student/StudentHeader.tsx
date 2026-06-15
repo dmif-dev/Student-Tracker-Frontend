@@ -19,7 +19,7 @@ export default function StudentHeader() {
     };
 
     // Load Student Profile Dynamically from PostgreSQL DB
-    const { data: profile } = useQuery({
+    const { data: profile, isLoading } = useQuery({
         queryKey: ["studentProfile"],
         queryFn: async () => {
             try {
@@ -34,7 +34,15 @@ export default function StudentHeader() {
     const studentName = profile ? `${profile.firstName} ${profile.lastName}` : "Student User";
     const studentEmail = profile?.email || "student@dmifstudent.org";
     const studentReg = profile?.id || "DMIF Student";
-    const avatarUrl = profile?.avatar || "/assets/student-profile.jpg";
+    
+    const getAvatarUrl = (path: string | undefined | null) => {
+        if (!path) return null;
+        if (path.startsWith('http') || path.startsWith('data:')) return path;
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim()?.replace(/\/api\/?$/, '') || 'http://localhost:4000';
+        return `${apiUrl}/api/student/${profile?.studentId}/avatar?v=${encodeURIComponent(path)}`;
+    };
+
+    const avatarUrl = getAvatarUrl(profile?.avatar) || "/assets/student-profile.jpg";
 
     // Dynamic Title mapping
     const getPageTitle = () => {
@@ -68,20 +76,33 @@ export default function StudentHeader() {
                         {/* User Menu Dropdown */}
                         <div className="relative">
                             <button
-                                onClick={() => setShowUserMenu(!showUserMenu)}
+                                onClick={() => !isLoading && setShowUserMenu(!showUserMenu)}
                                 className="flex items-center space-x-3 p-1.5 rounded-xl hover:bg-gray-50 transition-colors"
                                 aria-label="User menu"
+                                disabled={isLoading}
                             >
-                                <Avatar className="h-8 w-8 border border-orange-200">
-                                    <AvatarImage src={avatarUrl} alt={studentName} />
-                                    <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold text-xs">
-                                        {profile ? `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}` : "ST"}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className="text-left hidden md:block">
-                                    <p className="text-xs font-bold text-gray-800 leading-tight">{studentName}</p>
-                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{studentReg}</p>
-                                </div>
+                                {isLoading ? (
+                                    <>
+                                        <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>
+                                        <div className="text-left hidden md:block space-y-1">
+                                            <div className="h-3 w-24 bg-gray-200 animate-pulse rounded"></div>
+                                            <div className="h-2 w-16 bg-gray-200 animate-pulse rounded"></div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Avatar className="h-8 w-8 border border-orange-200">
+                                            <AvatarImage src={avatarUrl} alt={studentName} />
+                                            <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold text-xs">
+                                                {profile ? `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}` : "ST"}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="text-left hidden md:block">
+                                            <p className="text-xs font-bold text-gray-800 leading-tight">{studentName}</p>
+                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{studentReg}</p>
+                                        </div>
+                                    </>
+                                )}
                             </button>
 
                             {showUserMenu && (

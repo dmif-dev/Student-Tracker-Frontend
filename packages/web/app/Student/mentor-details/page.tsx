@@ -141,6 +141,18 @@ export default function MentorDetailsPage() {
     }
 
     if (!mentor) {
+        if (profile?.programTrack === 'PCP') {
+            return (
+                <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <UserCircle className="w-12 h-12 text-gray-400" />
+                    </div>
+                    <h2 className="text-2xl font-black text-gray-900">Mentorship Not Applicable</h2>
+                    <p className="text-gray-500 max-w-md">The Professional Certification Program (PCP) is a self-paced learning track. Mentor assignments are not required for this program.</p>
+                </div>
+            );
+        }
+
         return (
             <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -444,7 +456,7 @@ export default function MentorDetailsPage() {
                                     <div className="flex items-start justify-between">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <Badge variant={session.status === 'COMPLETED' ? 'default' : 'secondary'} className={session.status === 'COMPLETED' ? 'bg-green-100 text-green-700 hover:bg-green-200' : ''}>
+                                                <Badge variant={session.status === 'COMPLETED' ? 'default' : 'secondary'} className={session.status === 'COMPLETED' ? 'bg-green-100 text-green-700 hover:bg-green-200' : session.status === 'PENDING' ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' : ''}>
                                                     {session.status}
                                                 </Badge>
                                                 <span className="text-xs font-bold text-gray-400 uppercase">{format(new Date(session.date), 'MMM d, yyyy')}</span>
